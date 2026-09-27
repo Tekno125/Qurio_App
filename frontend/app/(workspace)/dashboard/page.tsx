@@ -31,6 +31,7 @@ import {
 import { getSessionList, type SessionListItem } from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
 
+// Format tanggal dari API menggunakan lokal Indonesia.
 function formatDate(value: string | null) {
   if (!value) return "-";
 
@@ -40,7 +41,23 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
+// Tentukan label tombol berdasarkan jumlah dan jenis status yang dipilih.
+function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
+  if (statusFilters.length === 0) return "Semua status";
+  if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
+
+  switch (statusFilters[0]) {
+    case "active":
+      return "Aktif";
+    case "ended":
+      return "Selesai";
+    default:
+      return "Semua status";
+  }
+}
+
 function DashboardPage() {
+  // State untuk data sesi, pencarian, filter status, dan kondisi pemuatan.
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -50,6 +67,7 @@ function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Tunda pencarian agar pemrosesan tidak berjalan pada setiap ketikan.
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -58,6 +76,7 @@ function DashboardPage() {
     return () => window.clearTimeout(debounceTimer);
   }, [searchQuery]);
 
+  // Muat sesi pengguna sekali saat halaman dashboard dibuka.
   useEffect(() => {
     let isMounted = true;
 
@@ -81,6 +100,7 @@ function DashboardPage() {
     };
   }, []);
 
+  // Hitung ringkasan jumlah seluruh sesi dan sesi yang masih aktif.
   const overviewItems = [
     {
       label: "Total Sesi",
@@ -96,42 +116,40 @@ function DashboardPage() {
     },
   ];
 
+  // Terapkan pencarian fuzzy pada judul sesi dan statusnya.
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
         sessions,
         debouncedSearchQuery,
-        (session) =>
-          `${session.title} ${session.id} ${session.access_code} ${session.status}`,
+        (session) => `${session.title} ${session.status}`,
       )
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)
     : sessions;
+
+  // Kosong berarti semua status; beberapa pilihan harus cocok sekaligus.
   const visibleSessions = searchedSessions.filter(
     (session) =>
       statusFilters.length === 0 ||
       statusFilters.every((status) => session.status === status),
   );
-  const statusFilterLabel =
-    statusFilters.length === 0
-      ? "Semua status"
-      : statusFilters.length > 1
-        ? `${statusFilters.length} status dipilih`
-        : statusFilters[0] === "active"
-          ? "Aktif"
-          : statusFilters[0] === "ended"
-            ? "Selesai"
-            : "Semua status";
 
+  const statusFilterLabel = getStatusFilterLabel(statusFilters);
+
+  // Siapkan teks tombol filter sesuai pilihan status saat ini.
   return (
     <section className="mx-auto w-full max-w-[1180px] p-6 lg:p-8">
       <header>
         <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
+          {/* Judul dan deskripsi halaman dashboard. */}
           Dashboard
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Ringkasan aktivitas kelas dan performa siswa Qurio Anda
         </p>
       </header>
+
+      {/* Kartu ringkasan aktivitas sesi. */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {overviewItems.map(({ label, value, detail }) => (
           <Card
@@ -152,12 +170,15 @@ function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Panel aktivitas berisi pencarian, filter, dan daftar sesi. */}
       <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
         <CardContent className="p-5 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">
             Aktivitas Sesi Terbaru
           </h2>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            {/* Input pencarian dengan tombol untuk menghapus kata kunci. */}
             <div className="relative flex-1">
               <IconSearch className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -183,6 +204,8 @@ function DashboardPage() {
                 </Button>
               )}
             </div>
+
+            {/* Menu checkbox untuk memilih status yang ditampilkan. */}
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -198,6 +221,7 @@ function DashboardPage() {
               <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
+                  {/* Buat satu opsi checkbox untuk setiap status sesi. */}
                   {(
                     [
                       ["active", "Aktif"],
@@ -222,6 +246,8 @@ function DashboardPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Tabel utama yang menampilkan daftar sesi hasil filter. */}
           <div className="mt-4 overflow-hidden rounded-md border border-border">
             <Table className="min-w-[760px] text-left">
               <TableHeader className="bg-muted text-muted-foreground">
@@ -248,6 +274,7 @@ function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Tampilkan indikator saat data sesi sedang dimuat. */}
                 {isLoading && (
                   <TableRow>
                     <TableCell
@@ -258,6 +285,8 @@ function DashboardPage() {
                     </TableCell>
                   </TableRow>
                 )}
+
+                {/* Tampilkan pesan jika permintaan daftar sesi gagal. */}
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
@@ -268,6 +297,8 @@ function DashboardPage() {
                     </TableCell>
                   </TableRow>
                 )}
+
+                {/* Beri umpan balik saat filter tidak menghasilkan sesi. */}
                 {!isLoading &&
                   !errorMessage &&
                   visibleSessions.length === 0 && (
@@ -284,6 +315,8 @@ function DashboardPage() {
                       </TableCell>
                     </TableRow>
                   )}
+
+                {/* Render baris untuk setiap sesi yang lolos pencarian dan filter. */}
                 {!isLoading &&
                   !errorMessage &&
                   visibleSessions.map((session) => (
