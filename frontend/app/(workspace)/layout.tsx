@@ -65,9 +65,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={label}
                 href={href}
+                aria-current={active ? "page" : undefined}
+                onClick={(event) => {
+                  if (active) event.preventDefault();
+                }}
                 className={cn(
                   "flex h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold transition-colors",
-                  active && label === "Dashboard"
+                  active
                     ? "bg-primary text-primary-foreground"
                     : "text-[#64728b] hover:bg-sidebar-accent",
                 )}
