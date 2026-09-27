@@ -19,8 +19,8 @@ import { SettingsDialog } from "@/components/SettingsModal";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", Icon: IconLayoutGrid },
-  { href: "/dashboard", label: "Session List", Icon: IconList },
-  { href: "/dashboard", label: "Analytics", Icon: IconChartBar },
+  { href: "/sessions", label: "Session List", Icon: IconList },
+  { href: "/analytics", label: "Analytics", Icon: IconChartBar },
 ];
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
