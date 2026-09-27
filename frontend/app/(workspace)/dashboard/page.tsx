@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  IconCopy,
   IconChevronDown,
   IconDotsVertical,
   IconSearch,
@@ -10,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -218,7 +218,7 @@ function DashboardPage() {
                   </Button>
                 }
               />
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
                   {/* Buat satu opsi checkbox untuk setiap status sesi. */}
@@ -254,9 +254,6 @@ function DashboardPage() {
                 <TableRow className="hover:bg-transparent font-bold">
                   <TableHead className="px-4 py-3 font-semibold">
                     Nama sesi
-                  </TableHead>
-                  <TableHead className="px-4 py-3 font-semibold">
-                    ID sesi
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
                     Kode akses
@@ -331,19 +328,13 @@ function DashboardPage() {
                       </TableCell>
                       <TableCell className="px-4 py-3.5">
                         <span className="font-semibold text-foreground">
-                          {session.id}
-                        </span>
-                        <Button variant="ghost" size="icon-xs" className="ml-2">
-                          <IconCopy className="size-3 text-muted-foreground" />
-                        </Button>
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5">
-                        <span className="font-semibold text-foreground">
                           {session.access_code}
                         </span>
-                        <Button variant="ghost" size="icon-xs" className="ml-2">
-                          <IconCopy className="size-3 text-muted-foreground" />
-                        </Button>
+                        <CopyButton
+                          text={session.access_code}
+                          label="kode akses"
+                          className="ml-2"
+                        />
                       </TableCell>
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}

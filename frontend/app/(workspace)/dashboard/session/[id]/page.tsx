@@ -11,6 +11,7 @@ import {
   updateSinglePolls,
   updateStatusSession,
 } from "@/lib/api";
+import { CopyButton } from "@/components/CopyButton";
 
 export interface SessionData {
   id: string;
@@ -391,6 +392,7 @@ function SessionPage() {
                 <span className="font-mono font-semibold bg-gray-100 px-2 py-0.5 rounded">
                   {session?.access_code}
                 </span>
+                <CopyButton text={session?.access_code || ""} />
               </p>
             </div>
             <span
