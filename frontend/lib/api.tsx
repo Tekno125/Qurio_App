@@ -1,4 +1,7 @@
-import { Poll, SessionData } from "@/app/dashboard/session/[id]/page";
+import {
+  Poll,
+  SessionData,
+} from "@/app/(workspace)/dashboard/session/[id]/page";
 
 interface LoginUserSuccess {
   success: true;
@@ -460,7 +463,7 @@ export const updateStatusSession = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-        `Gagal memperbarui status sesi (HTTP ${response.status})`,
+          `Gagal memperbarui status sesi (HTTP ${response.status})`,
       );
     }
 

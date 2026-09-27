@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   IconCopy,
+  IconChevronDown,
   IconDotsVertical,
   IconSearch,
   IconX,
@@ -10,6 +11,14 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -35,6 +44,9 @@ function DashboardPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [statusFilters, setStatusFilters] = useState<
+    SessionListItem["status"][]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -84,7 +96,7 @@ function DashboardPage() {
     },
   ];
 
-  const visibleSessions = debouncedSearchQuery.trim()
+  const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
         sessions,
         debouncedSearchQuery,
@@ -94,6 +106,21 @@ function DashboardPage() {
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)
     : sessions;
+  const visibleSessions = searchedSessions.filter(
+    (session) =>
+      statusFilters.length === 0 ||
+      statusFilters.every((status) => session.status === status),
+  );
+  const statusFilterLabel =
+    statusFilters.length === 0
+      ? "Semua status"
+      : statusFilters.length > 1
+        ? `${statusFilters.length} status dipilih`
+        : statusFilters[0] === "active"
+          ? "Aktif"
+          : statusFilters[0] === "ended"
+            ? "Selesai"
+            : "Semua status";
 
   return (
     <section className="mx-auto w-full max-w-[1180px] p-6 lg:p-8">
@@ -156,12 +183,44 @@ function DashboardPage() {
                 </Button>
               )}
             </div>
-            <Button
-              variant="outline"
-              className="h-10 justify-between border-border px-4 text-muted-foreground sm:w-[200px]"
-            >
-              Semua status <span>⌄</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="h-10 justify-between border-border px-4 text-muted-foreground sm:w-[200px]"
+                  >
+                    {statusFilterLabel}
+                    <IconChevronDown className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
+                  {(
+                    [
+                      ["active", "Aktif"],
+                      ["ended", "Selesai"],
+                    ] as const
+                  ).map(([status, label]) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilters.includes(status)}
+                      onCheckedChange={(checked) =>
+                        setStatusFilters((current) =>
+                          checked
+                            ? [...current, status]
+                            : current.filter((item) => item !== status),
+                        )
+                      }
+                    >
+                      {label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="mt-4 overflow-hidden rounded-md border border-border">
             <Table className="min-w-[760px] text-left">
@@ -219,7 +278,9 @@ function DashboardPage() {
                       >
                         {debouncedSearchQuery.trim()
                           ? "Sesi tidak ditemukan."
-                          : "Belum ada sesi."}
+                          : statusFilters.length > 1
+                            ? "Tidak ada sesi yang cocok dengan semua status terpilih."
+                            : "Belum ada sesi."}
                       </TableCell>
                     </TableRow>
                   )}
