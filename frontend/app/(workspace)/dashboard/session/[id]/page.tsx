@@ -193,7 +193,7 @@ function SessionPage() {
     let fallbackTimer: ReturnType<typeof setInterval> | null = null;
 
     const socketUrl = (
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001"
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
     ).replace(/\/api\/?$/, "");
     const socket = io(socketUrl, { withCredentials: true });
 

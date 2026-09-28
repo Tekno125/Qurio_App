@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // import icon
-import { IconLogin2 } from "@tabler/icons-react";
+import { IconCheck, IconLogin2, IconUserPlus } from "@tabler/icons-react";
 import { AccessForm } from "@/components/AccessForm";
 
 const heroSlides = [
@@ -53,6 +53,12 @@ const featureCards = [
     "Automated Summary",
     "Laporan evaluasi berbasis AI yang siap diunduh guru setelah kelas.",
   ],
+];
+
+const teacherBenefits = [
+  "Gratis tanpa kartu kredit",
+  "Tanpa unduh aplikasi",
+  "Sesi pertama siap dalam 1 menit",
 ];
 
 function HeroSlider() {
@@ -137,13 +143,13 @@ export default function App() {
             </span>
 
             <HeroSlider />
-            {/* <Link
+            <Link
               className="mt-6 text-primary text-sm hover:underline"
-              href="/login"
+              href="/register"
             >
               Apakah Anda seorang Guru?
               <strong className="font-extrabold"> Buat Sesi Gratis →</strong>
-            </Link> */}
+            </Link>
           </div>
         </div>
       </section>
@@ -438,6 +444,52 @@ export default function App() {
                 </Card>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA untuk guru: ditempatkan setelah alur "3 langkah" agar guru yang
+          sudah membaca benefit & cara kerja langsung menemukan tombol daftar.
+          Layout sengaja di-mirror dengan section "UNTUK SISWA" (#cta) di atas. */}
+      <section id="daftar-guru" className="py-24 bg-[#eef4ff]">
+        <div className="mx-auto flex w-full max-w-304 flex-col items-center justify-center gap-8 px-6 text-center lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:text-left">
+          <div className="flex max-w-xl flex-col items-center text-center lg:items-start lg:text-left">
+            <span className="mb-5 block text-[13px] font-extrabold tracking-[0.12em] text-brand-purple">
+              UNTUK GURU
+            </span>
+            <h2 className="mt-0 mb-4 text-3xl tracking-[-0.04em]">
+              Siap memulai kelas yang terbaca oleh AI?
+            </h2>
+            <p className="mt-0 max-w-xl text-lg leading-normal text-[#536682]">
+              Daftarkan akun guru, siapkan pertanyaan pertama, dan biarkan Qurio
+              memetakan pemahaman serta keaktifan murid Anda secara otomatis.
+            </p>
+            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-bold text-[#536682] lg:justify-start">
+              {teacherBenefits.map((benefit) => (
+                <li key={benefit} className="inline-flex items-center gap-2">
+                  <IconCheck className="size-4 text-primary" />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex w-full flex-col items-center gap-3 lg:items-end">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2.5 rounded-full border border-primary/20 bg-primary px-7 py-4 text-base font-extrabold text-primary-foreground shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl"
+            >
+              <span>Daftar Sekarang</span>
+              <IconUserPlus className="size-5" />
+            </Link>
+            <span className="text-sm text-[#536682]">
+              Sudah punya akun guru?{" "}
+              <Link
+                href="/login"
+                className="font-extrabold text-primary hover:underline"
+              >
+                Masuk di sini
+              </Link>
+            </span>
           </div>
         </div>
       </section>
