@@ -17,36 +17,17 @@ import { CopyButton } from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  DropdownMenuCheckboxItem,
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-<<<<<<< HEAD
-<<<<<<< HEAD
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -57,11 +38,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-<<<<<<< HEAD
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   Table,
   TableBody,
   TableCell,
@@ -70,27 +46,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-<<<<<<< HEAD
-<<<<<<< HEAD
   deleteSession,
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-  deleteSession,
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   getSessionList,
   updateStatusSession,
   type SessionListItem,
 } from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { toast } from "@/components/ui/toast";
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-import { toast } from "@/components/ui/toast";
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -101,63 +63,29 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
   if (statusFilter === null) return "Semua status";
   return statusFilter === "active" ? "Aktif" : "Selesai";
-=======
-function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
-  if (statusFilters.length === 0) return "Semua status";
-  if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
-  return statusFilters[0] === "active" ? "Aktif" : "Selesai";
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
-  if (statusFilter === null) return "Semua status";
-  return statusFilter === "active" ? "Aktif" : "Selesai";
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 }
 
 function SessionsPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-<<<<<<< HEAD
-<<<<<<< HEAD
   const [statusFilter, setStatusFilter] = useState<
     SessionListItem["status"] | null
   >(null);
-=======
-  const [statusFilters, setStatusFilters] = useState<
-    SessionListItem["status"][]
-  >([]);
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-  const [statusFilter, setStatusFilter] = useState<
-    SessionListItem["status"] | null
-  >(null);
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
     null,
   );
   const [updatingSessionIds, setUpdatingSessionIds] = useState<string[]>([]);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   const [sessionToDelete, setSessionToDelete] =
     useState<SessionListItem | null>(null);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
     null,
   );
-<<<<<<< HEAD
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
@@ -212,38 +140,16 @@ function SessionsPage() {
     ? smartSearch(
         sessions,
         debouncedSearchQuery,
-<<<<<<< HEAD
-<<<<<<< HEAD
         (session) => `${session.title}`,
-=======
-        (session) =>
-          `${session.title} ${session.status} ${session.access_code}`,
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-        (session) => `${session.title}`,
->>>>>>> 750d1a1 (chore: -)
       )
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)
     : sessions;
 
   const visibleSessions = searchedSessions.filter(
-<<<<<<< HEAD
-<<<<<<< HEAD
     (session) => statusFilter === null || statusFilter === session.status,
   );
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
-=======
-    (session) =>
-      statusFilters.length === 0 || statusFilters.includes(session.status),
-  );
-  const statusFilterLabel = getStatusFilterLabel(statusFilters);
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-    (session) => statusFilter === null || statusFilter === session.status,
-  );
-  const statusFilterLabel = getStatusFilterLabel(statusFilter);
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -275,10 +181,6 @@ function SessionsPage() {
     }
   };
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   const confirmDeleteSession = async () => {
     if (!sessionToDelete) return;
 
@@ -305,11 +207,6 @@ function SessionsPage() {
     }
   };
 
-<<<<<<< HEAD
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
       <header>
@@ -389,10 +286,6 @@ function SessionsPage() {
               <DropdownMenuContent align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                   <DropdownMenuRadioGroup
                     value={statusFilter ?? "all"}
                     onValueChange={(value) => {
@@ -400,7 +293,6 @@ function SessionsPage() {
                         setStatusFilter(null);
                       } else if (value === "active" || value === "ended") {
                         setStatusFilter(value);
-<<<<<<< HEAD
                       }
                     }}
                   >
@@ -414,43 +306,6 @@ function SessionsPage() {
                       Selesai
                     </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
-=======
-                  {(
-                    [
-                      ["active", "Aktif"],
-                      ["ended", "Selesai"],
-                    ] as const
-                  ).map(([status, label]) => (
-                    <DropdownMenuCheckboxItem
-                      key={status}
-                      checked={statusFilters.includes(status)}
-                      onCheckedChange={(checked) =>
-                        setStatusFilters((current) =>
-                          checked
-                            ? [...current, status]
-                            : current.filter((item) => item !== status),
-                        )
-                      }
-                    >
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                      }
-                    }}
-                  >
-                    <DropdownMenuRadioItem value="all">
-                      Semua status
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="active">
-                      Aktif
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="ended">
-                      Selesai
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -462,15 +317,7 @@ function SessionsPage() {
           )}
 
           <div className="mt-4 overflow-auto rounded-md border border-border">
-<<<<<<< HEAD
-<<<<<<< HEAD
             <Table className="min-w-210 text-left">
-=======
-            <Table className="min-w-190 text-left">
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-            <Table className="min-w-210 text-left">
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
               <TableHeader className="bg-muted text-muted-foreground">
                 <TableRow className="font-bold hover:bg-transparent">
                   <TableHead className="px-4 py-3 font-semibold">
@@ -479,18 +326,9 @@ function SessionsPage() {
                   <TableHead className="px-4 py-3 font-semibold">
                     Kode akses
                   </TableHead>
-<<<<<<< HEAD
-<<<<<<< HEAD
                   <TableHead className="px-4 py-3 text-center font-semibold">
                     Siswa
                   </TableHead>
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                  <TableHead className="px-4 py-3 text-center font-semibold">
-                    Siswa
-                  </TableHead>
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                   <TableHead className="px-4 py-3 font-semibold">
                     Dibuat
                   </TableHead>
@@ -507,15 +345,7 @@ function SessionsPage() {
                 {isLoading && (
                   <TableRow>
                     <TableCell
-<<<<<<< HEAD
-<<<<<<< HEAD
                       colSpan={7}
-=======
-                      colSpan={6}
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                      colSpan={7}
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -526,15 +356,7 @@ function SessionsPage() {
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
-<<<<<<< HEAD
-<<<<<<< HEAD
                       colSpan={7}
-=======
-                      colSpan={6}
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                      colSpan={7}
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -547,24 +369,10 @@ function SessionsPage() {
                   visibleSessions.length === 0 && (
                     <TableRow>
                       <TableCell
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                         colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
                         {debouncedSearchQuery.trim() || statusFilter !== null
-=======
-                        colSpan={6}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-<<<<<<< HEAD
-                        {debouncedSearchQuery.trim() || statusFilters.length > 0
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                        {debouncedSearchQuery.trim() || statusFilter !== null
->>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                           ? "Tidak ada sesi yang cocok dengan pencarian atau filter."
                           : "Belum ada sesi."}
                       </TableCell>
@@ -593,18 +401,9 @@ function SessionsPage() {
                           className="ml-2"
                         />
                       </TableCell>
-<<<<<<< HEAD
-<<<<<<< HEAD
                       <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
                         {session.participant_count}
                       </TableCell>
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
-                      <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
-                        {session.participant_count}
-                      </TableCell>
->>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}
                       </TableCell>
@@ -660,20 +459,10 @@ function SessionsPage() {
                                 : "Aktifkan sesi"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() => setSessionToDelete(session)}
                             >
-<<<<<<< HEAD
-=======
-                            <DropdownMenuItem variant="destructive" disabled>
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
                               <IconTrash className="size-4" />
                               Hapus sesi
                             </DropdownMenuItem>
@@ -687,10 +476,6 @@ function SessionsPage() {
           </div>
         </CardContent>
       </Card>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
       <AlertDialog
         open={sessionToDelete !== null}
@@ -720,11 +505,6 @@ function SessionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-<<<<<<< HEAD
-=======
->>>>>>> ca371d0 (feat: membuat halaman sessions list)
-=======
->>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
     </section>
   );
 }
