@@ -17,17 +17,25 @@ import { CopyButton } from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
+<<<<<<< HEAD
+=======
+  DropdownMenuCheckboxItem,
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+<<<<<<< HEAD
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+<<<<<<< HEAD
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,6 +46,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   Table,
   TableBody,
   TableCell,
@@ -46,13 +56,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+<<<<<<< HEAD
   deleteSession,
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   getSessionList,
   updateStatusSession,
   type SessionListItem,
 } from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
+<<<<<<< HEAD
 import { toast } from "@/components/ui/toast";
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -63,29 +79,45 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
+<<<<<<< HEAD
 function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
   if (statusFilter === null) return "Semua status";
   return statusFilter === "active" ? "Aktif" : "Selesai";
+=======
+function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
+  if (statusFilters.length === 0) return "Semua status";
+  if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
+  return statusFilters[0] === "active" ? "Aktif" : "Selesai";
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
 }
 
 function SessionsPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+<<<<<<< HEAD
   const [statusFilter, setStatusFilter] = useState<
     SessionListItem["status"] | null
   >(null);
+=======
+  const [statusFilters, setStatusFilters] = useState<
+    SessionListItem["status"][]
+  >([]);
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
     null,
   );
   const [updatingSessionIds, setUpdatingSessionIds] = useState<string[]>([]);
+<<<<<<< HEAD
   const [sessionToDelete, setSessionToDelete] =
     useState<SessionListItem | null>(null);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
     null,
   );
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
 
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
@@ -140,16 +172,28 @@ function SessionsPage() {
     ? smartSearch(
         sessions,
         debouncedSearchQuery,
+<<<<<<< HEAD
         (session) => `${session.title}`,
+=======
+        (session) =>
+          `${session.title} ${session.status} ${session.access_code}`,
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
       )
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)
     : sessions;
 
   const visibleSessions = searchedSessions.filter(
+<<<<<<< HEAD
     (session) => statusFilter === null || statusFilter === session.status,
   );
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
+=======
+    (session) =>
+      statusFilters.length === 0 || statusFilters.includes(session.status),
+  );
+  const statusFilterLabel = getStatusFilterLabel(statusFilters);
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -181,6 +225,7 @@ function SessionsPage() {
     }
   };
 
+<<<<<<< HEAD
   const confirmDeleteSession = async () => {
     if (!sessionToDelete) return;
 
@@ -207,6 +252,8 @@ function SessionsPage() {
     }
   };
 
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
       <header>
@@ -286,6 +333,7 @@ function SessionsPage() {
               <DropdownMenuContent align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
+<<<<<<< HEAD
                   <DropdownMenuRadioGroup
                     value={statusFilter ?? "all"}
                     onValueChange={(value) => {
@@ -306,6 +354,28 @@ function SessionsPage() {
                       Selesai
                     </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
+=======
+                  {(
+                    [
+                      ["active", "Aktif"],
+                      ["ended", "Selesai"],
+                    ] as const
+                  ).map(([status, label]) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilters.includes(status)}
+                      onCheckedChange={(checked) =>
+                        setStatusFilters((current) =>
+                          checked
+                            ? [...current, status]
+                            : current.filter((item) => item !== status),
+                        )
+                      }
+                    >
+                      {label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -317,7 +387,11 @@ function SessionsPage() {
           )}
 
           <div className="mt-4 overflow-auto rounded-md border border-border">
+<<<<<<< HEAD
             <Table className="min-w-210 text-left">
+=======
+            <Table className="min-w-190 text-left">
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
               <TableHeader className="bg-muted text-muted-foreground">
                 <TableRow className="font-bold hover:bg-transparent">
                   <TableHead className="px-4 py-3 font-semibold">
@@ -326,9 +400,12 @@ function SessionsPage() {
                   <TableHead className="px-4 py-3 font-semibold">
                     Kode akses
                   </TableHead>
+<<<<<<< HEAD
                   <TableHead className="px-4 py-3 text-center font-semibold">
                     Siswa
                   </TableHead>
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                   <TableHead className="px-4 py-3 font-semibold">
                     Dibuat
                   </TableHead>
@@ -345,7 +422,11 @@ function SessionsPage() {
                 {isLoading && (
                   <TableRow>
                     <TableCell
+<<<<<<< HEAD
                       colSpan={7}
+=======
+                      colSpan={6}
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -356,7 +437,11 @@ function SessionsPage() {
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
+<<<<<<< HEAD
                       colSpan={7}
+=======
+                      colSpan={6}
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -369,10 +454,17 @@ function SessionsPage() {
                   visibleSessions.length === 0 && (
                     <TableRow>
                       <TableCell
+<<<<<<< HEAD
                         colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
                         {debouncedSearchQuery.trim() || statusFilter !== null
+=======
+                        colSpan={6}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        {debouncedSearchQuery.trim() || statusFilters.length > 0
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                           ? "Tidak ada sesi yang cocok dengan pencarian atau filter."
                           : "Belum ada sesi."}
                       </TableCell>
@@ -401,9 +493,12 @@ function SessionsPage() {
                           className="ml-2"
                         />
                       </TableCell>
+<<<<<<< HEAD
                       <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
                         {session.participant_count}
                       </TableCell>
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}
                       </TableCell>
@@ -459,10 +554,14 @@ function SessionsPage() {
                                 : "Aktifkan sesi"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
+<<<<<<< HEAD
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() => setSessionToDelete(session)}
                             >
+=======
+                            <DropdownMenuItem variant="destructive" disabled>
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
                               <IconTrash className="size-4" />
                               Hapus sesi
                             </DropdownMenuItem>
@@ -476,6 +575,7 @@ function SessionsPage() {
           </div>
         </CardContent>
       </Card>
+<<<<<<< HEAD
 
       <AlertDialog
         open={sessionToDelete !== null}
@@ -505,6 +605,8 @@ function SessionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+=======
+>>>>>>> ca371d0 (feat: membuat halaman sessions list)
     </section>
   );
 }
