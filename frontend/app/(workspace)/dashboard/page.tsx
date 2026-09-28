@@ -153,6 +153,7 @@ function DashboardPage() {
     (session) => statusFilter === null || statusFilter === session.status,
   );
 
+<<<<<<< HEAD
   const displayedSessions = visibleSessions.slice(0, 5);
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
 
@@ -211,6 +212,15 @@ function DashboardPage() {
       setDeletingSessionId(null);
     }
   };
+=======
+  const isSearchActive = debouncedSearchQuery.trim().length > 0;
+  const displayedSessions =
+    isSearchActive || statusFilters.length > 0
+      ? visibleSessions
+      : visibleSessions.slice(0, 5);
+
+  const statusFilterLabel = getStatusFilterLabel(statusFilters);
+>>>>>>> ebaae14 (feat: membatasi jumlah aktivitas sesi terbaru)
 
   // Siapkan teks tombol filter sesuai pilihan status saat ini.
   return (
