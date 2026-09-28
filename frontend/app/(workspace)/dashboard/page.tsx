@@ -134,6 +134,12 @@ function DashboardPage() {
       statusFilters.every((status) => session.status === status),
   );
 
+  const isSearchActive = debouncedSearchQuery.trim().length > 0;
+  const displayedSessions =
+    isSearchActive || statusFilters.length > 0
+      ? visibleSessions
+      : visibleSessions.slice(0, 5);
+
   const statusFilterLabel = getStatusFilterLabel(statusFilters);
 
   // Siapkan teks tombol filter sesuai pilihan status saat ini.
@@ -172,8 +178,8 @@ function DashboardPage() {
       </div>
 
       {/* Panel aktivitas berisi pencarian, filter, dan daftar sesi. */}
-      <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-        <CardContent className="p-5 sm:p-6">
+      <Card className="mt-6 max-h-[100dvh] rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">
             Aktivitas Sesi Terbaru
           </h2>
@@ -248,7 +254,7 @@ function DashboardPage() {
           </div>
 
           {/* Tabel utama yang menampilkan daftar sesi hasil filter. */}
-          <div className="mt-4 overflow-hidden rounded-md border border-border">
+          <div className="mt-4 min-h-0 flex-1 overflow-auto rounded-md border border-border">
             <Table className="min-w-[760px] text-left">
               <TableHeader className="bg-muted text-muted-foreground">
                 <TableRow className="hover:bg-transparent font-bold">
@@ -316,7 +322,7 @@ function DashboardPage() {
                 {/* Render baris untuk setiap sesi yang lolos pencarian dan filter. */}
                 {!isLoading &&
                   !errorMessage &&
-                  visibleSessions.map((session) => (
+                  displayedSessions.map((session) => (
                     <TableRow key={session.id}>
                       <TableCell className="px-4 py-3.5 font-medium text-foreground">
                         <Link
