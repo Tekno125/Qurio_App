@@ -1,10 +1,14 @@
 "use client";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useCallback, useEffect, useRef, useState } from "react";
 =======
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+import { useCallback, useEffect, useRef, useState } from "react";
+>>>>>>> 7b0e682 (chore: menghilangkan useMemo dan useCallback)
 import type { ReactNode } from "react";
 import {
   IconAlertTriangle,
@@ -565,6 +569,7 @@ function AnalyticsPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => void loadSessions(), 0);
     return () => window.clearTimeout(timer);
+<<<<<<< HEAD
 =======
 =======
   // Muat data sekali saat halaman pertama kali dibuka.
@@ -572,6 +577,8 @@ function AnalyticsPage() {
   useEffect(() => {
     void loadSessions();
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 7b0e682 (chore: menghilangkan useMemo dan useCallback)
   }, [loadSessions]);
 
   // Durasi sesi aktif harus tetap hidup: jam internal memicu hitung ulang tiap
@@ -581,6 +588,7 @@ function AnalyticsPage() {
     return () => window.clearInterval(timer);
   }, []);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // Turunan data tetap murni; React Compiler dapat memoize bila diperlukan.
   const referenceTime = Math.max(now, fetchedAt ?? 0);
@@ -603,35 +611,27 @@ function AnalyticsPage() {
   // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
 =======
   // Semua turunan dihitung dari array sesi yang sudah ada di memori.
+=======
+  // Turunan data tetap murni; React Compiler dapat memoize bila diperlukan.
+>>>>>>> 7b0e682 (chore: menghilangkan useMemo dan useCallback)
   const referenceTime = Math.max(now, fetchedAt ?? 0);
-  const sessions = useMemo(
-    () => rawSessions.map((session) => toTimedSession(session, referenceTime)),
-    [rawSessions, referenceTime],
+  const sessions = rawSessions.map((session) =>
+    toTimedSession(session, referenceTime),
   );
-  const analytics = useMemo(
-    () => buildAnalytics(sessions, referenceTime),
-    [sessions, referenceTime],
+  const analytics = buildAnalytics(sessions, referenceTime);
+  const trendSeries = buildDailySeries(
+    sessions,
+    Number(trendRange),
+    referenceTime,
   );
-  const trendSeries = useMemo(
-    () => buildDailySeries(sessions, Number(trendRange), referenceTime),
-    [sessions, trendRange, referenceTime],
-  );
-  const weekdaySeries = useMemo(() => buildWeekdaySeries(sessions), [sessions]);
-  const longestSessions = useMemo(
-    () =>
-      sessions
-        .filter((session) => session.durationMs !== null)
-        .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
-        .slice(0, 5),
-    [sessions],
-  );
-  const busiestWeekday = useMemo(
-    () =>
-      weekdaySeries.reduce(
-        (best, current) => (current.sessions > best.sessions ? current : best),
-        { label: "-", sessions: 0 },
-      ),
-    [weekdaySeries],
+  const weekdaySeries = buildWeekdaySeries(sessions);
+  const longestSessions = sessions
+    .filter((session) => session.durationMs !== null)
+    .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
+    .slice(0, 5);
+  const busiestWeekday = weekdaySeries.reduce(
+    (best, current) => (current.sessions > best.sessions ? current : best),
+    { label: "-", sessions: 0 },
   );
 
 <<<<<<< HEAD
