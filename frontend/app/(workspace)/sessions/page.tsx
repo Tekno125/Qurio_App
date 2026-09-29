@@ -140,8 +140,7 @@ function SessionsPage() {
     ? smartSearch(
         sessions,
         debouncedSearchQuery,
-        (session) =>
-          `${session.title} ${session.status} ${session.access_code}`,
+        (session) => `${session.title}`,
       )
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)

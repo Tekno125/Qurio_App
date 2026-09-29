@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import {
   IconChevronDown,
   IconDotsVertical,
+  IconExternalLink,
+  IconPlayerPlay,
+  IconPlayerStop,
   IconSearch,
+  IconTrash,
   IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -13,13 +17,26 @@ import { CopyButton } from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -28,8 +45,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getSessionList, type SessionListItem } from "@/lib/api";
+import {
+  deleteSession,
+  getSessionList,
+  updateStatusSession,
+  type SessionListItem,
+} from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
+import { toast } from "@/components/ui/toast";
 
 // Format tanggal dari API menggunakan lokal Indonesia.
 function formatDate(value: string | null) {
@@ -41,19 +64,9 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-// Tentukan label tombol berdasarkan jumlah dan jenis status yang dipilih.
-function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
-  if (statusFilters.length === 0) return "Semua status";
-  if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
-
-  switch (statusFilters[0]) {
-    case "active":
-      return "Aktif";
-    case "ended":
-      return "Selesai";
-    default:
-      return "Semua status";
-  }
+function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
+  if (statusFilter === null) return "Semua status";
+  return statusFilter === "active" ? "Aktif" : "Selesai";
 }
 
 function DashboardPage() {
@@ -61,10 +74,19 @@ function DashboardPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [statusFilters, setStatusFilters] = useState<
-    SessionListItem["status"][]
-  >([]);
+  const [statusFilter, setStatusFilter] = useState<
+    SessionListItem["status"] | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
+    null,
+  );
+  const [updatingSessionIds, setUpdatingSessionIds] = useState<string[]>([]);
+  const [sessionToDelete, setSessionToDelete] =
+    useState<SessionListItem | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Tunda pencarian agar pemrosesan tidak berjalan pada setiap ketikan.
@@ -119,28 +141,76 @@ function DashboardPage() {
   // Terapkan pencarian fuzzy pada judul sesi dan statusnya.
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-      sessions,
-      debouncedSearchQuery,
-      (session) => `${session.title} ${session.status}`,
-    )
-      .filter((result) => result.matchedWords > 0)
-      .map((result) => result.item)
+        sessions,
+        debouncedSearchQuery,
+        (session) => `${session.title}`,
+      )
+        .filter((result) => result.matchedWords > 0)
+        .map((result) => result.item)
     : sessions;
 
-  // Kosong berarti semua status; beberapa pilihan harus cocok sekaligus.
   const visibleSessions = searchedSessions.filter(
-    (session) =>
-      statusFilters.length === 0 ||
-      statusFilters.every((status) => session.status === status),
+    (session) => statusFilter === null || statusFilter === session.status,
   );
 
-  const isSearchActive = debouncedSearchQuery.trim().length > 0;
-  const displayedSessions =
-    isSearchActive || statusFilters.length > 0
-      ? visibleSessions
-      : visibleSessions.slice(0, 5);
+  const displayedSessions = visibleSessions.slice(0, 5);
+  const statusFilterLabel = getStatusFilterLabel(statusFilter);
 
-  const statusFilterLabel = getStatusFilterLabel(statusFilters);
+  const toggleSessionStatus = async (session: SessionListItem) => {
+    const nextStatus = session.status === "active" ? "ended" : "active";
+    setUpdatingSessionIds((current) => [...current, session.id]);
+    setActionErrorMessage(null);
+
+    try {
+      await updateStatusSession(session.id, nextStatus, null);
+      setSessions((current) =>
+        current.map((item) =>
+          item.id === session.id
+            ? {
+                ...item,
+                status: nextStatus,
+                ended_at:
+                  nextStatus === "ended" ? new Date().toISOString() : null,
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      setActionErrorMessage(
+        error instanceof Error ? error.message : "Gagal mengubah status sesi.",
+      );
+    } finally {
+      setUpdatingSessionIds((current) =>
+        current.filter((id) => id !== session.id),
+      );
+    }
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    setDeletingSessionId(sessionToDelete.id);
+    setActionErrorMessage(null);
+
+    try {
+      await deleteSession(sessionToDelete.id);
+      setSessions((current) =>
+        current.filter((session) => session.id !== sessionToDelete.id),
+      );
+      toast.add({
+        title: "Sesi berhasil dihapus",
+        description: `Sesi “${sessionToDelete.title}” telah dihapus.`,
+        type: "success",
+      });
+      setSessionToDelete(null);
+    } catch (error) {
+      setActionErrorMessage(
+        error instanceof Error ? error.message : "Gagal menghapus sesi.",
+      );
+    } finally {
+      setDeletingSessionId(null);
+    }
+  };
 
   // Siapkan teks tombol filter sesuai pilihan status saat ini.
   return (
@@ -211,7 +281,7 @@ function DashboardPage() {
               )}
             </div>
 
-            {/* Menu checkbox untuk memilih status yang ditampilkan. */}
+            {/* Filter status radio: satu status atau semua status. */}
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -227,31 +297,34 @@ function DashboardPage() {
               <DropdownMenuContent align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
-                  {/* Buat satu opsi checkbox untuk setiap status sesi. */}
-                  {(
-                    [
-                      ["active", "Aktif"],
-                      ["ended", "Selesai"],
-                    ] as const
-                  ).map(([status, label]) => (
-                    <DropdownMenuCheckboxItem
-                      key={status}
-                      checked={statusFilters.includes(status)}
-                      onCheckedChange={(checked) =>
-                        setStatusFilters((current) =>
-                          checked
-                            ? [...current, status]
-                            : current.filter((item) => item !== status),
-                        )
+                  <DropdownMenuRadioGroup
+                    value={statusFilter ?? "all"}
+                    onValueChange={(value) => {
+                      if (value === "all") setStatusFilter(null);
+                      else if (value === "active" || value === "ended") {
+                        setStatusFilter(value);
                       }
-                    >
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
+                    }}
+                  >
+                    <DropdownMenuRadioItem value="all">
+                      Semua status
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="active">
+                      Aktif
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="ended">
+                      Selesai
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          {actionErrorMessage && (
+            <p className="mt-3 text-sm text-destructive" role="alert">
+              {actionErrorMessage}
+            </p>
+          )}
 
           {/* Tabel utama yang menampilkan daftar sesi hasil filter. */}
           <div className="mt-4 min-h-0 flex-1 overflow-auto rounded-md border border-border">
@@ -281,7 +354,7 @@ function DashboardPage() {
                 {isLoading && (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -293,7 +366,7 @@ function DashboardPage() {
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -307,13 +380,13 @@ function DashboardPage() {
                   visibleSessions.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={6}
                         className="h-24 text-center text-muted-foreground"
                       >
                         {debouncedSearchQuery.trim()
                           ? "Sesi tidak ditemukan."
-                          : statusFilters.length > 1
-                            ? "Tidak ada sesi yang cocok dengan semua status terpilih."
+                          : statusFilter !== null
+                            ? "Tidak ada sesi yang cocok dengan filter status."
                             : "Belum ada sesi."}
                       </TableCell>
                     </TableRow>
@@ -360,9 +433,52 @@ function DashboardPage() {
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-3.5">
-                        <Button variant="ghost" size="icon-xs">
-                          <IconDotsVertical className="size-4 text-muted-foreground" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                aria-label={`Aksi sesi ${session.title}`}
+                              >
+                                <IconDotsVertical className="size-4 text-muted-foreground" />
+                              </Button>
+                            }
+                          />
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              render={
+                                <Link
+                                  href={`/dashboard/session/${session.id}`}
+                                />
+                              }
+                            >
+                              <IconExternalLink className="size-4" />
+                              Buka sesi
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={updatingSessionIds.includes(session.id)}
+                              onClick={() => void toggleSessionStatus(session)}
+                            >
+                              {session.status === "active" ? (
+                                <IconPlayerStop className="size-4" />
+                              ) : (
+                                <IconPlayerPlay className="size-4" />
+                              )}
+                              {session.status === "active"
+                                ? "Akhiri sesi"
+                                : "Aktifkan sesi"}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setSessionToDelete(session)}
+                            >
+                              <IconTrash className="size-4" />
+                              Hapus sesi
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -371,6 +487,35 @@ function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={sessionToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingSessionId) setSessionToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus sesi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sesi “{sessionToDelete?.title}” dan seluruh data terkait akan
+              dihapus. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingSessionId !== null}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deletingSessionId !== null}
+              onClick={() => void confirmDeleteSession()}
+            >
+              {deletingSessionId ? "Menghapus..." : "Hapus sesi"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
