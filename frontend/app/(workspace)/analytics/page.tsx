@@ -15,7 +15,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   ComposedChart,
   Line,
   Pie,
@@ -310,14 +309,17 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
   );
 
   // Sesi terpanjang dihitung terpisah agar tipe tetap berupa union.
-  const longestSession = sessions.reduce<TimedSession | null>((longest, session) => {
-    const duration = session.durationMs;
-    if (duration === null) return longest;
-    if (longest === null || duration > (longest.durationMs ?? 0)) {
-      return session;
-    }
-    return longest;
-  }, null);
+  const longestSession = sessions.reduce<TimedSession | null>(
+    (longest, session) => {
+      const duration = session.durationMs;
+      if (duration === null) return longest;
+      if (longest === null || duration > (longest.durationMs ?? 0)) {
+        return session;
+      }
+      return longest;
+    },
+    null,
+  );
 
   return {
     totalSessions: sessions.length,
@@ -338,7 +340,6 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
     lastSessionAt,
   };
 }
-
 
 function AnalyticsPage() {
   const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
@@ -448,15 +449,25 @@ function AnalyticsPage() {
   const trendHasData = trendSeries.some((point) => point.sessions > 0);
   const weekDelta = analytics.last7Sessions - analytics.previous7Sessions;
   const statusSeries = [
-    { status: "active", value: analytics.activeSessions },
-    { status: "ended", value: analytics.endedSessions },
+    {
+      status: "active",
+      value: analytics.activeSessions,
+      fill: "var(--color-active)",
+    },
+    {
+      status: "ended",
+      value: analytics.endedSessions,
+      fill: "var(--color-ended)",
+    },
   ];
 
   const sevenDayDetail =
     analytics.previous7Sessions === 0 ? (
-      analytics.last7Sessions === 0
-        ? "Belum ada sesi pada 7 hari terakhir"
-        : "Sesi baru, belum ada pembanding"
+      analytics.last7Sessions === 0 ? (
+        "Belum ada sesi pada 7 hari terakhir"
+      ) : (
+        "Sesi baru, belum ada pembanding"
+      )
     ) : (
       <>
         <span
@@ -517,9 +528,7 @@ function AnalyticsPage() {
     },
     {
       label: "Rata-rata Waktu Sesi",
-      value: formatDuration(
-        hasSessions ? analytics.averageDurationMs : null,
-      ),
+      value: formatDuration(hasSessions ? analytics.averageDurationMs : null),
       detail: "Durasi rata-rata per sesi",
       compact: true,
     },
@@ -531,7 +540,6 @@ function AnalyticsPage() {
       compact: true,
     },
   ];
-
 
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
@@ -617,7 +625,6 @@ function AnalyticsPage() {
           </Card>
         ))}
       </div>
-
 
       {isLoading || hasSessions ? (
         <>
@@ -717,7 +724,6 @@ function AnalyticsPage() {
               </CardContent>
             </Card>
 
-
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
@@ -749,14 +755,7 @@ function AnalyticsPage() {
                           innerRadius="68%"
                           paddingAngle={2}
                           strokeWidth={0}
-                        >
-                          {statusSeries.map((entry) => (
-                            <Cell
-                              key={entry.status}
-                              fill={`var(--color-${entry.status})`}
-                            />
-                          ))}
-                        </Pie>
+                        />
                       </PieChart>
                     </ChartContainer>
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -799,7 +798,6 @@ function AnalyticsPage() {
               </CardContent>
             </Card>
           </div>
-
 
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
@@ -863,7 +861,6 @@ function AnalyticsPage() {
                 </div>
               </CardContent>
             </Card>
-
 
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
@@ -993,4 +990,3 @@ function AnalyticsPage() {
 }
 
 export default AnalyticsPage;
-
