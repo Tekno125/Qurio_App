@@ -27,6 +27,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -35,11 +45,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  deleteSession,
   getSessionList,
   updateStatusSession,
   type SessionListItem,
 } from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
+import { toast } from "@/components/ui/toast";
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -69,6 +81,11 @@ function SessionsPage() {
     null,
   );
   const [updatingSessionIds, setUpdatingSessionIds] = useState<string[]>([]);
+  const [sessionToDelete, setSessionToDelete] =
+    useState<SessionListItem | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
@@ -163,6 +180,32 @@ function SessionsPage() {
       setUpdatingSessionIds((current) =>
         current.filter((id) => id !== session.id),
       );
+    }
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    setDeletingSessionId(sessionToDelete.id);
+    setActionErrorMessage(null);
+
+    try {
+      await deleteSession(sessionToDelete.id);
+      setSessions((current) =>
+        current.filter((session) => session.id !== sessionToDelete.id),
+      );
+      toast.add({
+        title: "Sesi berhasil dihapus",
+        description: `Sesi “${sessionToDelete.title}” telah dihapus.`,
+        type: "success",
+      });
+      setSessionToDelete(null);
+    } catch (error) {
+      setActionErrorMessage(
+        error instanceof Error ? error.message : "Gagal menghapus sesi.",
+      );
+    } finally {
+      setDeletingSessionId(null);
     }
   };
 
@@ -412,7 +455,10 @@ function SessionsPage() {
                                 : "Aktifkan sesi"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem variant="destructive" disabled>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setSessionToDelete(session)}
+                            >
                               <IconTrash className="size-4" />
                               Hapus sesi
                             </DropdownMenuItem>
@@ -426,6 +472,35 @@ function SessionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={sessionToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingSessionId) setSessionToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus sesi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sesi “{sessionToDelete?.title}” dan seluruh data terkait akan
+              dihapus. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingSessionId !== null}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deletingSessionId !== null}
+              onClick={() => void confirmDeleteSession()}
+            >
+              {deletingSessionId ? "Menghapus..." : "Hapus sesi"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
