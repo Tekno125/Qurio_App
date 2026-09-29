@@ -1,8 +1,996 @@
-export default function AnalyticsPage() {
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import {
+  IconAlertTriangle,
+  IconArrowUpRight,
+  IconExternalLink,
+  IconRefresh,
+  IconTrendingDown,
+  IconTrendingUp,
+} from "@tabler/icons-react";
+import Link from "next/link";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Line,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getSessionList, type SessionListItem } from "@/lib/api";
+import { cn } from "@/lib/utils";
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_MINUTE = 60 * 1000;
+
+// Seluruh angka analitik dihitung dari SATU request GET /api/sessions karena
+// kolom created_at dan ended_at sudah ikut dikirim di daftar sesi. Halaman ini
+// jadi tidak perlu mengambil detail setiap sesi satu per satu (N+1 request).
+// Hasil request juga disimpan sebentar supaya pindah tab lalu kembali ke
+// halaman ini tidak langsung memicu fetch ulang.
+const SESSION_CACHE_TTL_MS = 30_000;
+
+const WEEKDAY_LABELS = [
+  "Senin",
+  "Selasa",
+  "Rabu",
+  "Kamis",
+  "Jumat",
+  "Sabtu",
+  "Minggu",
+];
+
+const TREND_RANGES = [
+  { value: "7", label: "7 hari" },
+  { value: "14", label: "14 hari" },
+  { value: "30", label: "30 hari" },
+] as const;
+
+type TrendRange = (typeof TREND_RANGES)[number]["value"];
+
+const dateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const timeFormatter = new Intl.DateTimeFormat("id-ID", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+const monthFormatter = new Intl.DateTimeFormat("id-ID", {
+  month: "long",
+  year: "numeric",
+});
+const dayLabelFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "short",
+});
+
+let sessionCache: { sessions: SessionListItem[]; fetchedAt: number } | null =
+  null;
+
+interface TimedSession {
+  id: string;
+  title: string;
+  status: SessionListItem["status"];
+  startedAt: number | null;
+  endedAt: number | null;
+  // Durasi sesi: ended_at - created_at, atau now - created_at untuk sesi aktif.
+  durationMs: number | null;
+  createdAtRaw: string | null;
+}
+
+interface DailyPoint {
+  key: string;
+  label: string;
+  sessions: number;
+  minutes: number;
+}
+
+const trendChartConfig = {
+  sessions: { label: "Jumlah sesi", color: "var(--primary)" },
+  minutes: {
+    label: "Total durasi (menit)",
+    color: "var(--color-brand-green)",
+  },
+} satisfies ChartConfig;
+
+const statusChartConfig = {
+  active: { label: "Aktif", color: "var(--primary)" },
+  ended: { label: "Selesai", color: "var(--chart-3)" },
+} satisfies ChartConfig;
+
+const weekdayChartConfig = {
+  sessions: { label: "Jumlah sesi", color: "var(--color-brand-green)" },
+} satisfies ChartConfig;
+
+function formatDate(value: string | null) {
+  if (!value) return "-";
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? "-"
+    : dateTimeFormatter.format(parsed);
+}
+
+// Ubah milidetik jadi teks yang enak dibaca, contoh "1 jam 5 menit".
+function formatDuration(milliseconds: number | null) {
+  if (milliseconds === null) return "-";
+
+  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) return `${hours} jam ${minutes} menit`;
+  if (minutes > 0) return `${minutes} menit ${seconds} detik`;
+  return `${seconds} detik`;
+}
+
+// Versi ringkas untuk tabel dan sumbu chart, contoh "1j 05m".
+function formatDurationShort(milliseconds: number | null) {
+  if (milliseconds === null) return "-";
+
+  const totalMinutes = Math.max(0, Math.round(milliseconds / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0) return `${hours}j ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function toTimestamp(value: string | null): number | null {
+  if (!value) return null;
+
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+// Pasangkan timestamp numerik pada sesi supaya durasi bisa dihitung cepat.
+function toTimedSession(session: SessionListItem, now: number): TimedSession {
+  const startedAt = toTimestamp(session.created_at);
+  const endedAt = toTimestamp(session.ended_at);
+  const effectiveEnd =
+    endedAt ?? (session.status === "active" && startedAt !== null ? now : null);
+  const durationMs =
+    startedAt !== null && effectiveEnd !== null
+      ? Math.max(0, effectiveEnd - startedAt)
+      : null;
+
+  return {
+    id: session.id,
+    title: session.title,
+    status: session.status,
+    startedAt,
+    endedAt,
+    durationMs,
+    createdAtRaw: session.created_at,
+  };
+}
+
+// Runtun hari per hari (termasuk hari kosong) untuk chart tren.
+function buildDailySeries(
+  sessions: TimedSession[],
+  days: number,
+  now: number,
+): DailyPoint[] {
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+
+  const points: DailyPoint[] = [];
+  const indexByKey = new Map<string, number>();
+
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const day = new Date(dayStart.getTime() - offset * MS_PER_DAY);
+    const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
+
+    indexByKey.set(key, points.length);
+    points.push({
+      key,
+      label: dayLabelFormatter.format(day),
+      sessions: 0,
+      minutes: 0,
+    });
+  }
+
+  sessions.forEach((session) => {
+    if (session.startedAt === null) return;
+
+    const day = new Date(session.startedAt);
+    const index = indexByKey.get(
+      `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
+    );
+    if (index === undefined) return;
+
+    points[index].sessions += 1;
+    points[index].minutes += Math.round((session.durationMs ?? 0) / 60000);
+  });
+
+  return points;
+}
+
+// Sebaran sesi berdasarkan hari pembuatannya (Senin sampai Minggu).
+function buildWeekdaySeries(sessions: TimedSession[]) {
+  const counts = WEEKDAY_LABELS.map((label) => ({ label, sessions: 0 }));
+
+  sessions.forEach((session) => {
+    if (session.startedAt === null) return;
+
+    // getDay(): 0 = Minggu, sedangkan daftar ini dimulai dari Senin.
+    const index = (new Date(session.startedAt).getDay() + 6) % 7;
+    counts[index].sessions += 1;
+  });
+
+  return counts;
+}
+
+// Ringkasan seluruh metrik utama dalam satu kali putaran data.
+function buildAnalytics(sessions: TimedSession[], now: number) {
+  const nowDate = new Date(now);
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  const last7From = dayStart.getTime() - 6 * MS_PER_DAY;
+  const previous7From = dayStart.getTime() - 13 * MS_PER_DAY;
+  const monthStart = new Date(
+    nowDate.getFullYear(),
+    nowDate.getMonth(),
+    1,
+  ).getTime();
+
+  let last7Sessions = 0;
+  let previous7Sessions = 0;
+  let monthSessions = 0;
+  let activeSessions = 0;
+  let endedSessions = 0;
+  let totalDurationMs = 0;
+  let measuredSessions = 0;
+
+  sessions.forEach((session) => {
+    if (session.status === "active") activeSessions += 1;
+    if (session.status === "ended") endedSessions += 1;
+
+    if (session.durationMs !== null) {
+      totalDurationMs += session.durationMs;
+      measuredSessions += 1;
+    }
+
+    if (session.startedAt === null) return;
+
+    if (session.startedAt >= monthStart) monthSessions += 1;
+    if (session.startedAt >= last7From) last7Sessions += 1;
+    else if (session.startedAt >= previous7From) previous7Sessions += 1;
+  });
+
+  // Sesi terakhir & terpanjang dihitung terpisah agar tipe tetap berupa union.
+  const lastSessionAt = sessions.reduce<number | null>(
+    (latest, session) =>
+      session.startedAt !== null &&
+      (latest === null || session.startedAt > latest)
+        ? session.startedAt
+        : latest,
+    null,
+  );
+
+  // Sesi terpanjang dihitung terpisah agar tipe tetap berupa union.
+  const longestSession = sessions.reduce<TimedSession | null>((longest, session) => {
+    const duration = session.durationMs;
+    if (duration === null) return longest;
+    if (longest === null || duration > (longest.durationMs ?? 0)) {
+      return session;
+    }
+    return longest;
+  }, null);
+
+  return {
+    totalSessions: sessions.length,
+    last7Sessions,
+    previous7Sessions,
+    monthSessions,
+    monthLabel: monthFormatter.format(nowDate),
+    activeSessions,
+    endedSessions,
+    totalDurationMs,
+    averageDurationMs:
+      measuredSessions > 0 ? totalDurationMs / measuredSessions : 0,
+    longestSession,
+    completionRate:
+      sessions.length > 0
+        ? Math.round((endedSessions / sessions.length) * 100)
+        : 0,
+    lastSessionAt,
+  };
+}
+
+
+function AnalyticsPage() {
+  const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  const [trendRange, setTrendRange] = useState<TrendRange>("7");
+  const [now, setNow] = useState(() => Date.now());
+  const requestRef = useRef(false);
+
+  const applySessions = useCallback(
+    (list: SessionListItem[], stamp: number) => {
+      setRawSessions(list);
+      setFetchedAt(stamp);
+      setNow(Date.now());
+    },
+    [],
+  );
+
+  // Satu-satunya sumber data: GET /api/sessions. Tombol muat ulang memakai
+  // force: true agar melewati cache singkat 30 detik.
+  const loadSessions = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      if (requestRef.current) return;
+
+      if (
+        !force &&
+        sessionCache &&
+        Date.now() - sessionCache.fetchedAt < SESSION_CACHE_TTL_MS
+      ) {
+        applySessions(sessionCache.sessions, sessionCache.fetchedAt);
+        setErrorMessage(null);
+        setIsLoading(false);
+        return;
+      }
+
+      requestRef.current = true;
+      if (force) setIsRefreshing(true);
+      else setIsLoading(true);
+
+      try {
+        const list = await getSessionList();
+        const stamp = Date.now();
+        sessionCache = { sessions: list, fetchedAt: stamp };
+        applySessions(list, stamp);
+        setErrorMessage(null);
+      } catch (error: unknown) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Data analitik gagal dimuat. Silakan coba lagi.",
+        );
+      } finally {
+        requestRef.current = false;
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [applySessions],
+  );
+
+  useEffect(() => {
+    void loadSessions();
+  }, [loadSessions]);
+
+  // Durasi sesi aktif harus tetap hidup: jam internal memicu hitung ulang tiap
+  // menit walaupun tidak ada request baru ke server.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), MS_PER_MINUTE);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  // Semua turunan dihitung dari array sesi yang sudah ada di memori.
+  const referenceTime = Math.max(now, fetchedAt ?? 0);
+  const sessions = useMemo(
+    () => rawSessions.map((session) => toTimedSession(session, referenceTime)),
+    [rawSessions, referenceTime],
+  );
+  const analytics = useMemo(
+    () => buildAnalytics(sessions, referenceTime),
+    [sessions, referenceTime],
+  );
+  const trendSeries = useMemo(
+    () => buildDailySeries(sessions, Number(trendRange), referenceTime),
+    [sessions, trendRange, referenceTime],
+  );
+  const weekdaySeries = useMemo(() => buildWeekdaySeries(sessions), [sessions]);
+  const longestSessions = useMemo(
+    () =>
+      sessions
+        .filter((session) => session.durationMs !== null)
+        .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
+        .slice(0, 5),
+    [sessions],
+  );
+  const busiestWeekday = useMemo(
+    () =>
+      weekdaySeries.reduce(
+        (best, current) => (current.sessions > best.sessions ? current : best),
+        { label: "-", sessions: 0 },
+      ),
+    [weekdaySeries],
+  );
+
+  const hasSessions = sessions.length > 0;
+  const trendHasData = trendSeries.some((point) => point.sessions > 0);
+  const weekDelta = analytics.last7Sessions - analytics.previous7Sessions;
+  const statusSeries = [
+    { status: "active", value: analytics.activeSessions },
+    { status: "ended", value: analytics.endedSessions },
+  ];
+
+  const sevenDayDetail =
+    analytics.previous7Sessions === 0 ? (
+      analytics.last7Sessions === 0
+        ? "Belum ada sesi pada 7 hari terakhir"
+        : "Sesi baru, belum ada pembanding"
+    ) : (
+      <>
+        <span
+          className={cn(
+            "inline-flex items-center gap-0.5 font-semibold",
+            weekDelta >= 0
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-rose-600 dark:text-rose-400",
+          )}
+        >
+          {weekDelta >= 0 ? (
+            <IconTrendingUp className="size-3" />
+          ) : (
+            <IconTrendingDown className="size-3" />
+          )}
+          {weekDelta >= 0 ? `+${weekDelta}` : weekDelta}
+        </span>
+        vs 7 hari sebelumnya
+      </>
+    );
+
+  const overviewItems: {
+    label: string;
+    value: string;
+    detail: ReactNode;
+    compact?: boolean;
+  }[] = [
+    {
+      label: "Total Seluruh Sesi",
+      value: String(analytics.totalSessions),
+      detail: "Tercatat di akun Anda",
+    },
+    {
+      label: "Sesi 7 Hari Terakhir",
+      value: String(analytics.last7Sessions),
+      detail: sevenDayDetail,
+    },
+    {
+      label: "Sesi Bulan Ini",
+      value: String(analytics.monthSessions),
+      detail: analytics.monthLabel,
+    },
+    {
+      label: "Sesi Aktif",
+      value: String(analytics.activeSessions),
+      detail: "Sedang berlangsung",
+    },
+    {
+      label: "Sesi Selesai",
+      value: String(analytics.endedSessions),
+      detail: `${analytics.completionRate}% dari total sesi`,
+    },
+    {
+      label: "Total Waktu Seluruh Sesi",
+      value: formatDuration(analytics.totalDurationMs),
+      detail: "Akumulasi durasi semua sesi",
+      compact: true,
+    },
+    {
+      label: "Rata-rata Waktu Sesi",
+      value: formatDuration(
+        hasSessions ? analytics.averageDurationMs : null,
+      ),
+      detail: "Durasi rata-rata per sesi",
+      compact: true,
+    },
+    {
+      label: "Sesi Terlama",
+      value: formatDurationShort(analytics.longestSession?.durationMs ?? null),
+      detail:
+        analytics.longestSession?.title ?? "Belum ada sesi yang punya durasi",
+      compact: true,
+    },
+  ];
+
+
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold">Analytics</h1>
-      <p className="text-gray-600">This is the analytics page.</p>
-    </div>
+    <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
+            Analitik
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ringkasan jumlah, status, dan durasi seluruh sesi kelas Qurio Anda
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            {fetchedAt
+              ? `Diperbarui pukul ${timeFormatter.format(new Date(fetchedAt))}`
+              : isLoading
+                ? "Memuat data..."
+                : "Data belum dimuat"}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isLoading || isRefreshing}
+            onClick={() => void loadSessions({ force: true })}
+          >
+            <IconRefresh
+              className={cn(
+                "size-4",
+                (isLoading || isRefreshing) && "animate-spin",
+              )}
+            />
+            Muat ulang
+          </Button>
+        </div>
+      </header>
+
+      {errorMessage && (
+        <Alert variant="destructive" className="mt-6">
+          <IconAlertTriangle />
+          <AlertTitle>Data analitik tidak dapat dimuat</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertAction>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => void loadSessions({ force: true })}
+            >
+              Coba lagi
+            </Button>
+          </AlertAction>
+        </Alert>
+      )}
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {overviewItems.map(({ label, value, detail, compact }) => (
+          <Card
+            key={label}
+            className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none"
+          >
+            <CardHeader className="p-5 pb-0">
+              <CardTitle className="text-[13px] font-medium text-muted-foreground">
+                {label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="gap-2 p-5 pt-2">
+              {isLoading ? (
+                <Skeleton className="h-8 w-28 rounded-lg" />
+              ) : (
+                <p
+                  className={cn(
+                    "font-bold tracking-tight text-foreground",
+                    compact ? "text-[22px] leading-8" : "text-[28px]",
+                  )}
+                >
+                  {value}
+                </p>
+              )}
+              <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                {detail}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+
+      {isLoading || hasSessions ? (
+        <>
+          <div className="mt-6 grid gap-3 lg:grid-cols-3">
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
+              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Tren Sesi Harian
+                </CardTitle>
+                <CardDescription>
+                  Jumlah sesi dan total durasi (menit) per hari
+                </CardDescription>
+                <CardAction>
+                  <Tabs
+                    value={trendRange}
+                    onValueChange={(value) =>
+                      setTrendRange(value as TrendRange)
+                    }
+                    className="w-auto gap-0"
+                  >
+                    <TabsList className="h-8 w-fit gap-1 rounded-full border-b-0 bg-muted px-1 py-1">
+                      {TREND_RANGES.map((range) => (
+                        <TabsTrigger
+                          key={range.value}
+                          value={range.value}
+                          className="h-6 rounded-full border-b-0 px-3 text-xs data-active:border-transparent data-active:bg-background data-active:text-foreground"
+                        >
+                          {range.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+                {isLoading ? (
+                  <Skeleton className="h-64 w-full rounded-xl" />
+                ) : trendHasData ? (
+                  <ChartContainer
+                    config={trendChartConfig}
+                    className="h-64 w-full aspect-auto"
+                  >
+                    <ComposedChart
+                      data={trendSeries}
+                      margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
+                    >
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={12}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        width={28}
+                        allowDecimals={false}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        width={38}
+                        allowDecimals={false}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${value}m`}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar
+                        yAxisId="left"
+                        name="sessions"
+                        dataKey="sessions"
+                        fill="var(--color-sessions)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={26}
+                      />
+                      <Line
+                        yAxisId="right"
+                        name="minutes"
+                        type="monotone"
+                        dataKey="minutes"
+                        stroke="var(--color-minutes)"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    </ComposedChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="grid h-64 w-full place-items-center rounded-xl bg-muted/60 px-6 text-center text-sm text-muted-foreground">
+                    Belum ada sesi pada rentang ini.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Distribusi Status
+                </CardTitle>
+                <CardDescription>
+                  {analytics.completionRate}% sesi sudah berakhir
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
+                {isLoading ? (
+                  <Skeleton className="mx-auto h-48 w-full max-w-56 rounded-full" />
+                ) : (
+                  <div className="relative">
+                    <ChartContainer
+                      id="session-status"
+                      config={statusChartConfig}
+                      className="mx-auto h-48 w-full max-w-56 aspect-auto"
+                    >
+                      <PieChart>
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel />}
+                        />
+                        <Pie
+                          data={statusSeries}
+                          dataKey="value"
+                          nameKey="status"
+                          innerRadius="68%"
+                          paddingAngle={2}
+                          strokeWidth={0}
+                        >
+                          {statusSeries.map((entry) => (
+                            <Cell
+                              key={entry.status}
+                              fill={`var(--color-${entry.status})`}
+                            />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ChartContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold text-foreground">
+                        {analytics.totalSessions}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        Total sesi
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 border-transparent bg-primary/10 px-2.5 text-primary"
+                  >
+                    <span className="size-1.5 rounded-full bg-primary" />
+                    Aktif {analytics.activeSessions}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 border-transparent bg-muted px-2.5 text-muted-foreground"
+                  >
+                    <span className="size-1.5 rounded-full bg-chart-3" />
+                    Selesai {analytics.endedSessions}
+                  </Badge>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                  <span>Sesi terakhir dibuat</span>
+                  <span className="truncate font-medium text-foreground">
+                    {analytics.lastSessionAt
+                      ? dateTimeFormatter.format(
+                          new Date(analytics.lastSessionAt),
+                        )
+                      : "-"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-3">
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Sesi per Hari
+                </CardTitle>
+                <CardDescription>
+                  Sebaran hari saat sesi dibuat (semua riwayat)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
+                {isLoading ? (
+                  <Skeleton className="h-56 w-full rounded-xl" />
+                ) : (
+                  <ChartContainer
+                    config={weekdayChartConfig}
+                    className="h-56 w-full aspect-auto"
+                  >
+                    <BarChart
+                      data={weekdaySeries}
+                      layout="vertical"
+                      margin={{ top: 0, right: 12, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid horizontal={false} />
+                      <XAxis
+                        type="number"
+                        height={18}
+                        allowDecimals={false}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="label"
+                        width={52}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <ChartTooltip
+                        cursor={{ fill: "var(--color-muted)" }}
+                        content={<ChartTooltipContent hideLabel />}
+                      />
+                      <Bar
+                        name="sessions"
+                        dataKey="sessions"
+                        fill="var(--color-sessions)"
+                        radius={[0, 4, 4, 0]}
+                        maxBarSize={16}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                )}
+                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                  <span>Hari paling ramai</span>
+                  <span className="font-medium text-foreground">
+                    {busiestWeekday.sessions > 0
+                      ? `${busiestWeekday.label} · ${busiestWeekday.sessions} sesi`
+                      : "-"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
+              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+                <CardTitle className="text-base font-semibold text-foreground">
+                  Sesi dengan Durasi Terlama
+                </CardTitle>
+                <CardDescription>
+                  Lima sesi dengan total waktu paling panjang
+                </CardDescription>
+                <CardAction>
+                  <Link
+                    href="/sessions"
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "xs" }),
+                      "text-muted-foreground",
+                    )}
+                  >
+                    Semua sesi
+                    <IconArrowUpRight className="size-3.5" />
+                  </Link>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[0, 1, 2, 3, 4].map((row) => (
+                      <Skeleton key={row} className="h-9 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : longestSessions.length === 0 ? (
+                  <div className="grid h-44 w-full place-items-center rounded-xl bg-muted/60 px-6 text-center text-sm text-muted-foreground">
+                    Belum ada sesi yang punya durasi tercatat.
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-xl border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="px-4">Judul Sesi</TableHead>
+                          <TableHead className="px-4">Status</TableHead>
+                          <TableHead className="px-4">Mulai</TableHead>
+                          <TableHead className="px-4 text-right">
+                            Durasi
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {longestSessions.map((session) => (
+                          <TableRow key={session.id}>
+                            <TableCell className="px-4 py-3 font-medium text-foreground">
+                              <Link
+                                href={`/dashboard/session/${session.id}`}
+                                className="inline-flex items-center gap-1.5 transition-colors hover:text-primary hover:underline"
+                              >
+                                <span className="line-clamp-1">
+                                  {session.title}
+                                </span>
+                                <IconExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+                              </Link>
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  session.status === "active"
+                                    ? "border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                                    : "border-transparent bg-muted text-muted-foreground"
+                                }
+                              >
+                                {session.status === "active"
+                                  ? "Aktif"
+                                  : "Selesai"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-muted-foreground">
+                              {formatDate(session.createdAtRaw)}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-right font-semibold text-foreground tabular-nums">
+                              {formatDurationShort(session.durationMs)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      ) : (
+        <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+          <CardContent className="items-center gap-3 px-6 py-16 text-center">
+            <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
+              <IconTrendingUp className="size-6" />
+            </span>
+            <p className="text-base font-semibold text-foreground">
+              Belum ada data untuk dianalisis
+            </p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              {errorMessage
+                ? "Muat ulang halaman setelah terhubung kembali ke server untuk melihat statistik sesi."
+                : "Buat dan jalankan sesi pertama Anda, lalu grafik jumlah serta durasi sesi akan muncul di sini."}
+            </p>
+            {errorMessage ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void loadSessions({ force: true })}
+              >
+                <IconRefresh className="size-4" />
+                Muat ulang
+              </Button>
+            ) : (
+              <Link
+                href="/dashboard/createsessions"
+                className={buttonVariants({ size: "sm" })}
+              >
+                Buat sesi pertama
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </section>
   );
 }
+
+export default AnalyticsPage;
+

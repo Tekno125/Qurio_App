@@ -311,6 +311,23 @@ export const getSessionList = async (): Promise<SessionListItem[]> => {
   return result.data;
 };
 
+export const deleteSession = async (sessionId: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  const result = (await response.json().catch(() => ({}))) as {
+    success?: boolean;
+    message?: string;
+    error?: string;
+  };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || result.error || "Gagal menghapus sesi");
+  }
+};
+
 const getDataType = async (sessionId: string): Promise<Sessions> => {
   try {
     const response = await fetch(`${API_URL}/api/sessions/${sessionId}/type`, {
