@@ -36,6 +36,9 @@ import {
 import { Input } from "@/components/ui/input";
 import {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -46,8 +49,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+<<<<<<< HEAD
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   Table,
   TableBody,
   TableCell,
@@ -57,18 +63,26 @@ import {
 } from "@/components/ui/table";
 import {
 <<<<<<< HEAD
+<<<<<<< HEAD
   deleteSession,
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+  deleteSession,
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   getSessionList,
   updateStatusSession,
   type SessionListItem,
 } from "@/lib/api";
 import smartSearch from "@/lib/smart-search";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { toast } from "@/components/ui/toast";
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+import { toast } from "@/components/ui/toast";
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -111,13 +125,19 @@ function SessionsPage() {
   );
   const [updatingSessionIds, setUpdatingSessionIds] = useState<string[]>([]);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   const [sessionToDelete, setSessionToDelete] =
     useState<SessionListItem | null>(null);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
     null,
   );
+<<<<<<< HEAD
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
@@ -226,6 +246,9 @@ function SessionsPage() {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   const confirmDeleteSession = async () => {
     if (!sessionToDelete) return;
 
@@ -252,8 +275,11 @@ function SessionsPage() {
     }
   };
 
+<<<<<<< HEAD
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
       <header>
@@ -555,13 +581,19 @@ function SessionsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() => setSessionToDelete(session)}
                             >
+<<<<<<< HEAD
 =======
                             <DropdownMenuItem variant="destructive" disabled>
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
                               <IconTrash className="size-4" />
                               Hapus sesi
                             </DropdownMenuItem>
@@ -576,6 +608,9 @@ function SessionsPage() {
         </CardContent>
       </Card>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 
       <AlertDialog
         open={sessionToDelete !== null}
@@ -605,8 +640,11 @@ function SessionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+<<<<<<< HEAD
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
     </section>
   );
 }
