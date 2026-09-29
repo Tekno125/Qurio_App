@@ -22,8 +22,11 @@ import {
 =======
   BarChart,
   CartesianGrid,
+<<<<<<< HEAD
   Cell,
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   ComposedChart,
   Line,
   Pie,
@@ -387,6 +390,9 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
 
   // Sesi terpanjang dihitung terpisah agar tipe tetap berupa union.
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   const longestSession = sessions.reduce<TimedSession | null>(
     (longest, session) => {
       const duration = session.durationMs;
@@ -398,6 +404,7 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
     },
     null,
   );
+<<<<<<< HEAD
 =======
   const longestSession = sessions.reduce<TimedSession | null>((longest, session) => {
     const duration = session.durationMs;
@@ -408,6 +415,8 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
     return longest;
   }, null);
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 
   return {
     totalSessions: sessions.length,
@@ -430,11 +439,14 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function AnalyticsPage() {
   // State halaman: data mentah dari API, status loading/refresh/error, waktu
   // acuan perhitungan, rentang tren, dan guard satu request berjalan.
 =======
 
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 function AnalyticsPage() {
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
   const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
@@ -582,6 +594,9 @@ function AnalyticsPage() {
   const weekDelta = analytics.last7Sessions - analytics.previous7Sessions;
   const statusSeries = [
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
     {
       status: "active",
       value: analytics.activeSessions,
@@ -592,6 +607,7 @@ function AnalyticsPage() {
       value: analytics.endedSessions,
       fill: "var(--color-ended)",
     },
+<<<<<<< HEAD
   ];
 
   // Detail kartu "Sesi 7 Hari Terakhir": delta dibanding 7 hari sebelumnya.
@@ -605,14 +621,24 @@ function AnalyticsPage() {
 =======
     { status: "active", value: analytics.activeSessions },
     { status: "ended", value: analytics.endedSessions },
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   ];
 
   const sevenDayDetail =
     analytics.previous7Sessions === 0 ? (
+<<<<<<< HEAD
       analytics.last7Sessions === 0
         ? "Belum ada sesi pada 7 hari terakhir"
         : "Sesi baru, belum ada pembanding"
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+      analytics.last7Sessions === 0 ? (
+        "Belum ada sesi pada 7 hari terakhir"
+      ) : (
+        "Sesi baru, belum ada pembanding"
+      )
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
     ) : (
       <>
         <span
@@ -678,12 +704,16 @@ function AnalyticsPage() {
     {
       label: "Rata-rata Waktu Sesi",
 <<<<<<< HEAD
+<<<<<<< HEAD
       value: formatDuration(hasSessions ? analytics.averageDurationMs : null),
 =======
       value: formatDuration(
         hasSessions ? analytics.averageDurationMs : null,
       ),
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+      value: formatDuration(hasSessions ? analytics.averageDurationMs : null),
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
       detail: "Durasi rata-rata per sesi",
       compact: true,
     },
@@ -697,11 +727,14 @@ function AnalyticsPage() {
   ];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
       {/* Header halaman: judul, waktu pembaruan terakhir, dan tombol muat ulang. */}
 =======
 
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
@@ -797,6 +830,7 @@ function AnalyticsPage() {
       </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       {isLoading || hasSessions ? (
         <>
           {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
@@ -806,6 +840,8 @@ function AnalyticsPage() {
                 {/* Grafik harian: jumlah sesi dan siswa (kiri), durasi (kanan). */}
 =======
 
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
       {isLoading || hasSessions ? (
         <>
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
@@ -930,10 +966,13 @@ function AnalyticsPage() {
             </Card>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               {/* Donut distribusi status dengan angka total sesi di tengah. */}
 =======
 
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
@@ -967,6 +1006,7 @@ function AnalyticsPage() {
                           paddingAngle={2}
                           strokeWidth={0}
 <<<<<<< HEAD
+<<<<<<< HEAD
                         />
 =======
                         >
@@ -978,6 +1018,9 @@ function AnalyticsPage() {
                           ))}
                         </Pie>
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                        />
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                       </PieChart>
                     </ChartContainer>
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -1026,9 +1069,12 @@ function AnalyticsPage() {
           </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
           <div className="mt-6 grid gap-3">
 =======
 
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
@@ -1092,8 +1138,11 @@ function AnalyticsPage() {
               </CardContent>
             </Card>
 
+<<<<<<< HEAD
 
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
@@ -1294,6 +1343,9 @@ function AnalyticsPage() {
 
 export default AnalyticsPage;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)

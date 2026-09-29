@@ -18,18 +18,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   DropdownMenuCheckboxItem,
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
 <<<<<<< HEAD
+<<<<<<< HEAD
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -94,6 +102,7 @@ function formatDate(value: string | null) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
   if (statusFilter === null) return "Semua status";
   return statusFilter === "active" ? "Aktif" : "Selesai";
@@ -103,12 +112,18 @@ function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
   if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
   return statusFilters[0] === "active" ? "Aktif" : "Selesai";
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
+  if (statusFilter === null) return "Semua status";
+  return statusFilter === "active" ? "Aktif" : "Selesai";
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 }
 
 function SessionsPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+<<<<<<< HEAD
 <<<<<<< HEAD
   const [statusFilter, setStatusFilter] = useState<
     SessionListItem["status"] | null
@@ -118,6 +133,11 @@ function SessionsPage() {
     SessionListItem["status"][]
   >([]);
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+  const [statusFilter, setStatusFilter] = useState<
+    SessionListItem["status"] | null
+  >(null);
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
@@ -205,6 +225,7 @@ function SessionsPage() {
 
   const visibleSessions = searchedSessions.filter(
 <<<<<<< HEAD
+<<<<<<< HEAD
     (session) => statusFilter === null || statusFilter === session.status,
   );
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
@@ -214,6 +235,11 @@ function SessionsPage() {
   );
   const statusFilterLabel = getStatusFilterLabel(statusFilters);
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+    (session) => statusFilter === null || statusFilter === session.status,
+  );
+  const statusFilterLabel = getStatusFilterLabel(statusFilter);
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -360,6 +386,9 @@ function SessionsPage() {
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                   <DropdownMenuRadioGroup
                     value={statusFilter ?? "all"}
                     onValueChange={(value) => {
@@ -367,6 +396,7 @@ function SessionsPage() {
                         setStatusFilter(null);
                       } else if (value === "active" || value === "ended") {
                         setStatusFilter(value);
+<<<<<<< HEAD
                       }
                     }}
                   >
@@ -402,6 +432,21 @@ function SessionsPage() {
                     </DropdownMenuCheckboxItem>
                   ))}
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                      }
+                    }}
+                  >
+                    <DropdownMenuRadioItem value="all">
+                      Semua status
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="active">
+                      Aktif
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="ended">
+                      Selesai
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -489,8 +534,12 @@ function SessionsPage() {
                         colSpan={6}
                         className="h-24 text-center text-muted-foreground"
                       >
+<<<<<<< HEAD
                         {debouncedSearchQuery.trim() || statusFilters.length > 0
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                        {debouncedSearchQuery.trim() || statusFilter !== null
+>>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
                           ? "Tidak ada sesi yang cocok dengan pencarian atau filter."
                           : "Belum ada sesi."}
                       </TableCell>
