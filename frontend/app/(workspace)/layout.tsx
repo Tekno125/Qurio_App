@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -16,6 +16,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { SettingsDialog } from "@/components/SettingsModal";
+import LogoQurio from "../../public/Qurio-Cropped.svg";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", Icon: IconLayoutGrid },
@@ -39,11 +40,13 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-65 flex-col border-r border-sidebar-border bg-sidebar px-6 py-6 lg:flex">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <span className="size-3 rounded-full bg-primary" />
-          <span className="text-xl font-bold tracking-[-0.5px] text-foreground">
-            Qurio
-          </span>
+        <Link href="/dashboard" className="flex items-center px-2 py-1 shrink-0">
+          <Image
+            src={LogoQurio}
+            alt="Logo Qurio"
+            className="h-[65px] ml-5 w-auto object-contain object-left"
+            priority
+          />
         </Link>
         {isFacilitator && (
           <Link

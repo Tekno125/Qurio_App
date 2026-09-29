@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardDescription,
   CardHeader,
   CardContent,
   CardTitle,
@@ -16,6 +15,7 @@ import { cn } from "@/lib/utils";
 // import icon
 import { IconLogin2 } from "@tabler/icons-react";
 import { AccessForm } from "@/components/AccessForm";
+
 
 const heroSlides = [
   {
@@ -106,7 +106,7 @@ export default function App() {
         {/* <div className="w-full px-4! sm:px-0 h-full flex items-center justify-between gap-8"> */}
         <div className="w-full px-4 sm:px-8 h-full flex items-center justify-between gap-8">
           <a className="logo" href="#top" aria-label="Qurio beranda">
-            <img src="/qurio_ramping.png" alt="" draggable={false} />
+            <img src="/Qurio-Cropped.svg" alt="" draggable={false} />
             {/* <span className=""></span> */}
           </a>
           <nav
@@ -447,7 +447,7 @@ export default function App() {
           <div className="col-span-2 md:col-span-1">
             <div className="w-20">
               <a className="logo" href="#top" aria-label="Qurio beranda">
-                <img src="/qurio.png" alt="" draggable={false} />
+                <img src="/Qurio-Cropped.svg" alt="" draggable={false} />
                 {/* <span className=""></span> */}
               </a>
             </div>

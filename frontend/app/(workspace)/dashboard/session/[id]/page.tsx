@@ -91,13 +91,12 @@ const PollCard = memo(function PollCard({
               {poll.type === "qa" ? "TANYA JAWAB" : poll.type.toUpperCase()}
             </p>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full ${
-                poll.status === "published"
-                  ? "bg-green-100 text-green-700"
-                  : poll.status === "closed"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-gray-100 text-gray-600"
-              }`}
+              className={`text-xs px-2 py-0.5 rounded-full ${poll.status === "published"
+                ? "bg-green-100 text-green-700"
+                : poll.status === "closed"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-gray-100 text-gray-600"
+                }`}
             >
               {poll.status}
             </span>
@@ -121,11 +120,10 @@ const PollCard = memo(function PollCard({
               {sortedOptions.map((opt) => (
                 <div
                   key={opt.id}
-                  className={`text-sm px-3 py-2 rounded-lg border ${
-                    opt.is_correct
-                      ? "bg-green-50 border-green-200 text-green-800"
-                      : "bg-gray-50 border-gray-100 text-gray-700"
-                  }`}
+                  className={`text-sm px-3 py-2 rounded-lg border ${opt.is_correct
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : "bg-gray-50 border-gray-100 text-gray-700"
+                    }`}
                 >
                   {opt.option_text} {opt.is_correct && " ✔"}
                 </div>
@@ -329,10 +327,10 @@ function SessionPage() {
         setPolls((prev) =>
           prev
             ? prev.map((p) =>
-                p.id === updated.id
-                  ? { ...updated, options: updated.options || p.options }
-                  : p,
-              )
+              p.id === updated.id
+                ? { ...updated, options: updated.options || p.options }
+                : p,
+            )
             : null,
         );
         setSuccessMessage(
@@ -396,11 +394,10 @@ function SessionPage() {
               </p>
             </div>
             <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                session?.status === "active"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-200 text-gray-600"
-              }`}
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${session?.status === "active"
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-200 text-gray-600"
+                }`}
             >
               {session?.status === "ended" ? "Selesai" : "Aktif"}
             </span>

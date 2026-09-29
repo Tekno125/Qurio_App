@@ -1,7 +1,7 @@
 "use client";
 import { fetchUserLogin } from "@/lib/api";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
@@ -31,18 +31,18 @@ function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormLogin>();
 
-  //   useEffect(() => {
-  //     if (isAuthenticated) {
-  //       router.push("/dashboard");
-  //     }
-  //   }, [isAuthenticated, router]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const onSubmit = async (data: FormLogin) => {
     try {
