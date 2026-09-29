@@ -421,7 +421,7 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
   const lastSessionAt = sessions.reduce<number | null>(
     (latest, session) =>
       session.startedAt !== null &&
-        (latest === null || session.startedAt > latest)
+      (latest === null || session.startedAt > latest)
         ? session.startedAt
         : latest,
     null,
@@ -546,12 +546,16 @@ function AnalyticsPage() {
         setErrorMessage(null);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         console.log(list);
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 =======
         console.log(list)
 >>>>>>> f8b555c (chore: menambah quey di getsession)
+=======
+        console.log(list);
+>>>>>>> 3a0af00 (merge)
       } catch (error: unknown) {
         setErrorMessage(
           error instanceof Error
@@ -728,7 +732,6 @@ function AnalyticsPage() {
     detail: ReactNode;
     compact?: boolean;
   }[] = [
-<<<<<<< HEAD
     {
       label: "Total Seluruh Sesi",
       value: String(analytics.totalSessions),
@@ -784,55 +787,6 @@ function AnalyticsPage() {
       compact: true,
     },
   ];
-=======
-      {
-        label: "Total Seluruh Sesi",
-        value: String(analytics.totalSessions),
-        detail: "Tercatat di akun Anda",
-      },
-      {
-        label: "Sesi 7 Hari Terakhir",
-        value: String(analytics.last7Sessions),
-        detail: sevenDayDetail,
-      },
-      {
-        label: "Sesi Bulan Ini",
-        value: String(analytics.monthSessions),
-        detail: analytics.monthLabel,
-      },
-      {
-        label: "Sesi Aktif",
-        value: String(analytics.activeSessions),
-        detail: "Sedang berlangsung",
-      },
-      {
-        label: "Sesi Selesai",
-        value: String(analytics.endedSessions),
-        detail: `${analytics.completionRate}% dari total sesi`,
-      },
-      {
-        label: "Total Waktu Seluruh Sesi",
-        value: formatDuration(analytics.totalDurationMs),
-        detail: "Akumulasi durasi semua sesi",
-        compact: true,
-      },
-      {
-        label: "Rata-rata Waktu Sesi",
-        value: formatDuration(
-          hasSessions ? analytics.averageDurationMs : null,
-        ),
-        detail: "Durasi rata-rata per sesi",
-        compact: true,
-      },
-      {
-        label: "Sesi Terlama",
-        value: formatDurationShort(analytics.longestSession?.durationMs ?? null),
-        detail:
-          analytics.longestSession?.title ?? "Belum ada sesi yang punya durasi",
-        compact: true,
-      },
-    ];
->>>>>>> 4cd631a (chore: menambah quey di getsession)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1194,8 +1148,8 @@ function AnalyticsPage() {
                   <span className="truncate font-medium text-foreground">
                     {analytics.lastSessionAt
                       ? dateTimeFormatter.format(
-                        new Date(analytics.lastSessionAt),
-                      )
+                          new Date(analytics.lastSessionAt),
+                        )
                       : "-"}
                   </span>
                 </div>
