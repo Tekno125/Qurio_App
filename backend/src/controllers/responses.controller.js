@@ -52,6 +52,7 @@ export const createResponse = async (req, res) => {
     const { option_id, answer, participant_id } = req.body
 
     try {
+        const studentId = req.user?.role === "siswa" ? req.user.id : null
         // 1. Pastikan soal sudah dipublikasikan
         const pollResult = await pool.query(
             `SELECT p.id, p.type, p.session_id, s.teacher_id
@@ -164,17 +165,19 @@ export const createResponse = async (req, res) => {
         // 9. Simpan jawaban siswa
         const insertResult = await pool.query(
             `INSERT INTO responses (
-                poll_id,
-                participant_id,
-                answer,
-                option_id,
-                is_correct
-            )
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *`,
+        poll_id,
+        participant_id,
+        student_id,
+        answer,
+        option_id,
+        is_correct
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *`,
             [
                 pollId,
                 participant_id,
+                studentId,
                 answerText,
                 option_id || null,
                 isCorrect
@@ -187,13 +190,18 @@ export const createResponse = async (req, res) => {
         const io = req.app.get("io")
 
         if (io) {
-            io.to(`teacher:${poll.teacher_id}`)
-                .emit("response_created", newResponse)
+            // emit ke guru tetap pakai newResponse (lengkap)
+            io.to(`teacher:${poll.teacher_id}`).emit("response_created", newResponse)
         }
 
+        // balasan ke siswa: tanpa is_correct
         return res.status(201).json({
             success: true,
-            data: newResponse
+            data: {
+                id: newResponse.id,
+                poll_id: newResponse.poll_id,
+                submitted_at: newResponse.submitted_at
+            }
         })
 
     } catch (error) {

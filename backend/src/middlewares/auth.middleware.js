@@ -99,3 +99,15 @@ export const authLimit = (req, res, next) => {
         return res.status(401).json({ success: false, message: "Token palsu atau kadaluwarsa!" })
     }
 }
+
+export const optionalAuth = (req, res, next) => {
+    const token = getTokenFromHeader(req);
+    if (token) {
+        try {
+            req.user = verifyToken(token);
+        } catch {
+            req.user = null;
+        }
+    }
+    next();
+};

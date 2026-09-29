@@ -44,7 +44,7 @@ const formSchema = z.object({
     .string()
     .email("Email tidak valid")
     .endsWith("gmail.com", "Isi input dengan format (gmail.com) "),
-  password: z.string().min(9, "Password minimal 8 karakter"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
   role: z.string(),
 });
 

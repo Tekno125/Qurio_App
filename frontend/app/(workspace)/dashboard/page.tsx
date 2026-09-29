@@ -119,12 +119,12 @@ function DashboardPage() {
   // Terapkan pencarian fuzzy pada judul sesi dan statusnya.
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-        sessions,
-        debouncedSearchQuery,
-        (session) => `${session.title} ${session.status}`,
-      )
-        .filter((result) => result.matchedWords > 0)
-        .map((result) => result.item)
+      sessions,
+      debouncedSearchQuery,
+      (session) => `${session.title} ${session.status}`,
+    )
+      .filter((result) => result.matchedWords > 0)
+      .map((result) => result.item)
     : sessions;
 
   // Kosong berarti semua status; beberapa pilihan harus cocok sekaligus.
