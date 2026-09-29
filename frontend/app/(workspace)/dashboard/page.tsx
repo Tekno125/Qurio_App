@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  IconChevronDown,
   IconDotsVertical,
   IconExternalLink,
   IconPlayerPlay,
@@ -18,11 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -64,19 +59,11 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
-  if (statusFilter === null) return "Semua status";
-  return statusFilter === "active" ? "Aktif" : "Selesai";
-}
-
 function DashboardPage() {
-  // State untuk data sesi, pencarian, filter status, dan kondisi pemuatan.
+  // State untuk data sesi, pencarian, dan kondisi pemuatan.
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    SessionListItem["status"] | null
-  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
     null,
@@ -122,6 +109,11 @@ function DashboardPage() {
     };
   }, []);
 
+  // Hanya tampilkan sesi yang berstatus aktif.
+  const activeSessions = sessions.filter(
+    (session) => session.status === "active",
+  );
+
   // Hitung ringkasan jumlah seluruh sesi dan sesi yang masih aktif.
   const overviewItems = [
     {
@@ -131,26 +123,24 @@ function DashboardPage() {
     },
     {
       label: "Sesi Aktif",
-      value: String(
-        sessions.filter((session) => session.status === "active").length,
-      ),
+      value: String(activeSessions.length),
       detail: "Sedang berlangsung",
     },
   ];
 
-  // Terapkan pencarian fuzzy pada judul sesi dan statusnya.
+  // Terapkan pencarian fuzzy hanya pada sesi aktif.
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-      sessions,
+      activeSessions,
       debouncedSearchQuery,
       (session) => `${session.title}`,
     )
       .filter((result) => result.matchedWords > 0)
       .map((result) => result.item)
-    : sessions;
+    : activeSessions;
 
+  const visibleSessions = searchedSessions;
   const displayedSessions = visibleSessions.slice(0, 5);
-  const statusFilterLabel = getStatusFilterLabel(statusFilter);
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -208,12 +198,10 @@ function DashboardPage() {
     }
   };
 
-  // Siapkan teks tombol filter sesuai pilihan status saat ini.
   return (
     <section className="mx-auto w-full max-w-[1180px] p-6 lg:p-8">
       <header>
         <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
-          {/* Judul dan deskripsi halaman dashboard. */}
           Dashboard
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -243,11 +231,11 @@ function DashboardPage() {
         ))}
       </div>
 
-      {/* Panel aktivitas berisi pencarian, filter, dan daftar sesi. */}
+      {/* Panel aktivitas berisi pencarian dan daftar sesi aktif. */}
       <Card className="mt-6 max-h-[100dvh] rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
         <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
           <h2 className="text-base font-semibold text-foreground">
-            Aktivitas Sesi Terbaru
+            Aktivitas Sesi Aktif
           </h2>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {/* Input pencarian dengan tombol untuk menghapus kata kunci. */}
@@ -255,7 +243,7 @@ function DashboardPage() {
               <IconSearch className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-11 rounded-full border-0 bg-muted pl-10 shadow-none"
-                placeholder="Cari sesi..."
+                placeholder="Cari sesi aktif..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
               />
@@ -276,45 +264,6 @@ function DashboardPage() {
                 </Button>
               )}
             </div>
-
-            {/* Filter status radio: satu status atau semua status. */}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    className="h-10 justify-between border-border px-4 text-muted-foreground sm:w-[200px]"
-                  >
-                    {statusFilterLabel}
-                    <IconChevronDown className="size-4" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="start">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup
-                    value={statusFilter ?? "all"}
-                    onValueChange={(value) => {
-                      if (value === "all") setStatusFilter(null);
-                      else if (value === "active" || value === "ended") {
-                        setStatusFilter(value);
-                      }
-                    }}
-                  >
-                    <DropdownMenuRadioItem value="all">
-                      Semua status
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="active">
-                      Aktif
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="ended">
-                      Selesai
-                    </DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
           {actionErrorMessage && (
             <p className="mt-3 text-sm text-destructive" role="alert">
@@ -322,7 +271,7 @@ function DashboardPage() {
             </p>
           )}
 
-          {/* Tabel utama yang menampilkan daftar sesi hasil filter. */}
+          {/* Tabel utama yang menampilkan daftar sesi aktif. */}
           <div className="mt-4 min-h-0 flex-1 overflow-auto rounded-md border border-border">
             <Table className="min-w-[760px] text-left">
               <TableHeader className="bg-muted text-muted-foreground">
@@ -370,7 +319,7 @@ function DashboardPage() {
                   </TableRow>
                 )}
 
-                {/* Beri umpan balik saat filter tidak menghasilkan sesi. */}
+                {/* Beri umpan balik saat tidak ada sesi aktif. */}
                 {!isLoading &&
                   !errorMessage &&
                   visibleSessions.length === 0 && (
@@ -380,15 +329,13 @@ function DashboardPage() {
                         className="h-24 text-center text-muted-foreground"
                       >
                         {debouncedSearchQuery.trim()
-                          ? "Sesi tidak ditemukan."
-                          : statusFilter !== null
-                            ? "Tidak ada sesi yang cocok dengan filter status."
-                            : "Belum ada sesi."}
+                          ? "Sesi aktif tidak ditemukan."
+                          : "Belum ada sesi aktif."}
                       </TableCell>
                     </TableRow>
                   )}
 
-                {/* Render baris untuk setiap sesi yang lolos pencarian dan filter. */}
+                {/* Render baris untuk setiap sesi aktif yang lolos pencarian. */}
                 {!isLoading &&
                   !errorMessage &&
                   displayedSessions.map((session) => (
@@ -418,14 +365,8 @@ function DashboardPage() {
                         {formatDate(session.ended_at)}
                       </TableCell>
                       <TableCell className="px-4 py-3.5">
-                        <span
-                          className={
-                            session.status === "active"
-                              ? "rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
-                              : "rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground"
-                          }
-                        >
-                          {session.status === "active" ? "Aktif" : "Selesai"}
+                        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                          Aktif
                         </span>
                       </TableCell>
                       <TableCell className="px-4 py-3.5">
