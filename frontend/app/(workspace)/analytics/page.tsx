@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   IconAlertTriangle,
@@ -418,7 +418,8 @@ function AnalyticsPage() {
 
   // Muat data sekali saat halaman pertama kali dibuka.
   useEffect(() => {
-    void loadSessions();
+    const timer = window.setTimeout(() => void loadSessions(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadSessions]);
 
   // Durasi sesi aktif harus tetap hidup: jam internal memicu hitung ulang tiap
@@ -428,36 +429,25 @@ function AnalyticsPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  // Semua turunan dihitung dari array sesi yang sudah ada di memori.
+  // Turunan data tetap murni; React Compiler dapat memoize bila diperlukan.
   const referenceTime = Math.max(now, fetchedAt ?? 0);
-  const sessions = useMemo(
-    () => rawSessions.map((session) => toTimedSession(session, referenceTime)),
-    [rawSessions, referenceTime],
+  const sessions = rawSessions.map((session) =>
+    toTimedSession(session, referenceTime),
   );
-  const analytics = useMemo(
-    () => buildAnalytics(sessions, referenceTime),
-    [sessions, referenceTime],
+  const analytics = buildAnalytics(sessions, referenceTime);
+  const trendSeries = buildDailySeries(
+    sessions,
+    Number(trendRange),
+    referenceTime,
   );
-  const trendSeries = useMemo(
-    () => buildDailySeries(sessions, Number(trendRange), referenceTime),
-    [sessions, trendRange, referenceTime],
-  );
-  const weekdaySeries = useMemo(() => buildWeekdaySeries(sessions), [sessions]);
-  const longestSessions = useMemo(
-    () =>
-      sessions
-        .filter((session) => session.durationMs !== null)
-        .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
-        .slice(0, 5),
-    [sessions],
-  );
-  const busiestWeekday = useMemo(
-    () =>
-      weekdaySeries.reduce(
-        (best, current) => (current.sessions > best.sessions ? current : best),
-        { label: "-", sessions: 0 },
-      ),
-    [weekdaySeries],
+  const weekdaySeries = buildWeekdaySeries(sessions);
+  const longestSessions = sessions
+    .filter((session) => session.durationMs !== null)
+    .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
+    .slice(0, 5);
+  const busiestWeekday = weekdaySeries.reduce(
+    (best, current) => (current.sessions > best.sessions ? current : best),
+    { label: "-", sessions: 0 },
   );
 
   // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
