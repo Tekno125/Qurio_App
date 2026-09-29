@@ -17,11 +17,12 @@ import { CopyButton } from "@/components/CopyButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -62,19 +63,18 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function getStatusFilterLabel(statusFilters: SessionListItem["status"][]) {
-  if (statusFilters.length === 0) return "Semua status";
-  if (statusFilters.length > 1) return `${statusFilters.length} status dipilih`;
-  return statusFilters[0] === "active" ? "Aktif" : "Selesai";
+function getStatusFilterLabel(statusFilter: SessionListItem["status"] | null) {
+  if (statusFilter === null) return "Semua status";
+  return statusFilter === "active" ? "Aktif" : "Selesai";
 }
 
 function SessionsPage() {
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [statusFilters, setStatusFilters] = useState<
-    SessionListItem["status"][]
-  >([]);
+  const [statusFilter, setStatusFilter] = useState<
+    SessionListItem["status"] | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
@@ -148,10 +148,9 @@ function SessionsPage() {
     : sessions;
 
   const visibleSessions = searchedSessions.filter(
-    (session) =>
-      statusFilters.length === 0 || statusFilters.includes(session.status),
+    (session) => statusFilter === null || statusFilter === session.status,
   );
-  const statusFilterLabel = getStatusFilterLabel(statusFilters);
+  const statusFilterLabel = getStatusFilterLabel(statusFilter);
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -288,26 +287,26 @@ function SessionsPage() {
               <DropdownMenuContent align="start">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Status sesi</DropdownMenuLabel>
-                  {(
-                    [
-                      ["active", "Aktif"],
-                      ["ended", "Selesai"],
-                    ] as const
-                  ).map(([status, label]) => (
-                    <DropdownMenuCheckboxItem
-                      key={status}
-                      checked={statusFilters.includes(status)}
-                      onCheckedChange={(checked) =>
-                        setStatusFilters((current) =>
-                          checked
-                            ? [...current, status]
-                            : current.filter((item) => item !== status),
-                        )
+                  <DropdownMenuRadioGroup
+                    value={statusFilter ?? "all"}
+                    onValueChange={(value) => {
+                      if (value === "all") {
+                        setStatusFilter(null);
+                      } else if (value === "active" || value === "ended") {
+                        setStatusFilter(value);
                       }
-                    >
-                      {label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
+                    }}
+                  >
+                    <DropdownMenuRadioItem value="all">
+                      Semua status
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="active">
+                      Aktif
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="ended">
+                      Selesai
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -371,7 +370,7 @@ function SessionsPage() {
                         colSpan={6}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        {debouncedSearchQuery.trim() || statusFilters.length > 0
+                        {debouncedSearchQuery.trim() || statusFilter !== null
                           ? "Tidak ada sesi yang cocok dengan pencarian atau filter."
                           : "Belum ada sesi."}
                       </TableCell>
