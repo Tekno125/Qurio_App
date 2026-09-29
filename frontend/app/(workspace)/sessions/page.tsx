@@ -213,11 +213,15 @@ function SessionsPage() {
         sessions,
         debouncedSearchQuery,
 <<<<<<< HEAD
+<<<<<<< HEAD
         (session) => `${session.title}`,
 =======
         (session) =>
           `${session.title} ${session.status} ${session.access_code}`,
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+        (session) => `${session.title}`,
+>>>>>>> 750d1a1 (chore: -)
       )
         .filter((result) => result.matchedWords > 0)
         .map((result) => result.item)

@@ -76,9 +76,13 @@ import { getSessionList, type SessionListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Konstanta satuan waktu untuk perhitungan rentang tren dan refresh durasi.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Konstanta satuan waktu untuk perhitungan rentang tren dan refresh durasi.
+>>>>>>> 750d1a1 (chore: -)
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_MINUTE = 60 * 1000;
 
@@ -90,8 +94,12 @@ const MS_PER_MINUTE = 60 * 1000;
 const SESSION_CACHE_TTL_MS = 30_000;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
 =======
+=======
+// Urutan hari (Senin–Minggu) untuk chart "Sesi per Hari".
+>>>>>>> 750d1a1 (chore: -)
 const WEEKDAY_LABELS = [
   "Senin",
   "Selasa",
@@ -102,7 +110,11 @@ const WEEKDAY_LABELS = [
   "Minggu",
 ];
 
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
+>>>>>>> 750d1a1 (chore: -)
 const TREND_RANGES = [
   { value: "7", label: "7 hari" },
   { value: "14", label: "14 hari" },
@@ -112,9 +124,13 @@ const TREND_RANGES = [
 type TrendRange = (typeof TREND_RANGES)[number]["value"];
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Formatter tanggal berbahasa Indonesia, dibuat sekali di level modul.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Formatter tanggal berbahasa Indonesia, dibuat sekali di level modul.
+>>>>>>> 750d1a1 (chore: -)
 const dateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -133,17 +149,23 @@ const dayLabelFormatter = new Intl.DateTimeFormat("id-ID", {
 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 750d1a1 (chore: -)
 // Cache singkat hasil fetch, disimpan di luar React agar pindah tab lalu kembali
 // ke halaman ini tidak langsung memicu fetch ulang.
 let sessionCache: { sessions: SessionListItem[]; fetchedAt: number } | null =
   null;
 
 // Sesi yang sudah dilengkapi timestamp numerik agar durasi bisa dihitung cepat.
+<<<<<<< HEAD
 =======
 let sessionCache: { sessions: SessionListItem[]; fetchedAt: number } | null =
   null;
 
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 750d1a1 (chore: -)
 interface TimedSession {
   id: string;
   title: string;
@@ -160,9 +182,13 @@ interface TimedSession {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Satu titik data pada grafik tren harian.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Satu titik data pada grafik tren harian.
+>>>>>>> 750d1a1 (chore: -)
 interface DailyPoint {
   key: string;
   label: string;
@@ -180,6 +206,7 @@ const trendChartConfig = {
   minutes: number;
 }
 
+// Konfigurasi label dan warna chart: tren, distribusi status, dan hari.
 const trendChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--primary)" },
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
@@ -201,7 +228,11 @@ const weekdayChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--color-brand-green)" },
 } satisfies ChartConfig;
 
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
+>>>>>>> 750d1a1 (chore: -)
 function formatDate(value: string | null) {
   if (!value) return "-";
 
@@ -238,9 +269,13 @@ function formatDurationShort(milliseconds: number | null) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Konversi string tanggal API menjadi timestamp, null bila kosong/tidak valid.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+// Konversi string tanggal API menjadi timestamp, null bila kosong/tidak valid.
+>>>>>>> 750d1a1 (chore: -)
 function toTimestamp(value: string | null): number | null {
   if (!value) return null;
 
@@ -443,12 +478,15 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
 function AnalyticsPage() {
   // State halaman: data mentah dari API, status loading/refresh/error, waktu
   // acuan perhitungan, rentang tren, dan guard satu request berjalan.
+<<<<<<< HEAD
 =======
 
 =======
 >>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
 function AnalyticsPage() {
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 750d1a1 (chore: -)
   const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -459,9 +497,13 @@ function AnalyticsPage() {
   const requestRef = useRef(false);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Terapkan hasil fetch ke state sekaligus menyegarkan titik waktu acuan.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  // Terapkan hasil fetch ke state sekaligus menyegarkan titik waktu acuan.
+>>>>>>> 750d1a1 (chore: -)
   const applySessions = useCallback(
     (list: SessionListItem[], stamp: number) => {
       setRawSessions(list);
@@ -518,11 +560,15 @@ function AnalyticsPage() {
   );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Muat data sekali saat halaman pertama kali dibuka.
   useEffect(() => {
     const timer = window.setTimeout(() => void loadSessions(), 0);
     return () => window.clearTimeout(timer);
 =======
+=======
+  // Muat data sekali saat halaman pertama kali dibuka.
+>>>>>>> 750d1a1 (chore: -)
   useEffect(() => {
     void loadSessions();
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
@@ -588,7 +634,11 @@ function AnalyticsPage() {
     [weekdaySeries],
   );
 
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
+>>>>>>> 750d1a1 (chore: -)
   const hasSessions = sessions.length > 0;
   const trendHasData = trendSeries.some((point) => point.sessions > 0);
   const weekDelta = analytics.last7Sessions - analytics.previous7Sessions;
@@ -661,9 +711,13 @@ function AnalyticsPage() {
     );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Delapan kartu ringkasan; dibuat sebagai data agar cukup dirender satu loop.
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  // Delapan kartu ringkasan; dibuat sebagai data agar cukup dirender satu loop.
+>>>>>>> 750d1a1 (chore: -)
   const overviewItems: {
     label: string;
     value: string;
@@ -731,6 +785,7 @@ function AnalyticsPage() {
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
       {/* Header halaman: judul, waktu pembaruan terakhir, dan tombol muat ulang. */}
+<<<<<<< HEAD
 =======
 
 =======
@@ -738,6 +793,8 @@ function AnalyticsPage() {
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 750d1a1 (chore: -)
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
@@ -773,9 +830,13 @@ function AnalyticsPage() {
       </header>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       {/* Pesan error bila request daftar sesi gagal. */}
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+      {/* Pesan error bila request daftar sesi gagal. */}
+>>>>>>> 750d1a1 (chore: -)
       {errorMessage && (
         <Alert variant="destructive" className="mt-6">
           <IconAlertTriangle />
@@ -794,9 +855,13 @@ function AnalyticsPage() {
       )}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       {/* Grid kartu ringkasan seluruh metrik utama. */}
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+      {/* Grid kartu ringkasan seluruh metrik utama. */}
+>>>>>>> 750d1a1 (chore: -)
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {overviewItems.map(({ label, value, detail, compact }) => (
           <Card
@@ -844,10 +909,15 @@ function AnalyticsPage() {
 >>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
       {isLoading || hasSessions ? (
         <>
+          {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                {/* Grafik tren harian: bar jumlah sesi (kiri) + garis total menit (kanan). */}
+>>>>>>> 750d1a1 (chore: -)
                 <CardTitle className="text-base font-semibold text-foreground">
                   Tren Sesi Harian
                 </CardTitle>
@@ -861,7 +931,11 @@ function AnalyticsPage() {
                   Jumlah sesi dan total durasi (menit) per hari
                 </CardDescription>
                 <CardAction>
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                  {/* Pemilih rentang 7/14/30 hari. */}
+>>>>>>> 750d1a1 (chore: -)
                   <Tabs
                     value={trendRange}
                     onValueChange={(value) =>
@@ -969,12 +1043,15 @@ function AnalyticsPage() {
 <<<<<<< HEAD
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               {/* Donut distribusi status dengan angka total sesi di tengah. */}
+<<<<<<< HEAD
 =======
 
 =======
 >>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 750d1a1 (chore: -)
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
                   Distribusi Status
@@ -1034,9 +1111,13 @@ function AnalyticsPage() {
                   </div>
                 )}
 <<<<<<< HEAD
+<<<<<<< HEAD
                 {/* Legenda status aktif dan selesai. */}
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                {/* Legenda status aktif dan selesai. */}
+>>>>>>> 750d1a1 (chore: -)
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Badge
                     variant="outline"
@@ -1086,6 +1167,7 @@ function AnalyticsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
+                {/* Bar horizontal: sebaran jumlah sesi per hari pembuatan. */}
                 {isLoading ? (
                   <Skeleton className="h-56 w-full rounded-xl" />
                 ) : (
@@ -1166,9 +1248,13 @@ function AnalyticsPage() {
               </CardHeader>
               <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
 <<<<<<< HEAD
+<<<<<<< HEAD
                 {/* Tabel lima sesi dengan total durasi paling panjang. */}
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                {/* Tabel lima sesi dengan total durasi paling panjang. */}
+>>>>>>> 750d1a1 (chore: -)
                 {isLoading ? (
                   <div className="space-y-3">
                     {[0, 1, 2, 3, 4].map((row) => (
@@ -1300,11 +1386,14 @@ function AnalyticsPage() {
       ) : (
         <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
           {/* Empty state: ajakan muat ulang saat error, atau membuat sesi pertama. */}
+<<<<<<< HEAD
 =======
         </>
       ) : (
         <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 750d1a1 (chore: -)
           <CardContent className="items-center gap-3 px-6 py-16 text-center">
             <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
               <IconTrendingUp className="size-6" />

@@ -154,6 +154,7 @@ function DashboardPage() {
   );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const displayedSessions = visibleSessions.slice(0, 5);
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
 
@@ -221,6 +222,66 @@ function DashboardPage() {
 
   const statusFilterLabel = getStatusFilterLabel(statusFilters);
 >>>>>>> ebaae14 (feat: membatasi jumlah aktivitas sesi terbaru)
+=======
+  const displayedSessions = visibleSessions.slice(0, 5);
+  const statusFilterLabel = getStatusFilterLabel(statusFilter);
+
+  const toggleSessionStatus = async (session: SessionListItem) => {
+    const nextStatus = session.status === "active" ? "ended" : "active";
+    setUpdatingSessionIds((current) => [...current, session.id]);
+    setActionErrorMessage(null);
+
+    try {
+      await updateStatusSession(session.id, nextStatus, null);
+      setSessions((current) =>
+        current.map((item) =>
+          item.id === session.id
+            ? {
+                ...item,
+                status: nextStatus,
+                ended_at:
+                  nextStatus === "ended" ? new Date().toISOString() : null,
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      setActionErrorMessage(
+        error instanceof Error ? error.message : "Gagal mengubah status sesi.",
+      );
+    } finally {
+      setUpdatingSessionIds((current) =>
+        current.filter((id) => id !== session.id),
+      );
+    }
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+
+    setDeletingSessionId(sessionToDelete.id);
+    setActionErrorMessage(null);
+
+    try {
+      await deleteSession(sessionToDelete.id);
+      setSessions((current) =>
+        current.filter((session) => session.id !== sessionToDelete.id),
+      );
+      toast.add({
+        title: "Sesi berhasil dihapus",
+        description: `Sesi “${sessionToDelete.title}” telah dihapus.`,
+        type: "success",
+      });
+      setSessionToDelete(null);
+    } catch (error) {
+      setActionErrorMessage(
+        error instanceof Error ? error.message : "Gagal menghapus sesi.",
+      );
+    } finally {
+      setDeletingSessionId(null);
+    }
+  };
+>>>>>>> 750d1a1 (chore: -)
 
   // Siapkan teks tombol filter sesuai pilihan status saat ini.
   return (

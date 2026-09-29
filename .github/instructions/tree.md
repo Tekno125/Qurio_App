@@ -1,3 +1,4 @@
+# Tree for frontend folder
 
 ```text
 frontend/
@@ -91,3 +92,5 @@ frontend/
     |-- qurio.png
     `-- qurio_ramping.png
 ```
+
+> folder frontend di dalam folder root proyek
