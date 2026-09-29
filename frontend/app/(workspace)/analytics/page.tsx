@@ -58,6 +58,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSessionList, type SessionListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+// Konstanta satuan waktu untuk perhitungan rentang tren dan refresh durasi.
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_MINUTE = 60 * 1000;
 
@@ -68,6 +69,7 @@ const MS_PER_MINUTE = 60 * 1000;
 // halaman ini tidak langsung memicu fetch ulang.
 const SESSION_CACHE_TTL_MS = 30_000;
 
+// Urutan hari (Senin–Minggu) untuk chart "Sesi per Hari".
 const WEEKDAY_LABELS = [
   "Senin",
   "Selasa",
@@ -78,6 +80,7 @@ const WEEKDAY_LABELS = [
   "Minggu",
 ];
 
+// Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
 const TREND_RANGES = [
   { value: "7", label: "7 hari" },
   { value: "14", label: "14 hari" },
@@ -86,6 +89,7 @@ const TREND_RANGES = [
 
 type TrendRange = (typeof TREND_RANGES)[number]["value"];
 
+// Formatter tanggal berbahasa Indonesia, dibuat sekali di level modul.
 const dateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
   timeStyle: "short",
@@ -103,9 +107,12 @@ const dayLabelFormatter = new Intl.DateTimeFormat("id-ID", {
   month: "short",
 });
 
+// Cache singkat hasil fetch, disimpan di luar React agar pindah tab lalu kembali
+// ke halaman ini tidak langsung memicu fetch ulang.
 let sessionCache: { sessions: SessionListItem[]; fetchedAt: number } | null =
   null;
 
+// Sesi yang sudah dilengkapi timestamp numerik agar durasi bisa dihitung cepat.
 interface TimedSession {
   id: string;
   title: string;
@@ -117,6 +124,7 @@ interface TimedSession {
   createdAtRaw: string | null;
 }
 
+// Satu titik data pada grafik tren harian.
 interface DailyPoint {
   key: string;
   label: string;
@@ -124,6 +132,7 @@ interface DailyPoint {
   minutes: number;
 }
 
+// Konfigurasi label dan warna chart: tren, distribusi status, dan hari.
 const trendChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--primary)" },
   minutes: {
@@ -141,6 +150,7 @@ const weekdayChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--color-brand-green)" },
 } satisfies ChartConfig;
 
+// Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
 function formatDate(value: string | null) {
   if (!value) return "-";
 
@@ -176,6 +186,7 @@ function formatDurationShort(milliseconds: number | null) {
   return `${minutes}m`;
 }
 
+// Konversi string tanggal API menjadi timestamp, null bila kosong/tidak valid.
 function toTimestamp(value: string | null): number | null {
   if (!value) return null;
 
@@ -342,6 +353,8 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
 }
 
 function AnalyticsPage() {
+  // State halaman: data mentah dari API, status loading/refresh/error, waktu
+  // acuan perhitungan, rentang tren, dan guard satu request berjalan.
   const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -351,6 +364,7 @@ function AnalyticsPage() {
   const [now, setNow] = useState(() => Date.now());
   const requestRef = useRef(false);
 
+  // Terapkan hasil fetch ke state sekaligus menyegarkan titik waktu acuan.
   const applySessions = useCallback(
     (list: SessionListItem[], stamp: number) => {
       setRawSessions(list);
@@ -402,6 +416,7 @@ function AnalyticsPage() {
     [applySessions],
   );
 
+  // Muat data sekali saat halaman pertama kali dibuka.
   useEffect(() => {
     void loadSessions();
   }, [loadSessions]);
@@ -445,6 +460,7 @@ function AnalyticsPage() {
     [weekdaySeries],
   );
 
+  // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
   const hasSessions = sessions.length > 0;
   const trendHasData = trendSeries.some((point) => point.sessions > 0);
   const weekDelta = analytics.last7Sessions - analytics.previous7Sessions;
@@ -461,6 +477,7 @@ function AnalyticsPage() {
     },
   ];
 
+  // Detail kartu "Sesi 7 Hari Terakhir": delta dibanding 7 hari sebelumnya.
   const sevenDayDetail =
     analytics.previous7Sessions === 0 ? (
       analytics.last7Sessions === 0 ? (
@@ -489,6 +506,7 @@ function AnalyticsPage() {
       </>
     );
 
+  // Delapan kartu ringkasan; dibuat sebagai data agar cukup dirender satu loop.
   const overviewItems: {
     label: string;
     value: string;
@@ -543,6 +561,7 @@ function AnalyticsPage() {
 
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
+      {/* Header halaman: judul, waktu pembaruan terakhir, dan tombol muat ulang. */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
@@ -577,6 +596,7 @@ function AnalyticsPage() {
         </div>
       </header>
 
+      {/* Pesan error bila request daftar sesi gagal. */}
       {errorMessage && (
         <Alert variant="destructive" className="mt-6">
           <IconAlertTriangle />
@@ -594,6 +614,7 @@ function AnalyticsPage() {
         </Alert>
       )}
 
+      {/* Grid kartu ringkasan seluruh metrik utama. */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {overviewItems.map(({ label, value, detail, compact }) => (
           <Card
@@ -628,9 +649,11 @@ function AnalyticsPage() {
 
       {isLoading || hasSessions ? (
         <>
+          {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+                {/* Grafik tren harian: bar jumlah sesi (kiri) + garis total menit (kanan). */}
                 <CardTitle className="text-base font-semibold text-foreground">
                   Tren Sesi Harian
                 </CardTitle>
@@ -638,6 +661,7 @@ function AnalyticsPage() {
                   Jumlah sesi dan total durasi (menit) per hari
                 </CardDescription>
                 <CardAction>
+                  {/* Pemilih rentang 7/14/30 hari. */}
                   <Tabs
                     value={trendRange}
                     onValueChange={(value) =>
@@ -725,6 +749,7 @@ function AnalyticsPage() {
             </Card>
 
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+              {/* Donut distribusi status dengan angka total sesi di tengah. */}
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
                   Distribusi Status
@@ -768,6 +793,7 @@ function AnalyticsPage() {
                     </div>
                   </div>
                 )}
+                {/* Legenda status aktif dan selesai. */}
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <Badge
                     variant="outline"
@@ -810,6 +836,7 @@ function AnalyticsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
+                {/* Bar horizontal: sebaran jumlah sesi per hari pembuatan. */}
                 {isLoading ? (
                   <Skeleton className="h-56 w-full rounded-xl" />
                 ) : (
@@ -884,6 +911,7 @@ function AnalyticsPage() {
                 </CardAction>
               </CardHeader>
               <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+                {/* Tabel lima sesi dengan total durasi paling panjang. */}
                 {isLoading ? (
                   <div className="space-y-3">
                     {[0, 1, 2, 3, 4].map((row) => (
@@ -953,6 +981,7 @@ function AnalyticsPage() {
         </>
       ) : (
         <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+          {/* Empty state: ajakan muat ulang saat error, atau membuat sesi pertama. */}
           <CardContent className="items-center gap-3 px-6 py-16 text-center">
             <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
               <IconTrendingUp className="size-6" />
