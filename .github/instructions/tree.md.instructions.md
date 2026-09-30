@@ -93,4 +93,4 @@ frontend/
     `-- qurio_ramping.png
 ```
 
-> folder frontend di dalam folder root proyek
+> folder frontend bukan folder root proyek, tapi folder frontend berada di dalam folder root proyek

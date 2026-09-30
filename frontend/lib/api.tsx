@@ -76,6 +76,7 @@ export interface SessionListItem {
   teacher_id: string;
   title: string;
   access_code: string;
+  participant_count: number;
   status: "active" | "ended";
   created_at: string;
   ended_at: string | null;
@@ -480,7 +481,7 @@ export const updateStatusSession = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-        `Gagal memperbarui status sesi (HTTP ${response.status})`,
+          `Gagal memperbarui status sesi (HTTP ${response.status})`,
       );
     }
 

@@ -317,7 +317,7 @@ function SessionsPage() {
           )}
 
           <div className="mt-4 overflow-auto rounded-md border border-border">
-            <Table className="min-w-190 text-left">
+            <Table className="min-w-210 text-left">
               <TableHeader className="bg-muted text-muted-foreground">
                 <TableRow className="font-bold hover:bg-transparent">
                   <TableHead className="px-4 py-3 font-semibold">
@@ -325,6 +325,9 @@ function SessionsPage() {
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
                     Kode akses
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-center font-semibold">
+                    Siswa
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
                     Dibuat
@@ -342,7 +345,7 @@ function SessionsPage() {
                 {isLoading && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -353,7 +356,7 @@ function SessionsPage() {
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -366,7 +369,7 @@ function SessionsPage() {
                   visibleSessions.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
                         {debouncedSearchQuery.trim() || statusFilter !== null
@@ -397,6 +400,9 @@ function SessionsPage() {
                           label="kode akses"
                           className="ml-2"
                         />
+                      </TableCell>
+                      <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
+                        {session.participant_count}
                       </TableCell>
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}

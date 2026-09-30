@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import {
   Bar,
-  BarChart,
   CartesianGrid,
   ComposedChart,
   Line,
@@ -40,6 +39,8 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -68,17 +69,6 @@ const MS_PER_MINUTE = 60 * 1000;
 // Hasil request juga disimpan sebentar supaya pindah tab lalu kembali ke
 // halaman ini tidak langsung memicu fetch ulang.
 const SESSION_CACHE_TTL_MS = 30_000;
-
-// Urutan hari (Senin–Minggu) untuk chart "Sesi per Hari".
-const WEEKDAY_LABELS = [
-  "Senin",
-  "Selasa",
-  "Rabu",
-  "Kamis",
-  "Jumat",
-  "Sabtu",
-  "Minggu",
-];
 
 // Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
 const TREND_RANGES = [
@@ -117,6 +107,7 @@ interface TimedSession {
   id: string;
   title: string;
   status: SessionListItem["status"];
+  studentCount: number;
   startedAt: number | null;
   endedAt: number | null;
   // Durasi sesi: ended_at - created_at, atau now - created_at untuk sesi aktif.
@@ -129,12 +120,14 @@ interface DailyPoint {
   key: string;
   label: string;
   sessions: number;
+  students: number;
   minutes: number;
 }
 
-// Konfigurasi label dan warna chart: tren, distribusi status, dan hari.
+// Konfigurasi label dan warna chart: tren dan distribusi status.
 const trendChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--primary)" },
+  students: { label: "Jumlah siswa", color: "var(--chart-2)" },
   minutes: {
     label: "Total durasi (menit)",
     color: "var(--color-brand-green)",
@@ -144,10 +137,6 @@ const trendChartConfig = {
 const statusChartConfig = {
   active: { label: "Aktif", color: "var(--primary)" },
   ended: { label: "Selesai", color: "var(--chart-3)" },
-} satisfies ChartConfig;
-
-const weekdayChartConfig = {
-  sessions: { label: "Jumlah sesi", color: "var(--color-brand-green)" },
 } satisfies ChartConfig;
 
 // Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
@@ -209,6 +198,7 @@ function toTimedSession(session: SessionListItem, now: number): TimedSession {
     id: session.id,
     title: session.title,
     status: session.status,
+    studentCount: session.participant_count,
     startedAt,
     endedAt,
     durationMs,
@@ -237,6 +227,7 @@ function buildDailySeries(
       key,
       label: dayLabelFormatter.format(day),
       sessions: 0,
+      students: 0,
       minutes: 0,
     });
   }
@@ -251,25 +242,11 @@ function buildDailySeries(
     if (index === undefined) return;
 
     points[index].sessions += 1;
+    points[index].students += session.studentCount;
     points[index].minutes += Math.round((session.durationMs ?? 0) / 60000);
   });
 
   return points;
-}
-
-// Sebaran sesi berdasarkan hari pembuatannya (Senin sampai Minggu).
-function buildWeekdaySeries(sessions: TimedSession[]) {
-  const counts = WEEKDAY_LABELS.map((label) => ({ label, sessions: 0 }));
-
-  sessions.forEach((session) => {
-    if (session.startedAt === null) return;
-
-    // getDay(): 0 = Minggu, sedangkan daftar ini dimulai dari Senin.
-    const index = (new Date(session.startedAt).getDay() + 6) % 7;
-    counts[index].sessions += 1;
-  });
-
-  return counts;
 }
 
 // Ringkasan seluruh metrik utama dalam satu kali putaran data.
@@ -441,16 +418,13 @@ function AnalyticsPage() {
     Number(trendRange),
     referenceTime,
   );
-  const weekdaySeries = buildWeekdaySeries(sessions);
+  const mostPopulatedSessions = [...sessions]
+    .sort((a, b) => b.studentCount - a.studentCount)
+    .slice(0, 5);
   const longestSessions = sessions
     .filter((session) => session.durationMs !== null)
     .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
     .slice(0, 5);
-  const busiestWeekday = weekdaySeries.reduce(
-    (best, current) => (current.sessions > best.sessions ? current : best),
-    { label: "-", sessions: 0 },
-  );
-
   // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
   const hasSessions = sessions.length > 0;
   const trendHasData = trendSeries.some((point) => point.sessions > 0);
@@ -642,14 +616,14 @@ function AnalyticsPage() {
         <>
           {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                {/* Grafik tren harian: bar jumlah sesi (kiri) + garis total menit (kanan). */}
+                {/* Grafik harian: jumlah sesi dan siswa (kiri), durasi (kanan). */}
                 <CardTitle className="text-base font-semibold text-foreground">
                   Tren Sesi Harian
                 </CardTitle>
                 <CardDescription>
-                  Jumlah sesi dan total durasi (menit) per hari
+                  Jumlah sesi, jumlah siswa, dan total durasi (menit) per hari
                 </CardDescription>
                 <CardAction>
                   {/* Pemilih rentang 7/14/30 hari. */}
@@ -720,6 +694,16 @@ function AnalyticsPage() {
                         maxBarSize={26}
                       />
                       <Line
+                        yAxisId="left"
+                        name="students"
+                        type="monotone"
+                        dataKey="students"
+                        stroke="var(--color-students)"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                      <Line
                         yAxisId="right"
                         name="minutes"
                         type="monotone"
@@ -729,6 +713,7 @@ function AnalyticsPage() {
                         dot={false}
                         activeDot={{ r: 4 }}
                       />
+                      <ChartLegend content={<ChartLegendContent />} />
                     </ComposedChart>
                   </ChartContainer>
                 ) : (
@@ -816,70 +801,7 @@ function AnalyticsPage() {
             </Card>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Sesi per Hari
-                </CardTitle>
-                <CardDescription>
-                  Sebaran hari saat sesi dibuat (semua riwayat)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
-                {/* Bar horizontal: sebaran jumlah sesi per hari pembuatan. */}
-                {isLoading ? (
-                  <Skeleton className="h-56 w-full rounded-xl" />
-                ) : (
-                  <ChartContainer
-                    config={weekdayChartConfig}
-                    className="h-56 w-full aspect-auto"
-                  >
-                    <BarChart
-                      data={weekdaySeries}
-                      layout="vertical"
-                      margin={{ top: 0, right: 12, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid horizontal={false} />
-                      <XAxis
-                        type="number"
-                        height={18}
-                        allowDecimals={false}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="label"
-                        width={52}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <ChartTooltip
-                        cursor={{ fill: "var(--color-muted)" }}
-                        content={<ChartTooltipContent hideLabel />}
-                      />
-                      <Bar
-                        name="sessions"
-                        dataKey="sessions"
-                        fill="var(--color-sessions)"
-                        radius={[0, 4, 4, 0]}
-                        maxBarSize={16}
-                      />
-                    </BarChart>
-                  </ChartContainer>
-                )}
-                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span>Hari paling ramai</span>
-                  <span className="font-medium text-foreground">
-                    {busiestWeekday.sessions > 0
-                      ? `${busiestWeekday.label} · ${busiestWeekday.sessions} sesi`
-                      : "-"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="mt-6 grid gap-3">
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
@@ -969,6 +891,66 @@ function AnalyticsPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+            <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+              <CardTitle className="text-base font-semibold text-foreground">
+                Sesi dengan Siswa Terbanyak
+              </CardTitle>
+              <CardDescription>
+                Lima sesi dengan jumlah siswa terdaftar terbanyak
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[0, 1, 2, 3, 4].map((row) => (
+                    <Skeleton key={row} className="h-12 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-border">
+                  <div className="grid grid-cols-[minmax(0,7fr)_minmax(112px,3fr)] gap-4 bg-muted/60 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
+                    <span>Judul sesi</span>
+                    <span className="text-right">Jumlah siswa</span>
+                  </div>
+                  {mostPopulatedSessions.map((session) => (
+                    <Link
+                      key={session.id}
+                      href={`/dashboard/session/${session.id}`}
+                      className="grid grid-cols-[minmax(0,7fr)_minmax(112px,3fr)] items-center gap-4 border-t border-border px-4 py-3 transition-colors hover:bg-muted/40 sm:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"
+                    >
+                      <span className="min-w-0 wrap-break-word font-medium text-foreground">
+                        {session.title}
+                      </span>
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted"
+                        >
+                          <span
+                            className="block h-full rounded-full bg-primary"
+                            style={{
+                              width: `${
+                                mostPopulatedSessions[0].studentCount > 0
+                                  ? (session.studentCount /
+                                      mostPopulatedSessions[0].studentCount) *
+                                    100
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </span>
+                        <span className="w-10 shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                          {session.studentCount}
+                        </span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       ) : (
         <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
