@@ -955,7 +955,7 @@ function AnalyticsPage() {
         <>
           {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 {/* Grafik harian: jumlah sesi dan siswa (kiri), durasi (kanan). */}
 <<<<<<< HEAD
