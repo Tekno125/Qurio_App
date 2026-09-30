@@ -3,19 +3,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
 
 // import icon
 import { IconCheck, IconLogin2, IconUserPlus } from "@tabler/icons-react";
 import { AccessForm } from "@/components/AccessForm";
-
 
 const heroSlides = [
   {
@@ -153,16 +147,16 @@ export default function App() {
           </div>
         </div>
       </section>
-      <section id="cta" className="py-24 bg-[#eef4ff]">
+      <section id="cta" className="py-24 bg-audience-section">
         <div className="mx-auto flex w-full max-w-304 flex-col items-center justify-center gap-8 px-6 text-center lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:text-left">
           <div className="flex max-w-xl flex-col items-center text-center lg:items-start lg:text-left">
-            <span className="mb-5 block text-[13px] font-extrabold tracking-[0.12em] text-brand-purple">
+            <span className="mb-5 block text-[13px] font-extrabold tracking-[0.12em] text-primary">
               UNTUK SISWA
             </span>
             <h2 className="mt-0 mb-4 text-3xl tracking-[-0.04em]">
               Sudah punya kode kelas?
             </h2>
-            <p className="mt-0 max-w-xl text-lg leading-normal text-[#536682]">
+            <p className="mt-0 max-w-xl text-lg leading-normal text-muted-foreground">
               Masukkan kode akses, nama, dan nomor absen untuk langsung masuk ke
               ruang kelas.
             </p>
@@ -451,20 +445,20 @@ export default function App() {
       {/* CTA untuk guru: ditempatkan setelah alur "3 langkah" agar guru yang
           sudah membaca benefit & cara kerja langsung menemukan tombol daftar.
           Layout sengaja di-mirror dengan section "UNTUK SISWA" (#cta) di atas. */}
-      <section id="daftar-guru" className="py-24 bg-[#eef4ff]">
+      <section id="daftar-guru" className="py-24 bg-audience-section">
         <div className="mx-auto flex w-full max-w-304 flex-col items-center justify-center gap-8 px-6 text-center lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:text-left">
           <div className="flex max-w-xl flex-col items-center text-center lg:items-start lg:text-left">
-            <span className="mb-5 block text-[13px] font-extrabold tracking-[0.12em] text-brand-purple">
+            <span className="mb-5 block text-[13px] font-extrabold tracking-[0.12em] text-primary">
               UNTUK GURU
             </span>
             <h2 className="mt-0 mb-4 text-3xl tracking-[-0.04em]">
               Siap memulai kelas yang terbaca oleh AI?
             </h2>
-            <p className="mt-0 max-w-xl text-lg leading-normal text-[#536682]">
+            <p className="mt-0 max-w-xl text-lg leading-normal text-muted-foreground">
               Daftarkan akun guru, siapkan pertanyaan pertama, dan biarkan Qurio
               memetakan pemahaman serta keaktifan murid Anda secara otomatis.
             </p>
-            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-bold text-[#536682] lg:justify-start">
+            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-bold text-muted-foreground lg:justify-start">
               {teacherBenefits.map((benefit) => (
                 <li key={benefit} className="inline-flex items-center gap-2">
                   <IconCheck className="size-4 text-primary" />
@@ -481,7 +475,7 @@ export default function App() {
               <span>Daftar Sekarang</span>
               <IconUserPlus className="size-5" />
             </Link>
-            <span className="text-sm text-[#536682]">
+            <span className="text-sm text-muted-foreground">
               Sudah punya akun guru?{" "}
               <Link
                 href="/login"
