@@ -32,6 +32,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-audience-section: var(--audience-section);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
@@ -82,6 +83,7 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(54.6% 0.245 262.88);
   --primary-foreground: oklch(0.982 0.018 155.826);
+  --audience-section: #eef4ff;
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
@@ -117,6 +119,7 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: var(--color-blue-600) /* oklch(62.3% 0.214 259.81) */;
   --primary-foreground: oklch(0.982 0.018 155.826);
+  --audience-section: oklch(0.22 0.045 262.88);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
