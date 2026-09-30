@@ -22,9 +22,12 @@ import Link from "next/link";
 import {
   Bar,
 <<<<<<< HEAD
+<<<<<<< HEAD
   CartesianGrid,
 =======
   BarChart,
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   CartesianGrid,
 <<<<<<< HEAD
   Cell,
@@ -57,10 +60,15 @@ import {
 import {
   ChartContainer,
 <<<<<<< HEAD
+<<<<<<< HEAD
   ChartLegend,
   ChartLegendContent,
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  ChartLegend,
+  ChartLegendContent,
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -99,6 +107,7 @@ const SESSION_CACHE_TTL_MS = 30_000;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
 =======
 =======
@@ -117,6 +126,8 @@ const WEEKDAY_LABELS = [
 <<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 =======
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
 // Pilihan rentang grafik tren beserta tipe union nilai yang diturunkan darinya.
 >>>>>>> 750d1a1 (chore: -)
 const TREND_RANGES = [
@@ -175,9 +186,13 @@ interface TimedSession {
   title: string;
   status: SessionListItem["status"];
 <<<<<<< HEAD
+<<<<<<< HEAD
   studentCount: number;
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  studentCount: number;
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   startedAt: number | null;
   endedAt: number | null;
   // Durasi sesi: ended_at - created_at, atau now - created_at untuk sesi aktif.
@@ -198,6 +213,7 @@ interface DailyPoint {
   label: string;
   sessions: number;
 <<<<<<< HEAD
+<<<<<<< HEAD
   students: number;
   minutes: number;
 }
@@ -207,13 +223,20 @@ const trendChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--primary)" },
   students: { label: "Jumlah siswa", color: "var(--chart-2)" },
 =======
+=======
+  students: number;
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   minutes: number;
 }
 
-// Konfigurasi label dan warna chart: tren, distribusi status, dan hari.
+// Konfigurasi label dan warna chart: tren dan distribusi status.
 const trendChartConfig = {
   sessions: { label: "Jumlah sesi", color: "var(--primary)" },
+<<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+  students: { label: "Jumlah siswa", color: "var(--chart-2)" },
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   minutes: {
     label: "Total durasi (menit)",
     color: "var(--color-brand-green)",
@@ -226,6 +249,7 @@ const statusChartConfig = {
 } satisfies ChartConfig;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
 =======
 const weekdayChartConfig = {
@@ -235,6 +259,8 @@ const weekdayChartConfig = {
 <<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 =======
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
 // Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
 >>>>>>> 750d1a1 (chore: -)
 function formatDate(value: string | null) {
@@ -303,9 +329,13 @@ function toTimedSession(session: SessionListItem, now: number): TimedSession {
     title: session.title,
     status: session.status,
 <<<<<<< HEAD
+<<<<<<< HEAD
     studentCount: session.participant_count,
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+    studentCount: session.participant_count,
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
     startedAt,
     endedAt,
     durationMs,
@@ -335,9 +365,13 @@ function buildDailySeries(
       label: dayLabelFormatter.format(day),
       sessions: 0,
 <<<<<<< HEAD
+<<<<<<< HEAD
       students: 0,
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+      students: 0,
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
       minutes: 0,
     });
   }
@@ -353,15 +387,20 @@ function buildDailySeries(
 
     points[index].sessions += 1;
 <<<<<<< HEAD
+<<<<<<< HEAD
     points[index].students += session.studentCount;
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+    points[index].students += session.studentCount;
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
     points[index].minutes += Math.round((session.durationMs ?? 0) / 60000);
   });
 
   return points;
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 // Sebaran sesi berdasarkan hari pembuatannya (Senin sampai Minggu).
@@ -380,6 +419,8 @@ function buildWeekdaySeries(sessions: TimedSession[]) {
 }
 
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
 // Ringkasan seluruh metrik utama dalam satu kali putaran data.
 function buildAnalytics(sessions: TimedSession[], now: number) {
   const nowDate = new Date(now);
@@ -612,6 +653,7 @@ function AnalyticsPage() {
   const mostPopulatedSessions = [...sessions]
     .sort((a, b) => b.studentCount - a.studentCount)
     .slice(0, 5);
+<<<<<<< HEAD
   const longestSessions = sessions
     .filter((session) => session.durationMs !== null)
     .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
@@ -633,10 +675,13 @@ function AnalyticsPage() {
     referenceTime,
   );
   const weekdaySeries = buildWeekdaySeries(sessions);
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   const longestSessions = sessions
     .filter((session) => session.durationMs !== null)
     .sort((a, b) => (b.durationMs ?? 0) - (a.durationMs ?? 0))
     .slice(0, 5);
+<<<<<<< HEAD
   const busiestWeekday = weekdaySeries.reduce(
     (best, current) => (current.sessions > best.sessions ? current : best),
     { label: "-", sessions: 0 },
@@ -645,6 +690,8 @@ function AnalyticsPage() {
 <<<<<<< HEAD
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 =======
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
   // Nilai siap-pakai di JSX: flag kondisi, delta mingguan, dan data donut status.
 >>>>>>> 750d1a1 (chore: -)
   const hasSessions = sessions.length > 0;
@@ -908,9 +955,10 @@ function AnalyticsPage() {
         <>
           {/* Konten analitik: tren harian, distribusi status, sebaran hari, tabel durasi. */}
           <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
+            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 {/* Grafik harian: jumlah sesi dan siswa (kiri), durasi (kanan). */}
+<<<<<<< HEAD
 =======
 
 =======
@@ -926,11 +974,16 @@ function AnalyticsPage() {
 =======
                 {/* Grafik tren harian: bar jumlah sesi (kiri) + garis total menit (kanan). */}
 >>>>>>> 750d1a1 (chore: -)
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                 <CardTitle className="text-base font-semibold text-foreground">
                   Tren Sesi Harian
                 </CardTitle>
                 <CardDescription>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                   Jumlah sesi, jumlah siswa, dan total durasi (menit) per hari
                 </CardDescription>
                 <CardAction>
@@ -1012,6 +1065,9 @@ function AnalyticsPage() {
                       />
                       <Line
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                         yAxisId="left"
                         name="students"
                         type="monotone"
@@ -1022,8 +1078,11 @@ function AnalyticsPage() {
                         activeDot={{ r: 4 }}
                       />
                       <Line
+<<<<<<< HEAD
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                         yAxisId="right"
                         name="minutes"
                         type="monotone"
@@ -1034,9 +1093,13 @@ function AnalyticsPage() {
                         activeDot={{ r: 4 }}
                       />
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <ChartLegend content={<ChartLegendContent />} />
 =======
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
+=======
+                      <ChartLegend content={<ChartLegendContent />} />
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                     </ComposedChart>
                   </ChartContainer>
                 ) : (
@@ -1159,6 +1222,7 @@ function AnalyticsPage() {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
           <div className="mt-6 grid gap-3">
 =======
 
@@ -1233,6 +1297,9 @@ function AnalyticsPage() {
 >>>>>>> 28e266e (feat: membuat analytics dan membuat fungsi tombol hapus sesi)
 =======
 >>>>>>> da1a812 (fix: memperbaiki filter sesi dan mengganti komponen yang deprecated)
+=======
+          <div className="mt-6 grid gap-3">
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
             <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
               <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
                 <CardTitle className="text-base font-semibold text-foreground">
@@ -1330,6 +1397,9 @@ function AnalyticsPage() {
             </Card>
           </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
 
           <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
             <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">

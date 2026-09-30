@@ -463,10 +463,14 @@ function SessionsPage() {
 
           <div className="mt-4 overflow-auto rounded-md border border-border">
 <<<<<<< HEAD
+<<<<<<< HEAD
             <Table className="min-w-210 text-left">
 =======
             <Table className="min-w-190 text-left">
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+            <Table className="min-w-210 text-left">
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
               <TableHeader className="bg-muted text-muted-foreground">
                 <TableRow className="font-bold hover:bg-transparent">
                   <TableHead className="px-4 py-3 font-semibold">
@@ -476,11 +480,17 @@ function SessionsPage() {
                     Kode akses
                   </TableHead>
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <TableHead className="px-4 py-3 text-center font-semibold">
                     Siswa
                   </TableHead>
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                  <TableHead className="px-4 py-3 text-center font-semibold">
+                    Siswa
+                  </TableHead>
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                   <TableHead className="px-4 py-3 font-semibold">
                     Dibuat
                   </TableHead>
@@ -498,10 +508,14 @@ function SessionsPage() {
                   <TableRow>
                     <TableCell
 <<<<<<< HEAD
+<<<<<<< HEAD
                       colSpan={7}
 =======
                       colSpan={6}
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                      colSpan={7}
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -513,10 +527,14 @@ function SessionsPage() {
                   <TableRow>
                     <TableCell
 <<<<<<< HEAD
+<<<<<<< HEAD
                       colSpan={7}
 =======
                       colSpan={6}
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                      colSpan={7}
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -530,6 +548,9 @@ function SessionsPage() {
                     <TableRow>
                       <TableCell
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                         colSpan={7}
                         className="h-24 text-center text-muted-foreground"
                       >
@@ -573,11 +594,17 @@ function SessionsPage() {
                         />
                       </TableCell>
 <<<<<<< HEAD
+<<<<<<< HEAD
                       <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
                         {session.participant_count}
                       </TableCell>
 =======
 >>>>>>> ca371d0 (feat: membuat halaman sessions list)
+=======
+                      <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
+                        {session.participant_count}
+                      </TableCell>
+>>>>>>> 3ab09d1 (feat: menambahkan data jumlah siswa)
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}
                       </TableCell>
