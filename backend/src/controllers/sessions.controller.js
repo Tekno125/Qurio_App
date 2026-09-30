@@ -75,12 +75,8 @@ export const getSessions = async (req, res) => {
   }
 
   try {
+    // Ambil semua sesi milik guru, urutkan dari yang paling baru
     const sessionsResult = await pool.query(
-<<<<<<< HEAD
-      "SELECT * FROM sessions WHERE teacher_id = $1 ORDER BY created_at DESC",
-      [teacher_id]
-    )
-=======
       `
   SELECT
     s.*,
@@ -92,9 +88,8 @@ export const getSessions = async (req, res) => {
   GROUP BY s.id
   ORDER BY s.created_at DESC
   `,
-      [teacher_id],
-    );
->>>>>>> f8b555c (chore: menambah quey di getsession)
+      [teacher_id]
+    )
 
     res.status(200).json({ success: true, data: sessionsResult.rows })
   } catch (error) {
