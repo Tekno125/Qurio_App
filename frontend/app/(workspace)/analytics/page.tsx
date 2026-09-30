@@ -484,16 +484,6 @@ function AnalyticsPage() {
       detail: "Tercatat di akun Anda",
     },
     {
-      label: "Sesi 7 Hari Terakhir",
-      value: String(analytics.last7Sessions),
-      detail: sevenDayDetail,
-    },
-    {
-      label: "Sesi Bulan Ini",
-      value: String(analytics.monthSessions),
-      detail: analytics.monthLabel,
-    },
-    {
       label: "Sesi Aktif",
       value: String(analytics.activeSessions),
       detail: "Sedang berlangsung",
@@ -502,25 +492,6 @@ function AnalyticsPage() {
       label: "Sesi Selesai",
       value: String(analytics.endedSessions),
       detail: `${analytics.completionRate}% dari total sesi`,
-    },
-    {
-      label: "Total Waktu Seluruh Sesi",
-      value: formatDuration(analytics.totalDurationMs),
-      detail: "Akumulasi durasi semua sesi",
-      compact: true,
-    },
-    {
-      label: "Rata-rata Waktu Sesi",
-      value: formatDuration(hasSessions ? analytics.averageDurationMs : null),
-      detail: "Durasi rata-rata per sesi",
-      compact: true,
-    },
-    {
-      label: "Sesi Terlama",
-      value: formatDurationShort(analytics.longestSession?.durationMs ?? null),
-      detail:
-        analytics.longestSession?.title ?? "Belum ada sesi yang punya durasi",
-      compact: true,
     },
   ];
 

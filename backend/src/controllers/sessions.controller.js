@@ -76,6 +76,7 @@ export const getSessions = async (req, res) => {
   }
 
   try {
+    // Ambil semua sesi milik guru, urutkan dari yang paling baru
     const sessionsResult = await pool.query(
       `
   SELECT
