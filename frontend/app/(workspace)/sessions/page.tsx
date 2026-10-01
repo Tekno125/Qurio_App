@@ -7,8 +7,10 @@ import {
   IconExternalLink,
   IconPlayerPlay,
   IconPlayerStop,
+  IconShare,
   IconSearch,
   IconTrash,
+  IconUsers,
   IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -54,6 +56,7 @@ import {
 import smartSearch from "@/lib/smart-search";
 import { toast } from "@/components/ui/toast";
 
+// Format tanggal dari API menggunakan lokal Indonesia.
 function formatDate(value: string | null) {
   if (!value) return "-";
 
@@ -87,6 +90,7 @@ function SessionsPage() {
     null,
   );
 
+  // Tunda pencarian agar pemrosesan tidak berjalan pada setiap ketikan.
   useEffect(() => {
     const debounceTimer = window.setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -95,6 +99,7 @@ function SessionsPage() {
     return () => window.clearTimeout(debounceTimer);
   }, [searchQuery]);
 
+  // Muat seluruh sesi pengguna sekali saat halaman dibuka.
   useEffect(() => {
     let isMounted = true;
 
@@ -118,38 +123,47 @@ function SessionsPage() {
     };
   }, []);
 
+  const activeSessionsCount = sessions.filter(
+    (session) => session.status === "active",
+  ).length;
+  const endedSessionsCount = sessions.filter(
+    (session) => session.status === "ended",
+  ).length;
+
   const overviewItems = [
     {
       label: "Total Sesi",
-      value: sessions.length,
-      detail: "Semua sesi milik Anda",
+      value: String(sessions.length),
+      detail: "Semua sesi yang pernah dibuat",
     },
     {
       label: "Sesi Aktif",
-      value: sessions.filter((session) => session.status === "active").length,
+      value: String(activeSessionsCount),
       detail: "Sedang berlangsung",
     },
     {
       label: "Sesi Selesai",
-      value: sessions.filter((session) => session.status === "ended").length,
-      detail: "Sudah berakhir",
+      value: String(endedSessionsCount),
+      detail: "Sudah diakhiri",
     },
   ];
 
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-        sessions,
-        debouncedSearchQuery,
-        (session) => `${session.title}`,
-      )
-        .filter((result) => result.matchedWords > 0)
-        .map((result) => result.item)
+      sessions,
+      debouncedSearchQuery,
+      (session) => `${session.title} ${session.access_code}`,
+    )
+      .filter((result) => result.matchedWords > 0)
+      .map((result) => result.item)
     : sessions;
 
   const visibleSessions = searchedSessions.filter(
     (session) => statusFilter === null || statusFilter === session.status,
   );
   const statusFilterLabel = getStatusFilterLabel(statusFilter);
+  const hasFilterOrSearch =
+    debouncedSearchQuery.trim().length > 0 || statusFilter !== null;
 
   const toggleSessionStatus = async (session: SessionListItem) => {
     const nextStatus = session.status === "active" ? "ended" : "active";
@@ -162,14 +176,20 @@ function SessionsPage() {
         current.map((item) =>
           item.id === session.id
             ? {
-                ...item,
-                status: nextStatus,
-                ended_at:
-                  nextStatus === "ended" ? new Date().toISOString() : null,
-              }
+              ...item,
+              status: nextStatus,
+              ended_at:
+                nextStatus === "ended" ? new Date().toISOString() : null,
+            }
             : item,
         ),
       );
+      toast.add({
+        title:
+          nextStatus === "ended" ? "Sesi diakhiri" : "Sesi diaktifkan kembali",
+        description: `Sesi "${session.title}" berhasil diperbarui.`,
+        type: "success",
+      });
     } catch (error) {
       setActionErrorMessage(
         error instanceof Error ? error.message : "Gagal mengubah status sesi.",
@@ -194,7 +214,7 @@ function SessionsPage() {
       );
       toast.add({
         title: "Sesi berhasil dihapus",
-        description: `Sesi “${sessionToDelete.title}” telah dihapus.`,
+        description: `Sesi "${sessionToDelete.title}" telah dihapus permanen.`,
         type: "success",
       });
       setSessionToDelete(null);
@@ -207,17 +227,62 @@ function SessionsPage() {
     }
   };
 
+  // Handler "Bagikan undangan" dengan Web Share API + fallback clipboard.
+  const shareSession = async (session: SessionListItem) => {
+    const url = new URL(
+      `/play/${session.id}`,
+      window.location.origin,
+    ).toString();
+    const message =
+      `Halo! Silakan bergabung ke sesi "${session.title}" di Qurio.\n\n` +
+      `Kode akses: ${session.access_code}\n` +
+      `Tautan: ${url}`;
+
+    // 1. Coba Web Share API (biasanya di HP).
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Sesi Qurio: ${session.title}`,
+          text: message,
+          url,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        // Gagal karena alasan lain → lanjut ke fallback clipboard.
+      }
+    }
+
+    // 2. Fallback: salin ke clipboard.
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.add({
+        title: "Undangan tersalin",
+        description: "Link dan kode akses siap dibagikan ke siswa.",
+        type: "success",
+      });
+    } catch {
+      setActionErrorMessage(
+        "Gagal menyalin undangan. Salin kode akses secara manual.",
+      );
+    }
+  };
+
   return (
-    <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
+    <section className="mx-auto w-full max-w-[1180px] p-6 lg:p-8">
+      {/* Header halaman. */}
       <header>
         <h1 className="text-2xl font-bold tracking-[-0.5px] text-foreground">
-          Daftar Sesi
+          Semua Sesi
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Kelola dan telusuri seluruh sesi kelas Qurio Anda
+          Kelola, cari, dan bagikan seluruh sesi kelas Qurio Anda
         </p>
       </header>
 
+      {/* Kartu ringkasan sesi. */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {overviewItems.map(({ label, value, detail }) => (
           <Card
@@ -239,17 +304,27 @@ function SessionsPage() {
         ))}
       </div>
 
+      {/* Panel daftar seluruh sesi. */}
       <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-foreground">
-            Seluruh Sesi
-          </h2>
+        <CardContent className="flex flex-col p-5 sm:p-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-base font-semibold text-foreground">
+              Daftar Sesi
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {hasFilterOrSearch
+                ? `${visibleSessions.length} dari ${sessions.length} sesi cocok`
+                : `${sessions.length} sesi tersimpan`}
+            </p>
+          </div>
+
+          {/* Baris kontrol: pencarian + filter status. */}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <IconSearch className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-11 rounded-full border-0 bg-muted pl-10 shadow-none"
-                placeholder="Cari nama, kode akses, atau status..."
+                placeholder="Cari nama sesi atau kode akses..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
               />
@@ -276,7 +351,7 @@ function SessionsPage() {
                 render={
                   <Button
                     variant="outline"
-                    className="h-10 justify-between border-border px-4 text-muted-foreground sm:w-50"
+                    className="h-11 justify-between border-border px-4 text-muted-foreground sm:w-[200px]"
                   >
                     {statusFilterLabel}
                     <IconChevronDown className="size-4" />
@@ -310,16 +385,18 @@ function SessionsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
           {actionErrorMessage && (
             <p className="mt-3 text-sm text-destructive" role="alert">
               {actionErrorMessage}
             </p>
           )}
 
-          <div className="mt-4 overflow-auto rounded-md border border-border">
-            <Table className="min-w-210 text-left">
+          {/* Tabel sesi. */}
+          <div className="mt-4 overflow-hidden rounded-xl border border-border">
+            <Table className="min-w-[820px] text-left">
               <TableHeader className="bg-muted text-muted-foreground">
-                <TableRow className="font-bold hover:bg-transparent">
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="px-4 py-3 font-semibold">
                     Nama sesi
                   </TableHead>
@@ -333,19 +410,19 @@ function SessionsPage() {
                     Dibuat
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
-                    Berakhir
-                  </TableHead>
-                  <TableHead className="px-4 py-3 font-semibold">
                     Status
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-semibold" />
+                  <TableHead className="px-4 py-3 text-right font-semibold">
+                    Aksi
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* State: sedang memuat. */}
                 {isLoading && (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Memuat sesi...
@@ -353,10 +430,11 @@ function SessionsPage() {
                   </TableRow>
                 )}
 
+                {/* State: error memuat data. */}
                 {!isLoading && errorMessage && (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="h-24 text-center text-destructive"
                     >
                       {errorMessage}
@@ -364,119 +442,194 @@ function SessionsPage() {
                   </TableRow>
                 )}
 
+                {/* State: hasil filter kosong. */}
                 {!isLoading &&
                   !errorMessage &&
                   visibleSessions.length === 0 && (
                     <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        {debouncedSearchQuery.trim() || statusFilter !== null
-                          ? "Tidak ada sesi yang cocok dengan pencarian atau filter."
-                          : "Belum ada sesi."}
+                      <TableCell colSpan={6} className="p-0">
+                        <div className="flex h-32 flex-col items-center justify-center gap-2 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            {hasFilterOrSearch
+                              ? "Tidak ada sesi yang cocok dengan pencarian atau filter Anda."
+                              : "Belum ada sesi yang dibuat."}
+                          </p>
+                          {hasFilterOrSearch ? (
+                            <button
+                              type="button"
+                              className="text-sm font-semibold text-primary hover:underline"
+                              onClick={() => {
+                                setSearchQuery("");
+                                setDebouncedSearchQuery("");
+                                setStatusFilter(null);
+                              }}
+                            >
+                              Reset filter →
+                            </button>
+                          ) : (
+                            <Link
+                              href="/dashboard/createsessions"
+                              className="text-sm font-semibold text-primary hover:underline"
+                            >
+                              Buat sesi baru →
+                            </Link>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
 
+                {/* Baris data sesi. */}
                 {!isLoading &&
                   !errorMessage &&
-                  visibleSessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell className="px-4 py-3.5 font-medium text-foreground">
-                        <Link
-                          href={`/dashboard/session/${session.id}`}
-                          className="transition-colors hover:text-primary hover:underline"
-                        >
-                          {session.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5">
-                        <span className="font-semibold text-foreground">
-                          {session.access_code}
-                        </span>
-                        <CopyButton
-                          text={session.access_code}
-                          label="kode akses"
-                          className="ml-2"
-                        />
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
-                        {session.participant_count}
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5 text-muted-foreground">
-                        {formatDate(session.created_at)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5 text-muted-foreground">
-                        {formatDate(session.ended_at)}
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5">
-                        <span
-                          className={
-                            session.status === "active"
-                              ? "rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
-                              : "rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground"
-                          }
-                        >
-                          {session.status === "active" ? "Aktif" : "Selesai"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="px-4 py-3.5">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                aria-label={`Aksi sesi ${session.title}`}
-                              >
-                                <IconDotsVertical className="size-4 text-muted-foreground" />
-                              </Button>
-                            }
-                          />
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              render={
-                                <Link
-                                  href={`/dashboard/session/${session.id}`}
-                                />
+                  visibleSessions.map((session) => {
+                    const isActive = session.status === "active";
+                    return (
+                      <TableRow key={session.id}>
+                        {/* Nama sesi + dot indikator. */}
+                        <TableCell className="px-4 py-3.5">
+                          <Link
+                            href={`/dashboard/session/${session.id}`}
+                            className="group inline-flex items-center gap-2"
+                          >
+                            <span
+                              className={
+                                isActive
+                                  ? "size-2 shrink-0 rounded-full bg-emerald-500"
+                                  : "size-2 shrink-0 rounded-full bg-muted-foreground/40"
+                              }
+                              aria-hidden="true"
+                            />
+                            <span className="font-medium text-foreground transition-colors group-hover:text-primary group-hover:underline">
+                              {session.title}
+                            </span>
+                          </Link>
+                        </TableCell>
+
+                        {/* Kode akses + tombol salin. */}
+                        <TableCell className="px-4 py-3.5">
+                          <div className="inline-flex items-center gap-1.5">
+                            <span className="font-mono text-base font-bold tracking-wider text-foreground">
+                              {session.access_code}
+                            </span>
+                            <CopyButton
+                              text={session.access_code}
+                              label="kode akses"
+                            />
+                          </div>
+                        </TableCell>
+
+                        {/* Jumlah siswa. */}
+                        <TableCell className="px-4 py-3.5 text-center">
+                          <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                            <IconUsers className="size-4" />
+                            <span className="font-semibold text-foreground">
+                              {session.participant_count ?? 0}
+                            </span>
+                          </span>
+                        </TableCell>
+
+                        {/* Waktu dibuat. */}
+                        <TableCell className="px-4 py-3.5 text-sm text-muted-foreground">
+                          {formatDate(session.created_at)}
+                        </TableCell>
+
+                        {/* Status: badge + subteks tanggal berakhir. */}
+                        <TableCell className="px-4 py-3.5">
+                          <div className="flex flex-col items-start gap-1">
+                            <span
+                              className={
+                                isActive
+                                  ? "rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400"
+                                  : "rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground"
                               }
                             >
-                              <IconExternalLink className="size-4" />
-                              Buka sesi
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={updatingSessionIds.includes(session.id)}
-                              onClick={() => void toggleSessionStatus(session)}
+                              {isActive ? "Aktif" : "Selesai"}
+                            </span>
+                            {!isActive && session.ended_at && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {formatDate(session.ended_at)}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Aksi: share + dropdown. */}
+                        <TableCell className="px-4 py-3.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-xs"
+                              aria-label={`Bagikan undangan sesi ${session.title}`}
+                              title="Bagikan undangan sesi"
+                              onClick={() => void shareSession(session)}
                             >
-                              {session.status === "active" ? (
-                                <IconPlayerStop className="size-4" />
-                              ) : (
-                                <IconPlayerPlay className="size-4" />
-                              )}
-                              {session.status === "active"
-                                ? "Akhiri sesi"
-                                : "Aktifkan sesi"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => setSessionToDelete(session)}
-                            >
-                              <IconTrash className="size-4" />
-                              Hapus sesi
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                              <IconShare className="size-4 text-muted-foreground" />
+                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    aria-label={`Aksi lain untuk sesi ${session.title}`}
+                                  >
+                                    <IconDotsVertical className="size-4 text-muted-foreground" />
+                                  </Button>
+                                }
+                              />
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  render={
+                                    <Link
+                                      href={`/dashboard/session/${session.id}`}
+                                    />
+                                  }
+                                >
+                                  <IconExternalLink className="size-4" />
+                                  Buka sesi
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  disabled={updatingSessionIds.includes(
+                                    session.id,
+                                  )}
+                                  onClick={() =>
+                                    void toggleSessionStatus(session)
+                                  }
+                                >
+                                  {isActive ? (
+                                    <IconPlayerStop className="size-4" />
+                                  ) : (
+                                    <IconPlayerPlay className="size-4" />
+                                  )}
+                                  {isActive
+                                    ? "Akhiri sesi"
+                                    : "Aktifkan sesi"}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setSessionToDelete(session)}
+                                >
+                                  <IconTrash className="size-4" />
+                                  Hapus sesi
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
+      {/* Dialog konfirmasi hapus sesi. */}
       <AlertDialog
         open={sessionToDelete !== null}
         onOpenChange={(open) => {
@@ -485,10 +638,11 @@ function SessionsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus sesi?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus sesi ini?</AlertDialogTitle>
             <AlertDialogDescription>
-              Sesi “{sessionToDelete?.title}” dan seluruh data terkait akan
-              dihapus. Tindakan ini tidak dapat dibatalkan.
+              Sesi "{sessionToDelete?.title}" beserta seluruh data terkait
+              (respons siswa, pertanyaan, dan hasil) akan dihapus permanen.
+              Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -500,7 +654,7 @@ function SessionsPage() {
               disabled={deletingSessionId !== null}
               onClick={() => void confirmDeleteSession()}
             >
-              {deletingSessionId ? "Menghapus..." : "Hapus sesi"}
+              {deletingSessionId ? "Menghapus..." : "Ya, hapus sesi"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

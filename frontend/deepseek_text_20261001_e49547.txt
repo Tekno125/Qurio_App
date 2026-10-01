@@ -1,0 +1,335 @@
+KONTEKS PROJECT:
+Qurio — aplikasi kuis kelas.
+- Backend: Express + PostgreSQL (`backend/`)
+  - Routes: `backend/src/routes/`
+  - Controllers: `backend/src/controllers/`
+  - Schema: `backend/src/config/db/001_schema.sql`
+  - Pool: `backend/src/config/db/connection.js`
+  - JWT middleware: `backend/src/middleware/JWT.js` (teacherLimit)
+- Frontend: Next.js 16 App Router + TypeScript (`frontend/`)
+  - API helper: `frontend/lib/api.tsx`
+  - Halaman Analytics: `frontend/app/analytics/page.tsx`
+  - Register page: `frontend/app/(auth)/register/page.tsx`
+  - Chart: Recharts + shadcn/ui ChartContainer
+  - Toast: `frontend/components/ui/toast.tsx` (`toast.add({...})`)
+
+STATUS SAAT INI (sudah diaudit):
+- Fitur KUIS sudah sempurna. JANGAN sentuh controller/routes quiz.
+- Fitur POLLING punya bug (is_correct dianggap salah untuk polling).
+  Tapi INI TIDAK AKAN DIPAKAI di analytics. Skip.
+- Fitur UP VOTE backend ada, tapi tidak dipakai frontend.
+  Ini JUGA TIDAK DIPAKAI di analytics. Skip.
+- Peserta sesi (tabel `participants`) TIDAK ter-link ke `users`.
+  Ini OK, kita pakai nama sebagai identity key.
+
+KEPUTUSAN PRODUK:
+1. Siswa join anonymous pakai kode akses + nama (tidak wajib login).
+   Login siswa dipertahankan untuk masa depan, tapi register UI hanya guru.
+2. Identity key untuk leaderboard lintas-sesi = NAMA SISWA
+   (normalized: TRIM + LOWER).
+3. Leaderboard global lintas-sesi dulu (tab per-sesi nanti).
+4. Upvote TIDAK masuk leaderboard.
+   Leaderboard "Paling Aktif" hanya pakai:
+   - responsesSubmitted (COUNT responses)
+   - questionsAsked (COUNT questions)
+
+TARGET HALAMAN ANALYTICS SETELAH SELESAI:
+1. Kartu ringkasan: Total Siswa, Rata-rata Skor Kuis, Tingkat
+   Partisipasi, Sesi Dianalisis.
+2. AreaChart: Tren Partisipasi Siswa (per hari, 7/14/30 hari).
+3. Horizontal BarChart: Topik Paling Sulit.
+4. Tabel Leaderboard: 2 tab — Paling Aktif & Skor Tertinggi.
+5. Tombol Ekspor CSV + PDF.
+
+YANG DIBATALKAN (JANGAN DIBUAT):
+- ❌ Bar Chart Distribusi Nilai (A-E)
+- ❌ Donut Chart Tipe Aktivitas
+- ❌ Endpoint activity-mix
+- ❌ Analytics untuk tipe poll 'polling'
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN A — ADJUSTMENT REGISTER PAGE (KECIL)
+═══════════════════════════════════════════════════════════════════
+
+Di `frontend/app/(auth)/register/page.tsx`:
+- HAPUS selector role (dropdown "Guru / Siswa").
+- Register sekarang default ke role `guru` saja.
+- Update title/description halaman: "Daftar Akun Guru" (bukan
+  "Daftar Akun").
+- Kalau ada field yang tidak relevan untuk guru, hapus juga.
+- JANGAN ubah backend register controller — biarkan tetap menerima
+  role sebagai parameter. Hanya UI yang dibatasi.
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN B — SKIP (tidak perlu migration)
+═══════════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN C — SEEDER DATA
+═══════════════════════════════════════════════════════════════════
+
+Buat `backend/scripts/seed-analytics.js`:
+
+DATA DASAR:
+- 1 guru: email `guru@qurio.test`, password `password123` (bcrypt),
+  name "Bu Sari", role 'guru'.
+- 30 siswa di tabel `users` (role='siswa') dengan nama Indonesia
+  realistis. (Ini hanya untuk demo, karena siswa anonymous tetap
+  bisa join via participants.)
+- 8 sesi dalam 30 hari terakhir, judul:
+  1. Matematika — Persamaan Kuadrat
+  2. Bahasa Indonesia — Teks Eksposisi
+  3. IPA — Sistem Tata Surya
+  4. Sejarah — Kemerdekaan Indonesia
+  5. Bahasa Inggris — Simple Past Tense
+  6. Matematika — Trigonometri Dasar
+  7. IPA — Fotosintesis
+  8. IPS — Peta dan Skala
+  Setiap sesi `created_at` disebar dalam 30 hari terakhir
+  (NOW() - INTERVAL 'X days'). 4 sesi 'ended', 4 'active'.
+
+═══════════════════════════════════════════════
+PENTING — KONSISTENSI NAMA PESERTA:
+═══════════════════════════════════════════════
+Setiap siswa punya SATU nama tetap dari daftar 30 siswa.
+Kalau "Budi Santoso" hadir di 5 sesi berbeda, isi `participants.name`
+= "Budi Santoso" (persis) di KELIMA sesi tersebut.
+Ini penting karena analytics pakai nama sebagai identity key.
+
+JANGAN random nama per sesi. Pakai pool 30 nama yang sudah dibuat.
+
+DATA PER SESI:
+
+A. Polls KUIS (untuk skor siswa):
+   - Setiap sesi punya 5 poll type='quiz'.
+   - Setiap poll = 1 soal + 4 poll_options (1 correct).
+   - Pertanyaan sesuai tema sesi.
+   - Semua poll status='published'.
+   - INI YANG PALING PENTING untuk analytics.
+
+B. Polls Q&A:
+   - Setiap sesi punya 1 poll type='qa'.
+   - Isi `questions`: 5-15 pertanyaan per sesi, kolom `text` diisi
+     pertanyaan realistis, `student_id` NULL (karena anonymous),
+     `participant_id` diisi dari participants sesi itu,
+     `upvotes` random 0-20, `answered` random 30%.
+
+C. Polls WORDCLOUD:
+   - Setiap sesi punya 1 poll type='wordcloud'.
+   - Isi `wordcloud_word_counts`: 40-80 kata distribusi Zipf.
+
+D. Participants (WAJIB lengkap):
+   - Setiap sesi: 20-28 baris `participants`.
+   - Pilih random dari pool 30 siswa.
+   - `name` = nama persis dari pool (jangan diubah).
+   - `absen` 2 digit ('01', '02', dst). Untuk siswa yang sama,
+     usahakan absen konsisten lintas-sesi.
+
+E. Responses KUIS:
+   - Untuk setiap poll quiz di setiap sesi:
+     - 70-90% dari participants sesi itu hadir menjawab.
+     - Untuk setiap jawaban:
+       - `participant_id` = peserta yang jawab
+       - `student_id` = NULL (karena anonymous)
+       - `option_id` = pilih random dari 4 opsi
+       - `is_correct` = (option_id === opsi yang is_correct)
+     - Distribusi nilai NORMAL (Box-Muller), μ=75, σ=12, clamp 0-100.
+   - 1-2 soal per sesi dibuat "SULIT": 60-80% siswa di-set
+     is_correct=false.
+   - `submitted_at` disebar dalam rentang sesi berjalan.
+
+F. Responses Q&A & Wordcloud:
+   - Q&A: 30-50% participants isi response.
+   - Wordcloud: 60-80% isi response 1 kata acak.
+
+IDEMPOTENT:
+- TRUNCATE data milik guru@qurio.test saja.
+- Users guru + 30 siswa: pakai `INSERT ... ON CONFLICT (email)
+  DO NOTHING`.
+- Print progress setiap langkah.
+- Akhir: tampilkan COUNT(*) per tabel.
+
+Jalankan: `node backend/scripts/seed-analytics.js`.
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN D — ENDPOINT ANALYTICS
+═══════════════════════════════════════════════════════════════════
+
+Buat `backend/src/routes/analytics.route.js` dan
+`backend/src/controllers/analytics.controller.js`.
+
+Semua endpoint di-protect `teacherLimit`. Filter hanya sesi milik
+guru yang login (`WHERE sessions.teacher_id = $1`).
+
+IDENTITY KEY LINTAS-SESI = `LOWER(TRIM(COALESCE(users.name,
+participants.name)))`.
+
+1. GET `/api/analytics/summary?period=7d|30d|all`
+   Return:
+   {
+     totalStudents: number,       // COUNT DISTINCT nama siswa
+     averageScore: number,        // rata-rata skor semua kuis 0-100
+     participationRate: number,   // persen
+     totalSessions: number
+   }
+
+2. GET `/api/analytics/scores?period=7d|30d|all`
+   Return array skor per siswa per sesi:
+   [
+     {
+       studentKey,        // lowercase name untuk grouping
+       studentName,       // display name
+       sessionId, sessionTitle,
+       score, correctCount, totalQuestions,
+       submittedAt
+     }, ...
+   ]
+   Query: JOIN responses + poll_options + polls + sessions
+          LEFT JOIN participants, LEFT JOIN users.
+   Filter: poll.type='quiz', is_correct IS NOT NULL.
+
+3. GET `/api/analytics/students?period=7d|30d|all`
+   Return array partisipasi per siswa (grouped by nama):
+   [
+     {
+       studentKey,
+       studentName,
+       sessionsJoined,      // COUNT DISTINCT session_id
+       questionsAsked,      // COUNT dari questions
+       responsesSubmitted   // COUNT dari responses
+     }, ...
+   ]
+   JANGAN hitung upvote.
+
+4. GET `/api/analytics/topics?period=7d|30d|all&limit=5`
+   Return topik tersulit:
+   [
+     {
+       questionId, questionText, sessionTitle,
+       incorrectRate,     // persen
+       totalAnswers
+     }, ...
+   ]
+   Filter poll.type='quiz', totalAnswers >= 5. Urutkan DESC.
+
+5. GET `/api/analytics/participation-trend?period=7d|14d|30d`
+   Return titik harian:
+   [{ date, label, participants }, ...]
+   Isi hari kosong dengan 0.
+
+ATURAN SQL:
+- Parameterized ($1, $2). Jangan string concat.
+- Hindari N+1.
+- GROUP BY LOWER(TRIM(...)) untuk identity.
+
+Daftarkan di `backend/server.js`:
+`app.use("/api/analytics", analyticsRoutes);`
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN E — FRONTEND API HELPER
+═══════════════════════════════════════════════════════════════════
+
+Di `frontend/lib/api.tsx` tambahkan named export + tipe TS:
+- `getAnalyticsSummary(period)`
+- `getAnalyticsScores(period)`
+- `getAnalyticsStudents(period)`
+- `getAnalyticsTopics(period, limit?)`
+- `getAnalyticsParticipationTrend(period)`
+
+Ikuti pola fetch yang ada. Header Authorization Bearer.
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN F — WIRE UP HALAMAN ANALYTICS
+═══════════════════════════════════════════════════════════════════
+
+Di `frontend/app/analytics/page.tsx`:
+
+1. HAPUS komponen untuk Bar Chart Distribusi Nilai dan Donut Tipe
+   Aktivitas (kalau ada di versi sekarang).
+
+2. FETCH paralel pakai `Promise.allSettled`.
+
+3. LAYOUT (urutan):
+   a. Header + tombol Refresh + Ekspor CSV + Ekspor PDF.
+   b. Grid 4 kartu ringkasan (summary endpoint).
+   c. AreaChart Tren Partisipasi (full width).
+   d. Horizontal BarChart Topik Paling Sulit (full width).
+   e. Tabel Leaderboard (2 tab).
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN G — RECHARTS LEBIH RAME TAPI EFEKTIF
+═══════════════════════════════════════════════════════════════════
+
+1. **Tren Partisipasi — AreaChart dengan gradient**
+   Pakai `<defs><linearGradient>` untuk fill Area.
+   Tambah `<ReferenceLine>` horizontal = rata-rata partisipasi,
+   stroke dashed, label "Rata-rata: X siswa/hari".
+
+2. **Topik Tersulit — Horizontal BarChart**
+   - `layout="vertical"`, YAxis `type="category"` = text soal
+     (truncate 40 karakter + "…").
+   - XAxis `type="number"` = incorrectRate.
+   - Custom Cell: warna interpolasi kuning (#eab308) ke merah
+     (#dc2626) berdasarkan rate.
+   - `<LabelList dataKey="incorrectRate" position="right"
+     formatter={(v) => `${v}%`} />`.
+   - Tooltip: soal, sesi, total jawaban, % salah.
+
+3. **Sparkline di Leaderboard**
+   Komponen kecil `<MiniBarChart data={number[]} />` ukuran ~80x28.
+   Tidak pakai axis/grid/tooltip. Bar radius 2.
+
+4. **Kartu Ringkasan dengan micro chart**
+   Di bawah angka besar, mini LineChart 100x30 tren 7 hari.
+   Contoh di kartu "Tingkat Partisipasi".
+
+5. **Animasi**: turunkan `animationDuration={600}` di semua chart.
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN H — EXPORT CSV & PDF
+═══════════════════════════════════════════════════════════════════
+
+1. CSV: kolom
+   student_name, sessions_joined, questions_asked,
+   responses_submitted, average_score
+   Filename: `qurio-analytics-YYYY-MM-DD.csv`
+
+2. PDF: `npm install jspdf jspdf-autotable`
+   Buat `frontend/lib/export-pdf.ts`:
+   - Header: "Laporan Analitik Qurio" + tanggal
+   - Section kartu metrik ringkasan
+   - Tabel Leaderboard (10 teratas)
+   - Tabel Topik Tersulit (5 teratas)
+
+═══════════════════════════════════════════════════════════════════
+BAGIAN I — JALANKAN & VERIFIKASI
+═══════════════════════════════════════════════════════════════════
+
+1. `node backend/scripts/seed-analytics.js`
+2. Restart backend.
+3. Test curl endpoint (tampilkan output).
+4. Restart frontend.
+5. Buka `http://localhost:3000/analytics`:
+   - 4 kartu terisi angka.
+   - AreaChart tampil + ReferenceLine.
+   - Horizontal Bar tampil + label persen.
+   - Leaderboard 2 tab bisa switch.
+   - Export CSV & PDF jalan.
+   - Console: 0 error.
+6. Buka `/register`:
+   - Tidak ada selector role.
+   - Default guru.
+
+═══════════════════════════════════════════════════════════════════
+ATURAN KERJA
+═══════════════════════════════════════════════════════════════════
+- Ikuti pola kode existing.
+- JANGAN sentuh fitur quiz (controller/routes/components).
+- JANGAN sentuh fitur polling.
+- JANGAN buat Bar Chart Distribusi Nilai / Donut Tipe Aktivitas.
+- Semua file baru diberi komentar singkat.
+- Kalau ada ambiguitas, TANYA SAYA dulu.
+- Pause setelah setiap bagian (A, C, D, E, F, G, H, I) dan tunggu
+  saya bilang "lanjut".
+
+MULAI DARI BAGIAN A (hapus selector role di register page).
