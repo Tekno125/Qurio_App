@@ -44,7 +44,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Image
             src={LogoQurio}
             alt="Logo Qurio"
-            className="h-[65px] ml-5 w-auto object-contain object-left"
+            className="h-[45px] ml-10 w-auto object-contain object-left"
             priority
           />
         </Link>

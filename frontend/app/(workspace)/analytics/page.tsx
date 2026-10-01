@@ -126,17 +126,7 @@ interface DailyPoint {
 
 // Konfigurasi label dan warna chart: tren dan distribusi status.
 const trendChartConfig = {
-  sessions: { label: "Jumlah sesi", color: "var(--primary)" },
-  students: { label: "Jumlah siswa", color: "var(--chart-2)" },
-  minutes: {
-    label: "Total durasi (menit)",
-    color: "var(--color-brand-green)",
-  },
-} satisfies ChartConfig;
-
-const statusChartConfig = {
-  active: { label: "Aktif", color: "var(--primary)" },
-  ended: { label: "Selesai", color: "var(--chart-3)" },
+  students: { label: "Jumlah siswa", color: "var(--chart-2)" }
 } satisfies ChartConfig;
 
 // Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
@@ -290,7 +280,7 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
   const lastSessionAt = sessions.reduce<number | null>(
     (latest, session) =>
       session.startedAt !== null &&
-      (latest === null || session.startedAt > latest)
+        (latest === null || session.startedAt > latest)
         ? session.startedAt
         : latest,
     null,
@@ -478,22 +468,22 @@ function AnalyticsPage() {
     detail: ReactNode;
     compact?: boolean;
   }[] = [
-    {
-      label: "Total Seluruh Sesi",
-      value: String(analytics.totalSessions),
-      detail: "Tercatat di akun Anda",
-    },
-    {
-      label: "Sesi Aktif",
-      value: String(analytics.activeSessions),
-      detail: "Sedang berlangsung",
-    },
-    {
-      label: "Sesi Selesai",
-      value: String(analytics.endedSessions),
-      detail: `${analytics.completionRate}% dari total sesi`,
-    },
-  ];
+      {
+        label: "Total Seluruh Sesi",
+        value: String(analytics.totalSessions),
+        detail: "Tercatat di akun Anda",
+      },
+      {
+        label: "Sesi Aktif",
+        value: String(analytics.activeSessions),
+        detail: "Sedang berlangsung",
+      },
+      {
+        label: "Sesi Selesai",
+        value: String(analytics.endedSessions),
+        detail: `${analytics.completionRate}% dari total sesi`,
+      },
+    ];
 
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
@@ -694,173 +684,9 @@ function AnalyticsPage() {
                 )}
               </CardContent>
             </Card>
-
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-              {/* Donut distribusi status dengan angka total sesi di tengah. */}
-              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Distribusi Status
-                </CardTitle>
-                <CardDescription>
-                  {analytics.completionRate}% sesi sudah berakhir
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="gap-3 p-5 pt-4 sm:p-6 sm:pt-4">
-                {isLoading ? (
-                  <Skeleton className="mx-auto h-48 w-full max-w-56 rounded-full" />
-                ) : (
-                  <div className="relative">
-                    <ChartContainer
-                      id="session-status"
-                      config={statusChartConfig}
-                      className="mx-auto h-48 w-full max-w-56 aspect-auto"
-                    >
-                      <PieChart>
-                        <ChartTooltip
-                          cursor={false}
-                          content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Pie
-                          data={statusSeries}
-                          dataKey="value"
-                          nameKey="status"
-                          innerRadius="68%"
-                          paddingAngle={2}
-                          strokeWidth={0}
-                        />
-                      </PieChart>
-                    </ChartContainer>
-                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-foreground">
-                        {analytics.totalSessions}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        Total sesi
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {/* Legenda status aktif dan selesai. */}
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="gap-1.5 border-transparent bg-primary/10 px-2.5 text-primary"
-                  >
-                    <span className="size-1.5 rounded-full bg-primary" />
-                    Aktif {analytics.activeSessions}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="gap-1.5 border-transparent bg-muted px-2.5 text-muted-foreground"
-                  >
-                    <span className="size-1.5 rounded-full bg-chart-3" />
-                    Selesai {analytics.endedSessions}
-                  </Badge>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span>Sesi terakhir dibuat</span>
-                  <span className="truncate font-medium text-foreground">
-                    {analytics.lastSessionAt
-                      ? dateTimeFormatter.format(
-                          new Date(analytics.lastSessionAt),
-                        )
-                      : "-"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <div className="mt-6 grid gap-3">
-            <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
-              <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-                <CardTitle className="text-base font-semibold text-foreground">
-                  Sesi dengan Durasi Terlama
-                </CardTitle>
-                <CardDescription>
-                  Lima sesi dengan total waktu paling panjang
-                </CardDescription>
-                <CardAction>
-                  <Link
-                    href="/sessions"
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "xs" }),
-                      "text-muted-foreground",
-                    )}
-                  >
-                    Semua sesi
-                    <IconArrowUpRight className="size-3.5" />
-                  </Link>
-                </CardAction>
-              </CardHeader>
-              <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-                {/* Tabel lima sesi dengan total durasi paling panjang. */}
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[0, 1, 2, 3, 4].map((row) => (
-                      <Skeleton key={row} className="h-9 w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : longestSessions.length === 0 ? (
-                  <div className="grid h-44 w-full place-items-center rounded-xl bg-muted/60 px-6 text-center text-sm text-muted-foreground">
-                    Belum ada sesi yang punya durasi tercatat.
-                  </div>
-                ) : (
-                  <div className="overflow-hidden rounded-xl border border-border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="px-4">Judul Sesi</TableHead>
-                          <TableHead className="px-4">Status</TableHead>
-                          <TableHead className="px-4">Mulai</TableHead>
-                          <TableHead className="px-4 text-right">
-                            Durasi
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {longestSessions.map((session) => (
-                          <TableRow key={session.id}>
-                            <TableCell className="px-4 py-3 font-medium text-foreground">
-                              <Link
-                                href={`/dashboard/session/${session.id}`}
-                                className="inline-flex items-center gap-1.5 transition-colors hover:text-primary hover:underline"
-                              >
-                                <span className="line-clamp-1">
-                                  {session.title}
-                                </span>
-                                <IconExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
-                              </Link>
-                            </TableCell>
-                            <TableCell className="px-4 py-3">
-                              <Badge
-                                variant="outline"
-                                className={
-                                  session.status === "active"
-                                    ? "border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                                    : "border-transparent bg-muted text-muted-foreground"
-                                }
-                              >
-                                {session.status === "active"
-                                  ? "Aktif"
-                                  : "Selesai"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-muted-foreground">
-                              {formatDate(session.createdAtRaw)}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-right font-semibold text-foreground tabular-nums">
-                              {formatDurationShort(session.durationMs)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
@@ -902,13 +728,12 @@ function AnalyticsPage() {
                           <span
                             className="block h-full rounded-full bg-primary"
                             style={{
-                              width: `${
-                                mostPopulatedSessions[0].studentCount > 0
-                                  ? (session.studentCount /
-                                      mostPopulatedSessions[0].studentCount) *
-                                    100
-                                  : 0
-                              }%`,
+                              width: `${mostPopulatedSessions[0].studentCount > 0
+                                ? (session.studentCount /
+                                  mostPopulatedSessions[0].studentCount) *
+                                100
+                                : 0
+                                }%`,
                             }}
                           />
                         </span>
