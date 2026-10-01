@@ -12,6 +12,7 @@ import responsesRouter from "./src/routes/responses.route.js";
 import questionsRouter from "./src/routes/questions.route.js";
 import wordcloudRouter from "./src/routes/wordcloud.route.js";
 import usersRegLogRouter from "./src/routes/auth.route.js";
+import analyticsRouter from "./src/routes/analytics.route.js";
 
 dotenv.config({ quiet: true });
 
@@ -63,6 +64,7 @@ app.use("/api/responses", responsesRouter);
 app.use("/api/questions", questionsRouter);
 app.use("/api/wordcloud", wordcloudRouter);
 app.use("/api/users", usersRegLogRouter);
+app.use("/api/analytics", analyticsRouter);
 // app.use("/api/participants", participantsRouter)
 app.use("/api/test", (req, res) => {
     res.send("Test");
