@@ -76,7 +76,7 @@ export const getSessions = async (req, res) => {
   }
 
   try {
-    // Ambil semua sesi milik guru, urutkan dari yang paling baru
+    // Step 1: Ambil semua sesi milik guru, urutkan dari yang paling baru
     const sessionsResult = await pool.query(
       `
   SELECT
@@ -92,7 +92,87 @@ export const getSessions = async (req, res) => {
       [teacher_id],
     );
 
-    res.status(200).json({ success: true, data: sessionsResult.rows });
+    const sessions = sessionsResult.rows;
+
+    // Bila guru belum punya sesi, tidak perlu query tambahan
+    if (sessions.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const sessionIds = sessions.map((session) => session.id);
+
+    // Step 2 & Step 3: Jumlah soal (total poll) dan nilai tiap siswa dijalankan
+    // secara paralel karena keduanya tidak saling bergantung — hanya butuh
+    // sessionIds. Promise.all membuat total waktu tunggu mendekati query
+    // terlama, bukan jumlah keduanya.
+    const [questionsResult, scoresResult] = await Promise.all([
+      // Step 2: Hitung jumlah soal (total poll) untuk tiap sesi
+      pool.query(
+        `
+        SELECT session_id, COUNT(*)::int AS total_questions
+        FROM polls
+        WHERE session_id = ANY($1::uuid[])
+        GROUP BY session_id
+        `,
+        [sessionIds],
+      ),
+
+      // Step 3: Hitung nilai tiap siswa (jumlah jawaban benar) per sesi
+      pool.query(
+        `
+        SELECT
+          pa.id AS participant_id,
+          pa.session_id,
+          pa.name,
+          pa.absen,
+          COUNT(r.id) FILTER (WHERE r.is_correct = TRUE)::int AS score
+        FROM participants pa
+        LEFT JOIN responses r
+          ON r.participant_id = pa.id
+        WHERE pa.session_id = ANY($1::uuid[])
+        GROUP BY pa.id
+        ORDER BY pa.absen ASC
+        `,
+        [sessionIds],
+      ),
+    ]);
+
+    // Petakan jumlah soal berdasarkan session_id
+    const totalQuestionsBySession = new Map(
+      questionsResult.rows.map((row) => [row.session_id, row.total_questions]),
+    );
+
+    // Kelompokkan nilai siswa berdasarkan session_id
+    const scoresBySession = new Map();
+    for (const row of scoresResult.rows) {
+      if (!scoresBySession.has(row.session_id)) {
+        scoresBySession.set(row.session_id, []);
+      }
+
+      scoresBySession.get(row.session_id).push({
+        participant_id: row.participant_id,
+        name: row.name,
+        absen: row.absen,
+        score: row.score,
+      });
+    }
+
+    // Step 4: Sisipkan properti participants ke setiap sesi.
+    // participant_count dipindah ke dalam participants (bukan lagi field sejajar).
+    const enrichedSessions = sessions.map((session) => {
+      const { participant_count, ...sessionData } = session;
+
+      return {
+        ...sessionData,
+        participants: {
+          participant_count,
+          total_questions: totalQuestionsBySession.get(session.id) ?? 0,
+          scores: scoresBySession.get(session.id) ?? [],
+        },
+      };
+    });
+
+    res.status(200).json({ success: true, data: enrichedSessions });
   } catch (error) {
     console.error("Get sessions error:", error.message);
     return res.status(500).json({

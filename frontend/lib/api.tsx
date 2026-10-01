@@ -71,15 +71,30 @@ export interface Sessions {
   token: string;
 }
 
+// Nilai (skor) satu siswa pada sebuah sesi.
+export interface ParticipantScore {
+  participant_id: string;
+  name: string;
+  absen: string;
+  score: number;
+}
+
+// Ringkasan peserta yang dikirim backend pada tiap sesi.
+export interface SessionParticipants {
+  participant_count: number;
+  total_questions: number;
+  scores: ParticipantScore[];
+}
+
 export interface SessionListItem {
   id: string;
   teacher_id: string;
   title: string;
   access_code: string;
-  participant_count: number;
   status: "active" | "ended";
   created_at: string;
   ended_at: string | null;
+  participants?: SessionParticipants;
 }
 
 interface SessionListResponse {

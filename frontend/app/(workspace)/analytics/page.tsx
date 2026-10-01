@@ -188,7 +188,7 @@ function toTimedSession(session: SessionListItem, now: number): TimedSession {
     id: session.id,
     title: session.title,
     status: session.status,
-    studentCount: session.participant_count,
+    studentCount: session.participants?.participant_count ?? 0,
     startedAt,
     endedAt,
     durationMs,

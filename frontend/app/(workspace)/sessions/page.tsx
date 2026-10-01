@@ -402,7 +402,7 @@ function SessionsPage() {
                         />
                       </TableCell>
                       <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
-                        {session.participant_count}
+                        {session.participants?.participant_count ?? 0}
                       </TableCell>
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(session.created_at)}

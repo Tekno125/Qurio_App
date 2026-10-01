@@ -282,11 +282,11 @@ function DashboardPage() {
                   <TableHead className="px-4 py-3 font-semibold">
                     Kode akses
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-semibold">
-                    Dibuat
+                  <TableHead className="px-4 py-3 text-center font-semibold">
+                    Siswa
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
-                    Berakhir
+                    Dibuat
                   </TableHead>
                   <TableHead className="px-4 py-3 font-semibold">
                     Status
@@ -358,11 +358,11 @@ function DashboardPage() {
                           className="ml-2"
                         />
                       </TableCell>
-                      <TableCell className="px-4 py-3.5 text-muted-foreground">
-                        {formatDate(session.created_at)}
+                      <TableCell className="px-4 py-3.5 text-center font-medium text-foreground">
+                        {session.participants?.participant_count ?? 0}
                       </TableCell>
                       <TableCell className="px-4 py-3.5 text-muted-foreground">
-                        {formatDate(session.ended_at)}
+                        {formatDate(session.created_at)}
                       </TableCell>
                       <TableCell className="px-4 py-3.5">
                         <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
