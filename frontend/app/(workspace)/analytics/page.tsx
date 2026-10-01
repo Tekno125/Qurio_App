@@ -11,16 +11,12 @@ import {
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
   XAxis,
   YAxis,
 } from "recharts";
@@ -30,7 +26,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -41,8 +37,6 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -57,192 +51,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getSessionList, type SessionListItem } from "@/lib/api";
+import {
+  getAnalyticsParticipationTrend,
+  getAnalyticsScores,
+  getAnalyticsStudents,
+  getAnalyticsSummary,
+  getAnalyticsTopics,
+  type AnalyticsSummary,
+  type ParticipationTrendPeriod,
+  type ParticipationTrendPoint,
+  type StudentParticipation,
+  type StudentScore,
+  type TopTopic,
+} from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
-// -------------------------------------------------------------
-// Konstanta & tipe
-// -------------------------------------------------------------
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const MS_PER_MINUTE = 60 * 1000;
-const SESSION_CACHE_TTL_MS = 30_000;
+const TREND_RANGES: { value: ParticipationTrendPeriod; label: string }[] = [
+  { value: "7d", label: "7 hari" },
+  { value: "14d", label: "14 hari" },
+  { value: "30d", label: "30 hari" },
+];
 
-const TREND_RANGES = [
-  { value: "7", label: "7 hari" },
-  { value: "14", label: "14 hari" },
-  { value: "30", label: "30 hari" },
-] as const;
-type TrendRange = (typeof TREND_RANGES)[number]["value"];
-
-// Rentang nilai untuk distribusi skor.
-const SCORE_BUCKETS = [
-  { key: "A", min: 85, max: 100, color: "var(--chart-1)" },
-  { key: "B", min: 70, max: 84, color: "var(--chart-2)" },
-  { key: "C", min: 55, max: 69, color: "var(--chart-3)" },
-  { key: "D", min: 40, max: 54, color: "var(--chart-4)" },
-  { key: "E", min: 0, max: 39, color: "var(--chart-5)" },
-] as const;
-
-// Formatter.
-const dateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
 const timeFormatter = new Intl.DateTimeFormat("id-ID", {
   hour: "2-digit",
   minute: "2-digit",
 });
-const dayLabelFormatter = new Intl.DateTimeFormat("id-ID", {
-  day: "numeric",
-  month: "short",
-});
-
-// -------------------------------------------------------------
-// Tipe data analitik siswa (dari endpoint masa depan)
-// -------------------------------------------------------------
-
-/** Ringkasan skor satu siswa dalam satu sesi kuis. */
-interface StudentScore {
-  studentId: string;
-  studentName: string;
-  sessionId: string;
-  sessionTitle: string;
-  score: number; // 0–100
-  correctCount: number;
-  totalQuestions: number;
-}
-
-/** Ringkasan partisipasi per siswa untuk leaderboard. */
-interface StudentParticipation {
-  studentId: string;
-  studentName: string;
-  sessionsJoined: number;
-  questionsAsked: number;
-  upvotesGiven: number;
-  responsesSubmitted: number;
-}
-
-/** Topik/pertanyaan yang paling sering dijawab salah. */
-interface TopTopic {
-  questionId: string;
-  questionText: string;
-  sessionTitle: string;
-  incorrectRate: number; // 0–100
-  totalAnswers: number;
-}
-
-/** Distribusi tipe aktivitas yang dijalankan di kelas. */
-interface ActivityMixItem {
-  type: "quiz" | "qa" | "wordcloud";
-  label: string;
-  value: number;
-  color: string;
-}
-
-// -------------------------------------------------------------
-// Cache
-// -------------------------------------------------------------
-let sessionCache: { sessions: SessionListItem[]; fetchedAt: number } | null =
-  null;
-
-// -------------------------------------------------------------
-// Chart configs
-// -------------------------------------------------------------
-const scoreDistConfig = {
-  count: { label: "Jumlah siswa" },
-} satisfies ChartConfig;
-
-const activityMixConfig = {
-  value: { label: "Jumlah" },
-  quiz: { label: "Kuis", color: "var(--chart-1)" },
-  qa: { label: "Tanya Jawab", color: "var(--chart-2)" },
-  wordcloud: { label: "Word Cloud", color: "var(--chart-3)" },
-} satisfies ChartConfig;
 
 const participationConfig = {
-  participants: { label: "Siswa terlibat", color: "var(--chart-2)" },
+  participants: { label: "Siswa berpartisipasi", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
-// -------------------------------------------------------------
-// Helpers
-// -------------------------------------------------------------
-function formatDate(value: string | null) {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? "-"
-    : dateTimeFormatter.format(parsed);
-}
-
-function toTimestamp(value: string | null): number | null {
-  if (!value) return null;
-  const parsed = new Date(value).getTime();
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-/**
- * Hitung distribusi nilai menjadi bucket A/B/C/D/E.
- * Aktif dipakai saat endpoint `/api/analytics/scores` sudah tersedia.
- */
-function buildScoreDistribution(scores: StudentScore[]) {
-  const counts = new Map<string, number>();
-  SCORE_BUCKETS.forEach((bucket) => counts.set(bucket.key, 0));
-
-  scores.forEach((score) => {
-    const bucket = SCORE_BUCKETS.find(
-      (b) => score.score >= b.min && score.score <= b.max,
-    );
-    if (bucket) counts.set(bucket.key, (counts.get(bucket.key) ?? 0) + 1);
-  });
-
-  return SCORE_BUCKETS.map((bucket) => ({
-    grade: bucket.key,
-    count: counts.get(bucket.key) ?? 0,
-    fill: bucket.color,
-  }));
-}
-
-/**
- * Agregasi partisipasi siswa per hari dari sessions.participant_count.
- * Ini bukan data siswa unik (karena satu siswa bisa join banyak sesi),
- * tapi cukup untuk menunjukkan TREN aktivitas.
- */
-function buildParticipationTrend(
-  sessions: SessionListItem[],
-  days: number,
-  now: number,
-) {
-  const dayStart = new Date(now);
-  dayStart.setHours(0, 0, 0, 0);
-
-  const points: { key: string; label: string; participants: number }[] = [];
-  const indexByKey = new Map<string, number>();
-
-  for (let offset = days - 1; offset >= 0; offset -= 1) {
-    const day = new Date(dayStart.getTime() - offset * MS_PER_DAY);
-    const key = `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
-    indexByKey.set(key, points.length);
-    points.push({
-      key,
-      label: dayLabelFormatter.format(day),
-      participants: 0,
-    });
-  }
-
-  sessions.forEach((session) => {
-    const ts = toTimestamp(session.created_at);
-    if (ts === null) return;
-    const day = new Date(ts);
-    const idx = indexByKey.get(
-      `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
-    );
-    if (idx === undefined) return;
-    points[idx].participants += session.participant_count ?? 0;
-  });
-
-  return points;
-}
+const topicsConfig = {
+  incorrectRate: { label: "Jawaban salah", color: "var(--chart-4)" },
+} satisfies ChartConfig;
 
 // -------------------------------------------------------------
 // Komponen kecil yang dapat dipakai ulang
@@ -275,67 +117,78 @@ function EmptyBlock({
 // Halaman utama
 // -------------------------------------------------------------
 function AnalyticsPage() {
-  const [rawSessions, setRawSessions] = useState<SessionListItem[]>([]);
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [studentScores, setStudentScores] = useState<StudentScore[]>([]);
+  const [studentParticipation, setStudentParticipation] = useState<
+    StudentParticipation[]
+  >([]);
+  const [topTopics, setTopTopics] = useState<TopTopic[]>([]);
+  const [participationTrend, setParticipationTrend] = useState<
+    ParticipationTrendPoint[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
-  const [trendRange, setTrendRange] = useState<TrendRange>("7");
+  const [trendRange, setTrendRange] = useState<ParticipationTrendPeriod>("7d");
   const [leaderboardTab, setLeaderboardTab] = useState<
     "active" | "top-score"
   >("active");
-  const [now, setNow] = useState(() => Date.now());
   const requestRef = useRef(false);
-
-  // ---- Data per-siswa (endpoint masa depan) ----
-  // Saat endpoint siap, ganti dengan fetch di dalam loadSessions().
-  // Contoh: const [scores, participation, topics, activityMix] = await Promise.all([
-  //   fetchStudentScores(), fetchStudentParticipation(), fetchTopTopics(), fetchActivityMix()
-  // ]);
-  const studentScores: StudentScore[] = [];
-  const studentParticipation: StudentParticipation[] = [];
-  const topTopics: TopTopic[] = [];
-  const activityMix: ActivityMixItem[] = [];
-
-  const applySessions = useCallback(
-    (list: SessionListItem[], stamp: number) => {
-      setRawSessions(list);
-      setFetchedAt(stamp);
-      setNow(Date.now());
-    },
-    [],
-  );
 
   const loadSessions = useCallback(
     async ({ force = false }: { force?: boolean } = {}) => {
       if (requestRef.current) return;
-
-      if (
-        !force &&
-        sessionCache &&
-        Date.now() - sessionCache.fetchedAt < SESSION_CACHE_TTL_MS
-      ) {
-        applySessions(sessionCache.sessions, sessionCache.fetchedAt);
-        setErrorMessage(null);
-        setIsLoading(false);
-        return;
-      }
 
       requestRef.current = true;
       if (force) setIsRefreshing(true);
       else setIsLoading(true);
 
       try {
-        const list = await getSessionList();
+        const [summaryResult, scoresResult, studentsResult, topicsResult, trendResult] =
+          await Promise.allSettled([
+            getAnalyticsSummary("all"),
+            getAnalyticsScores("all"),
+            getAnalyticsStudents("all"),
+            getAnalyticsTopics("all", 5),
+            getAnalyticsParticipationTrend(trendRange),
+          ] as const);
+
+        if (summaryResult.status === "fulfilled") {
+          setSummary(summaryResult.value);
+        }
+        if (scoresResult.status === "fulfilled") {
+          setStudentScores(scoresResult.value);
+        }
+        if (studentsResult.status === "fulfilled") {
+          setStudentParticipation(studentsResult.value);
+        }
+        if (topicsResult.status === "fulfilled") {
+          setTopTopics(topicsResult.value);
+        }
+        if (trendResult.status === "fulfilled") {
+          setParticipationTrend(trendResult.value);
+        }
+
+        const failures: string[] = [];
+        if (summaryResult.status === "rejected") failures.push("ringkasan");
+        if (scoresResult.status === "rejected") failures.push("skor");
+        if (studentsResult.status === "rejected") {
+          failures.push("partisipasi siswa");
+        }
+        if (topicsResult.status === "rejected") {
+          failures.push("topik tersulit");
+        }
+        if (trendResult.status === "rejected") {
+          failures.push("tren partisipasi");
+        }
+
         const stamp = Date.now();
-        sessionCache = { sessions: list, fetchedAt: stamp };
-        applySessions(list, stamp);
-        setErrorMessage(null);
-      } catch (error: unknown) {
+        setFetchedAt(stamp);
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Data analitik gagal dimuat. Silakan coba lagi.",
+          failures.length > 0
+            ? `Sebagian data tidak dapat dimuat: ${failures.join(", ")}.`
+            : null,
         );
       } finally {
         requestRef.current = false;
@@ -343,7 +196,7 @@ function AnalyticsPage() {
         setIsRefreshing(false);
       }
     },
-    [applySessions],
+    [trendRange],
   );
 
   useEffect(() => {
@@ -351,108 +204,62 @@ function AnalyticsPage() {
     return () => window.clearTimeout(timer);
   }, [loadSessions]);
 
-  // Selama sesi berjalan, partisipasi bisa bertambah → refresh tiap menit.
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), MS_PER_MINUTE);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  // ---- Turunan data ----
-  const totalStudents = useMemo(
-    () =>
-      rawSessions.reduce(
-        (sum, session) => sum + (session.participant_count ?? 0),
-        0,
-      ),
-    [rawSessions],
-  );
-
-  const activeSessionsCount = rawSessions.filter(
-    (s) => s.status === "active",
-  ).length;
-
-  // Rata-rata skor dihitung hanya kalau ada data skor.
-  const averageScore =
-    studentScores.length > 0
-      ? Math.round(
-        studentScores.reduce((sum, s) => sum + s.score, 0) /
-        studentScores.length,
-      )
-      : null;
-
-  // Tingkat partisipasi = siswa yang submit minimal 1 respons / total siswa.
-  const participationRate =
-    studentParticipation.length > 0
-      ? Math.round(
-        (studentParticipation.filter((s) => s.responsesSubmitted > 0)
-          .length /
-          studentParticipation.length) *
-        100,
-      )
-      : null;
-
-  const scoreDistribution = buildScoreDistribution(studentScores);
-
-  const participationTrend = useMemo(
-    () =>
-      buildParticipationTrend(
-        rawSessions,
-        Number(trendRange),
-        Math.max(now, fetchedAt ?? 0),
-      ),
-    [rawSessions, trendRange, now, fetchedAt],
-  );
-
   const hasParticipationData = participationTrend.some(
     (point) => point.participants > 0,
   );
 
-  const topScoreStudents = useMemo(
-    () =>
-      [...studentScores]
-        .reduce<Map<string, { name: string; total: number; count: number }>>(
-          (acc, s) => {
-            const existing = acc.get(s.studentId) ?? {
-              name: s.studentName,
-              total: 0,
-              count: 0,
-            };
-            existing.total += s.score;
-            existing.count += 1;
-            acc.set(s.studentId, existing);
-            return acc;
-          },
-          new Map(),
-        )
-        .entries(),
-    [studentScores],
-  );
+  const scoreByStudent = useMemo(() => {
+    const totals = new Map<
+      string,
+      { studentName: string; scoreTotal: number; sessionCount: number }
+    >();
+
+    studentScores.forEach((score) => {
+      const existing = totals.get(score.studentKey) ?? {
+        studentName: score.studentName,
+        scoreTotal: 0,
+        sessionCount: 0,
+      };
+      existing.scoreTotal += score.score;
+      existing.sessionCount += 1;
+      totals.set(score.studentKey, existing);
+    });
+
+    return new Map(
+      [...totals.entries()].map(([studentKey, student]) => [
+        studentKey,
+        {
+          studentName: student.studentName,
+          average: Math.round(student.scoreTotal / student.sessionCount),
+          sessionCount: student.sessionCount,
+        },
+      ]),
+    );
+  }, [studentScores]);
 
   const topScoreLeaderboard = useMemo(
-    () =>
-      Array.from(topScoreStudents)
-        .map(([id, { name, total, count }]) => ({
-          studentId: id,
-          studentName: name,
-          average: Math.round(total / count),
-          sessionCount: count,
+    () => {
+      return [...scoreByStudent.entries()]
+        .map(([studentKey, student]) => ({
+          studentKey,
+          studentName: student.studentName,
+          average: student.average,
+          sessionCount: student.sessionCount,
         }))
-        .sort((a, b) => b.average - a.average)
-        .slice(0, 10),
-    [topScoreStudents],
+        .sort((first, second) => second.average - first.average)
+        .slice(0, 10);
+    },
+    [scoreByStudent],
   );
 
   const activeLeaderboard = useMemo(
     () =>
       [...studentParticipation]
         .sort(
-          (a, b) =>
-            b.sessionsJoined * 3 +
-            b.questionsAsked * 2 +
-            b.responsesSubmitted -
-            (a.sessionsJoined * 3 +
-              a.questionsAsked * 2 +
-              a.responsesSubmitted),
+          (first, second) =>
+            second.questionsAsked + second.responsesSubmitted -
+            (first.questionsAsked + first.responsesSubmitted) ||
+            second.sessionsJoined - first.sessionsJoined,
         )
         .slice(0, 10),
     [studentParticipation],
@@ -472,22 +279,24 @@ function AnalyticsPage() {
 
     const rows: string[] = [];
     rows.push(
-      "student_id,student_name,sessions_joined,questions_asked,responses_submitted,average_score",
+      "student_name,sessions_joined,questions_asked,responses_submitted,average_score",
     );
 
-    const scoreByStudent = new Map(
-      topScoreLeaderboard.map((row) => [row.studentId, row.average]),
+    const scoreByStudentName = new Map(
+      [...scoreByStudent.entries()].map(([studentKey, student]) => [
+        studentKey,
+        student.average,
+      ]),
     );
 
     studentParticipation.forEach((p) => {
       rows.push(
         [
-          p.studentId,
-          `"${p.studentName}"`,
+          `"${p.studentName.replaceAll('"', '""')}"`,
           p.sessionsJoined,
           p.questionsAsked,
           p.responsesSubmitted,
-          scoreByStudent.get(p.studentId) ?? "",
+          scoreByStudentName.get(p.studentKey) ?? "",
         ].join(","),
       );
     });
@@ -518,29 +327,29 @@ function AnalyticsPage() {
     compact?: boolean;
   }[] = [
       {
-        label: "Total Siswa Terlibat",
-        value: String(totalStudents),
-        detail: `${rawSessions.length} sesi, ${activeSessionsCount} sedang aktif`,
+        label: "Total Siswa",
+        value: summary ? String(summary.totalStudents) : "-",
+        detail: "Siswa unik di seluruh sesi",
       },
       {
         label: "Rata-rata Skor Kuis",
-        value: averageScore !== null ? String(averageScore) : "-",
+        value: summary ? `${Math.round(summary.averageScore)}%` : "-",
         detail:
-          averageScore !== null
-            ? `Dari ${studentScores.length} jawaban siswa`
+          summary
+            ? `Dari ${studentScores.length} rekap siswa-sesi`
             : "Menunggu data jawaban kuis",
       },
       {
         label: "Tingkat Partisipasi",
-        value: participationRate !== null ? `${participationRate}%` : "-",
+        value: summary ? `${Math.round(summary.participationRate)}%` : "-",
         detail:
-          participationRate !== null
-            ? "Siswa yang menjawab minimal 1 aktivitas"
+          summary
+            ? "Siswa yang berpartisipasi di sesi yang diikuti"
             : "Menunggu data respons",
       },
       {
         label: "Sesi Dianalisis",
-        value: String(rawSessions.length),
+        value: summary ? String(summary.totalSessions) : "-",
         detail:
           fetchedAt !== null
             ? `Diperbarui ${timeFormatter.format(new Date(fetchedAt))}`
@@ -579,6 +388,15 @@ function AnalyticsPage() {
           <Button size="sm" onClick={handleExportCSV}>
             <IconDownload className="size-4" />
             Ekspor CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            aria-label="Ekspor PDF"
+          >
+            <IconDownload className="size-4" />
+            Ekspor PDF
           </Button>
         </div>
       </header>
@@ -632,119 +450,21 @@ function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Baris 1: Distribusi Nilai + Tipe Aktivitas. */}
-      <div className="mt-6 grid gap-3 lg:grid-cols-3">
-        <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
-          <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Distribusi Nilai Kuis
-            </CardTitle>
-            <CardDescription>
-              Sebaran nilai siswa di semua sesi kuis (skala A–E)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-            {isLoading ? (
-              <Skeleton className="h-64 w-full rounded-xl" />
-            ) : studentScores.length > 0 ? (
-              <ChartContainer
-                config={scoreDistConfig}
-                className="h-64 w-full aspect-auto"
-              >
-                <BarChart
-                  data={scoreDistribution}
-                  margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="grade"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    tickLine={false}
-                    axisLine={false}
-                    width={28}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={56}>
-                    {scoreDistribution.map((entry) => (
-                      <Cell key={entry.grade} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ChartContainer>
-            ) : (
-              <EmptyBlock
-                title="Belum ada data nilai"
-                description="Distribusi nilai muncul setelah siswa menjawab kuis di sesi Anda. Minta siswa menyelesaikan minimal satu kuis."
-                icon={<IconAward className="size-5" />}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-          <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Tipe Aktivitas
-            </CardTitle>
-            <CardDescription>
-              Komposisi jenis aktivitas kelas yang dijalankan
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-            {isLoading ? (
-              <Skeleton className="h-64 w-full rounded-xl" />
-            ) : activityMix.length > 0 ? (
-              <ChartContainer
-                config={activityMixConfig}
-                className="mx-auto h-64 w-full aspect-auto"
-              >
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                  <Pie
-                    data={activityMix}
-                    dataKey="value"
-                    nameKey="label"
-                    innerRadius={56}
-                    outerRadius={90}
-                    paddingAngle={3}
-                  >
-                    {activityMix.map((entry) => (
-                      <Cell key={entry.type} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartLegend
-                    content={<ChartLegendContent nameKey="label" />}
-                  />
-                </PieChart>
-              </ChartContainer>
-            ) : (
-              <EmptyBlock
-                title="Belum ada aktivitas tercatat"
-                description="Donut chart ini menampilkan perbandingan kuis, tanya jawab, dan word cloud yang Anda jalankan."
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Baris 2: Tren Partisipasi. */}
+      {/* Tren partisipasi harian. */}
       <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
         <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
           <CardTitle className="text-base font-semibold text-foreground">
             Tren Partisipasi Siswa
           </CardTitle>
           <CardDescription>
-            Total kehadiran siswa per hari (dihitung dari seluruh sesi)
+            Siswa unik yang bergabung per hari
           </CardDescription>
           <CardAction>
             <Tabs
               value={trendRange}
-              onValueChange={(value) => setTrendRange(value as TrendRange)}
+              onValueChange={(value) =>
+                setTrendRange(value as ParticipationTrendPeriod)
+              }
               className="w-auto gap-0"
             >
               <TabsList className="h-8 w-fit gap-1 rounded-full border-b-0 bg-muted px-1 py-1">
@@ -769,7 +489,7 @@ function AnalyticsPage() {
               config={participationConfig}
               className="h-56 w-full aspect-auto"
             >
-              <LineChart
+              <AreaChart
                 data={participationTrend}
                 margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
               >
@@ -788,15 +508,15 @@ function AnalyticsPage() {
                   width={28}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="participants"
                   stroke="var(--color-participants)"
+                  fill="var(--color-participants)"
+                  fillOpacity={0.18}
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
                 />
-              </LineChart>
+              </AreaChart>
             </ChartContainer>
           ) : (
             <EmptyBlock
@@ -808,142 +528,141 @@ function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Baris 3: Leaderboard + Topik Tersulit. */}
-      <div className="mt-6 grid gap-3 lg:grid-cols-3">
-        <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none lg:col-span-2">
-          <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Papan Peringkat Siswa
-            </CardTitle>
-            <CardDescription>
-              Berdasarkan aktivitas dan capaian nilai di semua sesi
-            </CardDescription>
-            <CardAction>
-              <Tabs
-                value={leaderboardTab}
-                onValueChange={(value) =>
-                  setLeaderboardTab(value as "active" | "top-score")
-                }
-                className="w-auto gap-0"
+      {/* Topik tersulit berdasarkan persentase jawaban salah. */}
+      <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+        <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+          <CardTitle className="text-base font-semibold text-foreground">
+            Topik Paling Sulit
+          </CardTitle>
+          <CardDescription>
+            Persentase jawaban salah per soal kuis
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+          {isLoading ? (
+            <Skeleton className="h-72 w-full rounded-xl" />
+          ) : topTopics.length > 0 ? (
+            <ChartContainer
+              config={topicsConfig}
+              className="h-72 w-full aspect-auto"
+            >
+              <BarChart
+                data={topTopics.slice(0, 5)}
+                layout="vertical"
+                margin={{ top: 8, right: 24, left: 8, bottom: 0 }}
               >
-                <TabsList className="h-8 w-fit gap-1 rounded-full border-b-0 bg-muted px-1 py-1">
-                  <TabsTrigger
-                    value="active"
-                    className="h-6 rounded-full border-b-0 px-3 text-xs data-active:border-transparent data-active:bg-background data-active:text-foreground"
-                  >
-                    Paling Aktif
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="top-score"
-                    className="h-6 rounded-full border-b-0 px-3 text-xs data-active:border-transparent data-active:bg-background data-active:text-foreground"
-                  >
-                    Skor Tertinggi
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-            {isLoading ? (
-              <div className="space-y-3">
-                {[0, 1, 2, 3, 4].map((row) => (
-                  <Skeleton key={row} className="h-12 w-full rounded-lg" />
-                ))}
-              </div>
-            ) : leaderboardTab === "active" ? (
-              activeLeaderboard.length > 0 ? (
-                <LeaderboardTable
-                  rows={activeLeaderboard.map((row, index) => ({
-                    rank: index + 1,
-                    name: row.studentName,
-                    metric: `${row.sessionsJoined} sesi · ${row.questionsAsked} tanya · ${row.responsesSubmitted} jawaban`,
-                    value: row.sessionsJoined + row.questionsAsked,
-                  }))}
+                <CartesianGrid horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value: number) => `${value}%`}
                 />
-              ) : (
-                <EmptyBlock
-                  title="Belum ada data aktivitas siswa"
-                  description="Papan peringkat terisi otomatis saat siswa bergabung, mengirim pertanyaan, atau menjawab aktivitas."
-                  icon={<IconUsers className="size-5" />}
+                <YAxis
+                  type="category"
+                  dataKey="questionText"
+                  tickLine={false}
+                  axisLine={false}
+                  width={220}
+                  tickFormatter={(value: string) =>
+                    value.length > 40 ? `${value.slice(0, 40)}…` : value
+                  }
                 />
-              )
-            ) : topScoreLeaderboard.length > 0 ? (
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                  dataKey="incorrectRate"
+                  fill="var(--color-incorrectRate)"
+                  radius={[0, 4, 4, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <EmptyBlock
+              title="Belum ada topik tersulit"
+              description="Topik muncul setelah minimal lima jawaban tercatat untuk satu soal kuis."
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Leaderboard global siswa. */}
+      <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+        <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+          <CardTitle className="text-base font-semibold text-foreground">
+            Papan Peringkat Siswa
+          </CardTitle>
+          <CardDescription>
+            Peringkat lintas sesi berdasarkan aktivitas dan rata-rata kuis
+          </CardDescription>
+          <CardAction>
+            <Tabs
+              value={leaderboardTab}
+              onValueChange={(value) =>
+                setLeaderboardTab(value as "active" | "top-score")
+              }
+              className="w-auto gap-0"
+            >
+              <TabsList className="h-8 w-fit gap-1 rounded-full border-b-0 bg-muted px-1 py-1">
+                <TabsTrigger
+                  value="active"
+                  className="h-6 rounded-full border-b-0 px-3 text-xs data-active:border-transparent data-active:bg-background data-active:text-foreground"
+                >
+                  Paling Aktif
+                </TabsTrigger>
+                <TabsTrigger
+                  value="top-score"
+                  className="h-6 rounded-full border-b-0 px-3 text-xs data-active:border-transparent data-active:bg-background data-active:text-foreground"
+                >
+                  Skor Tertinggi
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </CardAction>
+        </CardHeader>
+        <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[0, 1, 2, 3, 4].map((row) => (
+                <Skeleton key={row} className="h-12 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : leaderboardTab === "active" ? (
+            activeLeaderboard.length > 0 ? (
               <LeaderboardTable
-                rows={topScoreLeaderboard.map((row, index) => ({
+                rows={activeLeaderboard.map((row, index) => ({
                   rank: index + 1,
                   name: row.studentName,
-                  metric: `Rata-rata dari ${row.sessionCount} kuis`,
-                  value: row.average,
-                  suffix: "poin",
+                  metric: `${row.sessionsJoined} sesi · ${row.questionsAsked} tanya · ${row.responsesSubmitted} jawaban`,
+                  value: row.sessionsJoined + row.questionsAsked,
                 }))}
               />
             ) : (
               <EmptyBlock
-                title="Belum ada nilai kuis"
-                description="Peringkat skor muncul setelah siswa menyelesaikan minimal satu sesi kuis."
-                icon={<IconAward className="size-5" />}
+                title="Belum ada data aktivitas siswa"
+                description="Papan peringkat terisi otomatis saat siswa bergabung, mengirim pertanyaan, atau menjawab aktivitas."
+                icon={<IconUsers className="size-5" />}
               />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
-          <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
-            <CardTitle className="text-base font-semibold text-foreground">
-              Topik Paling Sulit
-            </CardTitle>
-            <CardDescription>
-              Pertanyaan dengan tingkat jawaban salah tertinggi
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-            {isLoading ? (
-              <div className="space-y-3">
-                {[0, 1, 2, 3, 4].map((row) => (
-                  <Skeleton key={row} className="h-12 w-full rounded-lg" />
-                ))}
-              </div>
-            ) : topTopics.length > 0 ? (
-              <ul className="flex flex-col gap-3">
-                {topTopics.slice(0, 5).map((topic) => (
-                  <li
-                    key={topic.questionId}
-                    className="rounded-xl border border-border p-3"
-                  >
-                    <p className="line-clamp-2 text-sm font-medium text-foreground">
-                      {topic.questionText}
-                    </p>
-                    <div className="mt-2 flex items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
-                      >
-                        <span
-                          className="block h-full rounded-full bg-rose-500"
-                          style={{
-                            width: `${Math.min(100, topic.incorrectRate)}%`,
-                          }}
-                        />
-                      </span>
-                      <span className="shrink-0 text-xs font-semibold text-rose-600 dark:text-rose-400">
-                        {topic.incorrectRate}% salah
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {topic.sessionTitle} · {topic.totalAnswers} jawaban
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyBlock
-                title="Belum ada topik tersulit"
-                description="Data ini muncul saat cukup banyak siswa menjawab kuis, sehingga tingkat kesulitan tiap soal bisa dihitung."
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            )
+          ) : topScoreLeaderboard.length > 0 ? (
+            <LeaderboardTable
+              rows={topScoreLeaderboard.map((row, index) => ({
+                rank: index + 1,
+                name: row.studentName,
+                metric: `Rata-rata dari ${row.sessionCount} kuis`,
+                value: row.average,
+                suffix: "poin",
+              }))}
+            />
+          ) : (
+            <EmptyBlock
+              title="Belum ada nilai kuis"
+              description="Peringkat skor muncul setelah siswa menyelesaikan minimal satu sesi kuis."
+              icon={<IconAward className="size-5" />}
+            />
+          )}
+        </CardContent>
+      </Card>
     </section>
   );
 }
