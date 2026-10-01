@@ -129,6 +129,49 @@ export interface responseAnswer {
   }>;
 }
 
+export type AnalyticsPeriod = "7d" | "30d" | "all";
+export type ParticipationTrendPeriod = "7d" | "14d" | "30d";
+
+export interface AnalyticsSummary {
+  totalStudents: number;
+  averageScore: number;
+  participationRate: number;
+  totalSessions: number;
+}
+
+export interface StudentScore {
+  studentKey: string;
+  studentName: string;
+  sessionId: string;
+  sessionTitle: string;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  submittedAt: string;
+}
+
+export interface StudentParticipation {
+  studentKey: string;
+  studentName: string;
+  sessionsJoined: number;
+  questionsAsked: number;
+  responsesSubmitted: number;
+}
+
+export interface TopTopic {
+  questionId: string;
+  questionText: string;
+  sessionTitle: string;
+  incorrectRate: number;
+  totalAnswers: number;
+}
+
+export interface ParticipationTrendPoint {
+  date: string;
+  label: string;
+  participants: number;
+}
+
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 ).replace(/\/api\/?$/, "");
@@ -698,6 +741,95 @@ export const fetchResponseGetPoll = async (
     throw error;
   }
 };
+
+function getAnalyticsHeaders(token?: string): Headers {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  let authToken = token;
+
+  if (!authToken && typeof window !== "undefined") {
+    try {
+      authToken = window.localStorage.getItem("token") ?? undefined;
+    } catch {
+      authToken = undefined;
+    }
+  }
+
+  if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
+  return headers;
+}
+
+async function fetchAnalyticsData<T>(
+  path: string,
+  token?: string,
+): Promise<T> {
+  const response = await fetch(`${API_URL}/api/analytics/${path}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+    headers: getAnalyticsHeaders(token),
+  });
+
+  const result = (await response.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: T;
+    message?: string;
+    error?: string;
+  };
+
+  if (!response.ok || !result.success || result.data === undefined) {
+    throw new Error(
+      result.message || result.error || "Data analytics gagal dimuat.",
+    );
+  }
+
+  return result.data;
+}
+
+export const getAnalyticsSummary = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<AnalyticsSummary> =>
+  fetchAnalyticsData<AnalyticsSummary>(
+    `summary?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsScores = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<StudentScore[]> =>
+  fetchAnalyticsData<StudentScore[]>(
+    `scores?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsStudents = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<StudentParticipation[]> =>
+  fetchAnalyticsData<StudentParticipation[]>(
+    `students?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsTopics = (
+  period: AnalyticsPeriod = "7d",
+  limit = 5,
+  token?: string,
+): Promise<TopTopic[]> =>
+  fetchAnalyticsData<TopTopic[]>(
+    `topics?period=${encodeURIComponent(period)}&limit=${encodeURIComponent(String(limit))}`,
+    token,
+  );
+
+export const getAnalyticsParticipationTrend = (
+  period: ParticipationTrendPeriod = "7d",
+  token?: string,
+): Promise<ParticipationTrendPoint[]> =>
+  fetchAnalyticsData<ParticipationTrendPoint[]>(
+    `participation-trend?period=${encodeURIComponent(period)}`,
+    token,
+  );
 
 export {
   fetchUserLogin,
