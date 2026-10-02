@@ -340,11 +340,22 @@ function AnalyticsPage() {
             : "Menunggu data jawaban kuis",
       },
       {
-        label: "Tingkat Partisipasi",
-        value: summary ? `${Math.round(summary.participationRate)}%` : "-",
+        label:
+          summary && summary.sessionsWithClassSize > 0
+            ? "Tingkat Kehadiran"
+            : "Tingkat Partisipasi",
+        value: summary
+          ? `${Math.round(
+            summary.sessionsWithClassSize > 0
+              ? summary.attendanceRate
+              : summary.participationRate,
+          )}%`
+          : "-",
         detail:
           summary
-            ? "Siswa yang berpartisipasi di sesi yang diikuti"
+            ? summary.sessionsWithClassSize > 0
+              ? "Persentase kehadiran berdasarkan kapasitas kelas"
+              : "Siswa yang berpartisipasi di sesi yang diikuti"
             : "Menunggu data respons",
       },
       {
@@ -713,7 +724,7 @@ function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
               </TableCell>
             </TableRow>
           ))}
-        </TableBody>``
+        </TableBody>
       </Table>
     </div>
   );

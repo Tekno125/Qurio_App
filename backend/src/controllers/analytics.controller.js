@@ -6,64 +6,105 @@ const DATE_FILTER = `(
 )`;
 
 function parsePeriod(req, res, allowedPeriods = ["7d", "30d", "all"]) {
-    const period = req.query.period ?? "7d";
-    if (typeof period !== "string" || !allowedPeriods.includes(period)) {
-        res.status(400).json({
-            success: false,
-            message: `Period tidak valid. Pilihan: ${allowedPeriods.join(", ")}.`,
-        });
-        return undefined;
-    }
+  const period = req.query.period ?? "7d";
+  if (typeof period !== "string" || !allowedPeriods.includes(period)) {
+    res.status(400).json({
+      success: false,
+      message: `Period tidak valid. Pilihan: ${allowedPeriods.join(", ")}.`,
+    });
+    return undefined;
+  }
 
-    return PERIOD_DAYS[period];
+  return PERIOD_DAYS[period];
 }
 
 function getLimit(req, res) {
-    const rawLimit = req.query.limit ?? "5";
-    const limit = Number(rawLimit);
-    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
-        res.status(400).json({
-            success: false,
-            message: "Limit harus berupa bilangan bulat antara 1 dan 50.",
-        });
-        return undefined;
-    }
+  const rawLimit = req.query.limit ?? "5";
+  const limit = Number(rawLimit);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+    res.status(400).json({
+      success: false,
+      message: "Limit harus berupa bilangan bulat antara 1 dan 50.",
+    });
+    return undefined;
+  }
 
-    return limit;
+  return limit;
 }
 
 function sendQueryError(res, context, error) {
-    console.error(`${context}:`, error.message);
-    return res.status(500).json({
-        success: false,
-        message: "Data analytics gagal dimuat.",
-    });
+  console.error(`${context}:`, error.message);
+  return res.status(500).json({
+    success: false,
+    message: "Data analytics gagal dimuat.",
+  });
 }
 
 // Return summary metrics scoped to the authenticated teacher's sessions.
 export const getAnalyticsSummary = async (req, res) => {
-    const periodDays = parsePeriod(req, res);
-    if (periodDays === undefined) return;
+  const periodDays = parsePeriod(req, res);
+  if (periodDays === undefined) return;
 
-    try {
-        const result = await pool.query(
-            `WITH scoped_sessions AS (
+  try {
+    const result = await pool.query(
+      `WITH scoped_sessions AS (
+         SELECT id, title, class_size, created_at
+         FROM sessions
+         WHERE teacher_id = $1
+           AND class_size IS NOT NULL
+           AND (
+             $2::int IS NULL
+             OR created_at >= CURRENT_TIMESTAMP - ($2::int * INTERVAL '1 day')
+           )
+       ), per_session AS (
+         SELECT
+           s.id,
+           s.title,
+           s.class_size,
+           COUNT(DISTINCT COALESCE(r.student_id::text, r.participant_id::text)) AS joined
+         FROM scoped_sessions s
+         LEFT JOIN polls p ON p.session_id = s.id
+         LEFT JOIN responses r ON r.poll_id = p.id
+         GROUP BY s.id, s.title, s.class_size
+       ), attendance_agg AS (
+         SELECT
+           COALESCE(
+             SUM(joined)::float / NULLIF(SUM(class_size), 0) * 100,
+             0
+           )::float AS "attendanceRate",
+           COUNT(*)::int AS "sessionsWithClassSize",
+           COALESCE(
+             json_agg(
+               json_build_object(
+                 'sessionId', id,
+                 'title', title,
+                 'classSize', class_size,
+                 'joined', joined,
+                 'rate', ROUND(joined::numeric / NULLIF(class_size, 0) * 100, 1)
+               ) ORDER BY (joined::float / NULLIF(class_size, 0)) ASC
+             ),
+             '[]'::json
+           ) AS "attendanceBreakdown"
+         FROM per_session
+       ), all_sessions AS (
          SELECT s.id, s.created_at
          FROM sessions s
-         WHERE s.teacher_id = $1 AND ${DATE_FILTER}
+         WHERE s.teacher_id = $1 AND (
+           $2::int IS NULL OR s.created_at >= CURRENT_TIMESTAMP - ($2::int * INTERVAL '1 day')
+         )
        ), roster AS (
          SELECT
            p.session_id,
            LOWER(TRIM(p.name)) AS student_key
          FROM participants p
-         JOIN scoped_sessions s ON s.id = p.session_id
+         JOIN all_sessions s ON s.id = p.session_id
          WHERE NULLIF(TRIM(p.name), '') IS NOT NULL
        ), engaged AS (
          SELECT DISTINCT s.id AS session_id,
            LOWER(TRIM(COALESCE(NULLIF(u.name, ''), NULLIF(participant.name, '')))) AS student_key
          FROM responses r
          JOIN polls poll ON poll.id = r.poll_id AND poll.type <> 'polling'
-         JOIN scoped_sessions s ON s.id = poll.session_id
+         JOIN all_sessions s ON s.id = poll.session_id
          LEFT JOIN participants participant ON participant.id = r.participant_id
          LEFT JOIN users u ON u.id = r.student_id
          WHERE NULLIF(TRIM(COALESCE(u.name, participant.name)), '') IS NOT NULL
@@ -71,7 +112,7 @@ export const getAnalyticsSummary = async (req, res) => {
          SELECT DISTINCT s.id AS session_id,
            LOWER(TRIM(COALESCE(NULLIF(u.name, ''), NULLIF(participant.name, ''), NULLIF(q.student_name, '')))) AS student_key
          FROM questions q
-         JOIN scoped_sessions s ON s.id = q.session_id
+         JOIN all_sessions s ON s.id = q.session_id
          LEFT JOIN participants participant ON participant.id = q.participant_id
          LEFT JOIN users u ON u.id = q.student_id
          WHERE NULLIF(TRIM(COALESCE(u.name, participant.name, q.student_name)), '') IS NOT NULL
@@ -79,7 +120,7 @@ export const getAnalyticsSummary = async (req, res) => {
          SELECT AVG(CASE WHEN r.is_correct THEN 100.0 ELSE 0.0 END) AS average_score
          FROM responses r
          JOIN polls poll ON poll.id = r.poll_id AND poll.type = 'quiz'
-         JOIN scoped_sessions s ON s.id = poll.session_id
+         JOIN all_sessions s ON s.id = poll.session_id
          WHERE r.is_correct IS NOT NULL
        ), participation_metrics AS (
          SELECT
@@ -102,26 +143,30 @@ export const getAnalyticsSummary = async (req, res) => {
            ),
            0
          )::float AS "participationRate",
-         (SELECT COUNT(*)::int FROM scoped_sessions) AS "totalSessions"
+         COALESCE(attendance_agg."attendanceRate", 0)::float AS "attendanceRate",
+         COALESCE(attendance_agg."sessionsWithClassSize", 0)::int AS "sessionsWithClassSize",
+         COALESCE(attendance_agg."attendanceBreakdown", '[]'::json) AS "attendanceBreakdown",
+         (SELECT COUNT(*)::int FROM all_sessions) AS "totalSessions"
        FROM participation_metrics
-       CROSS JOIN score_metrics`,
-            [req.user.id, periodDays],
-        );
+       CROSS JOIN score_metrics
+       LEFT JOIN attendance_agg ON TRUE`,
+      [req.user.id, periodDays],
+    );
 
-        return res.status(200).json({ success: true, data: result.rows[0] });
-    } catch (error) {
-        return sendQueryError(res, "Get analytics summary error", error);
-    }
+    return res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    return sendQueryError(res, "Get analytics summary error", error);
+  }
 };
 
 // Return quiz scores grouped by normalized student name and session.
 export const getAnalyticsScores = async (req, res) => {
-    const periodDays = parsePeriod(req, res);
-    if (periodDays === undefined) return;
+  const periodDays = parsePeriod(req, res);
+  if (periodDays === undefined) return;
 
-    try {
-        const result = await pool.query(
-            `SELECT
+  try {
+    const result = await pool.query(
+      `SELECT
          LOWER(TRIM(COALESCE(NULLIF(u.name, ''), NULLIF(participant.name, '')))) AS "studentKey",
          MIN(TRIM(COALESCE(NULLIF(u.name, ''), NULLIF(participant.name, '')))) AS "studentName",
          s.id AS "sessionId",
@@ -144,23 +189,23 @@ export const getAnalyticsScores = async (req, res) => {
          s.id,
          s.title
        ORDER BY s.created_at DESC, score DESC, "studentName" ASC`,
-            [req.user.id, periodDays],
-        );
+      [req.user.id, periodDays],
+    );
 
-        return res.status(200).json({ success: true, data: result.rows });
-    } catch (error) {
-        return sendQueryError(res, "Get analytics scores error", error);
-    }
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    return sendQueryError(res, "Get analytics scores error", error);
+  }
 };
 
 // Return activity counts per normalized student name, excluding polling votes.
 export const getAnalyticsStudents = async (req, res) => {
-    const periodDays = parsePeriod(req, res);
-    if (periodDays === undefined) return;
+  const periodDays = parsePeriod(req, res);
+  if (periodDays === undefined) return;
 
-    try {
-        const result = await pool.query(
-            `WITH scoped_sessions AS (
+  try {
+    const result = await pool.query(
+      `WITH scoped_sessions AS (
          SELECT s.id, s.created_at
          FROM sessions s
          WHERE s.teacher_id = $1 AND ${DATE_FILTER}
@@ -227,25 +272,25 @@ export const getAnalyticsStudents = async (req, res) => {
        LEFT JOIN question_counts USING (student_key)
        LEFT JOIN response_counts USING (student_key)
        ORDER BY "responsesSubmitted" DESC, "questionsAsked" DESC, "studentName" ASC`,
-            [req.user.id, periodDays],
-        );
+      [req.user.id, periodDays],
+    );
 
-        return res.status(200).json({ success: true, data: result.rows });
-    } catch (error) {
-        return sendQueryError(res, "Get analytics students error", error);
-    }
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    return sendQueryError(res, "Get analytics students error", error);
+  }
 };
 
 // Return quiz questions with at least five scored answers, ordered by error rate.
 export const getAnalyticsTopics = async (req, res) => {
-    const periodDays = parsePeriod(req, res);
-    if (periodDays === undefined) return;
-    const limit = getLimit(req, res);
-    if (limit === undefined) return;
+  const periodDays = parsePeriod(req, res);
+  if (periodDays === undefined) return;
+  const limit = getLimit(req, res);
+  if (limit === undefined) return;
 
-    try {
-        const result = await pool.query(
-            `SELECT
+  try {
+    const result = await pool.query(
+      `SELECT
          poll.id AS "questionId",
          poll.question AS "questionText",
          s.title AS "sessionTitle",
@@ -265,23 +310,23 @@ export const getAnalyticsTopics = async (req, res) => {
        HAVING COUNT(*) >= 5
        ORDER BY "incorrectRate" DESC, "totalAnswers" DESC, poll.question ASC
        LIMIT $3`,
-            [req.user.id, periodDays, limit],
-        );
+      [req.user.id, periodDays, limit],
+    );
 
-        return res.status(200).json({ success: true, data: result.rows });
-    } catch (error) {
-        return sendQueryError(res, "Get analytics topics error", error);
-    }
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    return sendQueryError(res, "Get analytics topics error", error);
+  }
 };
 
 // Return a complete daily series of distinct student participation.
 export const getAnalyticsParticipationTrend = async (req, res) => {
-    const periodDays = parsePeriod(req, res, ["7d", "14d", "30d"]);
-    if (periodDays === undefined) return;
+  const periodDays = parsePeriod(req, res, ["7d", "14d", "30d"]);
+  if (periodDays === undefined) return;
 
-    try {
-        const result = await pool.query(
-            `WITH days AS (
+  try {
+    const result = await pool.query(
+      `WITH days AS (
          SELECT generated_day::date AS date
          FROM generate_series(
            CURRENT_DATE - ($2::int - 1),
@@ -306,20 +351,20 @@ export const getAnalyticsParticipationTrend = async (req, res) => {
        FROM days
        LEFT JOIN daily_participants USING (date)
        ORDER BY days.date ASC`,
-            [req.user.id, periodDays],
-        );
+      [req.user.id, periodDays],
+    );
 
-        const data = result.rows.map((row) => ({
-            ...row,
-            label: new Date(`${row.date}T12:00:00Z`).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                timeZone: "UTC",
-            }),
-        }));
+    const data = result.rows.map((row) => ({
+      ...row,
+      label: new Date(`${row.date}T12:00:00Z`).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        timeZone: "UTC",
+      }),
+    }));
 
-        return res.status(200).json({ success: true, data });
-    } catch (error) {
-        return sendQueryError(res, "Get analytics participation trend error", error);
-    }
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return sendQueryError(res, "Get analytics participation trend error", error);
+  }
 };

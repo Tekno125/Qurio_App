@@ -76,6 +76,7 @@ export interface SessionListItem {
   teacher_id: string;
   title: string;
   access_code: string;
+  class_size: number | null;
   participant_count: number;
   status: "active" | "ended";
   created_at: string;
@@ -93,6 +94,7 @@ interface SessionDetailResponse {
     id: string;
     title: string;
     access_code: number;
+    class_size: number | null;
     type: "quiz" | "polling" | "qa" | "wordcloud";
     status: "active" | "ended";
   };
@@ -136,7 +138,9 @@ export interface AnalyticsSummary {
   totalStudents: number;
   averageScore: number;
   participationRate: number;
+  attendanceRate: number;
   totalSessions: number;
+  sessionsWithClassSize: number;
 }
 
 export interface StudentScore {
@@ -309,8 +313,14 @@ const postType = async (
 
 const createSession = async (
   title: string,
-  token: string,
+  classSize?: number | null | string,
+  token?: string,
 ): Promise<Sessions> => {
+  const normalizedClassSize =
+    classSize === undefined || classSize === null || classSize === ""
+      ? null
+      : Number(classSize);
+
   try {
     const response = await fetch(`${API_URL}/api/sessions`, {
       method: "POST",
@@ -318,7 +328,10 @@ const createSession = async (
         "content-type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({
+        title,
+        class_size: normalizedClassSize,
+      }),
     });
 
     if (!response.ok) {

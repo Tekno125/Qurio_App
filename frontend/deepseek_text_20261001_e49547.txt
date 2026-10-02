@@ -1,260 +1,160 @@
+# Prompt Gabungan Final — Urutan yang Benar
+
+Betul, prompt terakhir kamu tadi salah urutan. Sekarang sudah sampai **Bagian G**. Kita perlu **selipkan Bagian baru** (class_size + analytics kehadiran) di antara **F** dan **G**, tanpa mengulang A–F yang sudah selesai.
+
+Berikut versi final yang siap paste ke Copilot:
+
+---
+
+## 📋 PROMPT FINAL (Copy dari sini)
+
+```
 KONTEKS PROJECT:
-Qurio — aplikasi kuis kelas.
+Qurio — aplikasi kuis kelas interaktif.
 - Backend: Express + PostgreSQL (`backend/`)
-  - Routes: `backend/src/routes/`
-  - Controllers: `backend/src/controllers/`
-  - Schema: `backend/src/config/db/001_schema.sql`
-  - Pool: `backend/src/config/db/connection.js`
-  - JWT middleware: `backend/src/middleware/JWT.js` (teacherLimit)
 - Frontend: Next.js 16 App Router + TypeScript (`frontend/`)
-  - API helper: `frontend/lib/api.tsx`
-  - Halaman Analytics: `frontend/app/analytics/page.tsx`
-  - Register page: `frontend/app/(auth)/register/page.tsx`
-  - Chart: Recharts + shadcn/ui ChartContainer
-  - Toast: `frontend/components/ui/toast.tsx` (`toast.add({...})`)
+- Halaman Analytics: `frontend/app/(workspace)/analytics/page.tsx`
+- API helper: `frontend/lib/api.tsx`
 
-STATUS SAAT INI (sudah diaudit):
-- Fitur KUIS sudah sempurna. JANGAN sentuh controller/routes quiz.
-- Fitur POLLING punya bug (is_correct dianggap salah untuk polling).
-  Tapi INI TIDAK AKAN DIPAKAI di analytics. Skip.
-- Fitur UP VOTE backend ada, tapi tidak dipakai frontend.
-  Ini JUGA TIDAK DIPAKAI di analytics. Skip.
-- Peserta sesi (tabel `participants`) TIDAK ter-link ke `users`.
-  Ini OK, kita pakai nama sebagai identity key.
+STATUS PROGRESS:
+✅ Bagian A–F sudah selesai (register page, seeder, endpoint analytics, 
+   wire up, layout dasar).
+🔄 SEKARANG: Menambahkan fitur "jumlah siswa kelas" untuk Analytics 
+   yang akurat.
+⏳ Belum: Bagian G (Recharts lebih rame), H (Export PDF), I (Verifikasi).
 
-KEPUTUSAN PRODUK:
-1. Siswa join anonymous pakai kode akses + nama (tidak wajib login).
-   Login siswa dipertahankan untuk masa depan, tapi register UI hanya guru.
-2. Identity key untuk leaderboard lintas-sesi = NAMA SISWA
-   (normalized: TRIM + LOWER).
-3. Leaderboard global lintas-sesi dulu (tab per-sesi nanti).
-4. Upvote TIDAK masuk leaderboard.
-   Leaderboard "Paling Aktif" hanya pakai:
-   - responsesSubmitted (COUNT responses)
-   - questionsAsked (COUNT questions)
+MASALAH YANG SEDANG DIPECAHKAN:
+Kartu "Tingkat Partisipasi" di Analytics selalu 100% karena 
+denominator-nya hanya "siswa yang join", bukan "siswa yang 
+seharusnya hadir di kelas". Guru tidak punya cara input jumlah siswa.
 
-TARGET HALAMAN ANALYTICS SETELAH SELESAI:
-1. Kartu ringkasan: Total Siswa, Rata-rata Skor Kuis, Tingkat
-   Partisipasi, Sesi Dianalisis.
-2. AreaChart: Tren Partisipasi Siswa (per hari, 7/14/30 hari).
-3. Horizontal BarChart: Topik Paling Sulit.
-4. Tabel Leaderboard: 2 tab — Paling Aktif & Skor Tertinggi.
-5. Tombol Ekspor CSV + PDF.
-
-YANG DIBATALKAN (JANGAN DIBUAT):
-- ❌ Bar Chart Distribusi Nilai (A-E)
-- ❌ Donut Chart Tipe Aktivitas
-- ❌ Endpoint activity-mix
-- ❌ Analytics untuk tipe poll 'polling'
+TARGET:
+- Guru bisa isi "jumlah siswa di kelas" saat bikin sesi baru (OPSIONAL).
+- Analytics tampilkan 2 kondisi:
+  - Kalau class_size terisi → "Tingkat Kehadiran" (akurat)
+  - Kalau tidak → fallback ke "Tingkat Respons" (seperti sekarang)
 
 ═══════════════════════════════════════════════════════════════════
-BAGIAN A — ADJUSTMENT REGISTER PAGE (KECIL)
+BAGIAN F.5 — FIELD class_size + ANALYTICS KEHADIRAN
 ═══════════════════════════════════════════════════════════════════
 
-Di `frontend/app/(auth)/register/page.tsx`:
-- HAPUS selector role (dropdown "Guru / Siswa").
-- Register sekarang default ke role `guru` saja.
-- Update title/description halaman: "Daftar Akun Guru" (bukan
-  "Daftar Akun").
-- Kalau ada field yang tidak relevan untuk guru, hapus juga.
-- JANGAN ubah backend register controller — biarkan tetap menerima
-  role sebagai parameter. Hanya UI yang dibatasi.
+─────────────────────────────────────────
+F.5.1 — MIGRATION DATABASE
+─────────────────────────────────────────
 
-═══════════════════════════════════════════════════════════════════
-BAGIAN B — SKIP (tidak perlu migration)
-═══════════════════════════════════════════════════════════════════
+Buat file: `backend/src/config/db/migrations/002_add_class_size.sql`
 
-═══════════════════════════════════════════════════════════════════
-BAGIAN C — SEEDER DATA
-═══════════════════════════════════════════════════════════════════
+```sql
+-- Jumlah siswa di kelas saat sesi dibuat. NULL = guru tidak mengisi.
+ALTER TABLE sessions
+  ADD COLUMN IF NOT EXISTS class_size INT NULL
+  CHECK (class_size IS NULL OR class_size BETWEEN 1 AND 500);
 
-Buat `backend/scripts/seed-analytics.js`:
+COMMENT ON COLUMN sessions.class_size IS
+  'Jumlah siswa di kelas saat sesi dibuat. NULL jika tidak diisi.';
+```
 
-DATA DASAR:
-- 1 guru: email `guru@qurio.test`, password `password123` (bcrypt),
-  name "Bu Sari", role 'guru'.
-- 30 siswa di tabel `users` (role='siswa') dengan nama Indonesia
-  realistis. (Ini hanya untuk demo, karena siswa anonymous tetap
-  bisa join via participants.)
-- 8 sesi dalam 30 hari terakhir, judul:
-  1. Matematika — Persamaan Kuadrat
-  2. Bahasa Indonesia — Teks Eksposisi
-  3. IPA — Sistem Tata Surya
-  4. Sejarah — Kemerdekaan Indonesia
-  5. Bahasa Inggris — Simple Past Tense
-  6. Matematika — Trigonometri Dasar
-  7. IPA — Fotosintesis
-  8. IPS — Peta dan Skala
-  Setiap sesi `created_at` disebar dalam 30 hari terakhir
-  (NOW() - INTERVAL 'X days'). 4 sesi 'ended', 4 'active'.
+Buat script runner `backend/scripts/run-migration.js`:
+- Baca file `.sql` di `backend/src/config/db/migrations/` urut alfabet.
+- Track di tabel `_migrations` (filename, executed_at).
+- Skip yang sudah dijalankan, jalankan yang baru.
+- Print progress.
 
-═══════════════════════════════════════════════
-PENTING — KONSISTENSI NAMA PESERTA:
-═══════════════════════════════════════════════
-Setiap siswa punya SATU nama tetap dari daftar 30 siswa.
-Kalau "Budi Santoso" hadir di 5 sesi berbeda, isi `participants.name`
-= "Budi Santoso" (persis) di KELIMA sesi tersebut.
-Ini penting karena analytics pakai nama sebagai identity key.
+Test: `node backend/scripts/run-migration.js`
 
-JANGAN random nama per sesi. Pakai pool 30 nama yang sudah dibuat.
+─────────────────────────────────────────
+F.5.2 — BACKEND: TERIMA class_size
+─────────────────────────────────────────
 
-DATA PER SESI:
+Update `backend/src/controllers/sessions.controller.js`:
 
-A. Polls KUIS (untuk skor siswa):
-   - Setiap sesi punya 5 poll type='quiz'.
-   - Setiap poll = 1 soal + 4 poll_options (1 correct).
-   - Pertanyaan sesuai tema sesi.
-   - Semua poll status='published'.
-   - INI YANG PALING PENTING untuk analytics.
+1. `createSession`: terima `class_size` dari body.
+   - Opsional. Kalau ada: integer 1-500. Kalau invalid: 400.
+   - Simpan NULL kalau kosong.
 
-B. Polls Q&A:
-   - Setiap sesi punya 1 poll type='qa'.
-   - Isi `questions`: 5-15 pertanyaan per sesi, kolom `text` diisi
-     pertanyaan realistis, `student_id` NULL (karena anonymous),
-     `participant_id` diisi dari participants sesi itu,
-     `upvotes` random 0-20, `answered` random 30%.
+2. `getSessions` (list): kembalikan `class_size` di response.
 
-C. Polls WORDCLOUD:
-   - Setiap sesi punya 1 poll type='wordcloud'.
-   - Isi `wordcloud_word_counts`: 40-80 kata distribusi Zipf.
+3. `getSession` (detail): kembalikan `class_size`.
 
-D. Participants (WAJIB lengkap):
-   - Setiap sesi: 20-28 baris `participants`.
-   - Pilih random dari pool 30 siswa.
-   - `name` = nama persis dari pool (jangan diubah).
-   - `absen` 2 digit ('01', '02', dst). Untuk siswa yang sama,
-     usahakan absen konsisten lintas-sesi.
+4. `updateSession`: allow update `class_size`.
 
-E. Responses KUIS:
-   - Untuk setiap poll quiz di setiap sesi:
-     - 70-90% dari participants sesi itu hadir menjawab.
-     - Untuk setiap jawaban:
-       - `participant_id` = peserta yang jawab
-       - `student_id` = NULL (karena anonymous)
-       - `option_id` = pilih random dari 4 opsi
-       - `is_correct` = (option_id === opsi yang is_correct)
-     - Distribusi nilai NORMAL (Box-Muller), μ=75, σ=12, clamp 0-100.
-   - 1-2 soal per sesi dibuat "SULIT": 60-80% siswa di-set
-     is_correct=false.
-   - `submitted_at` disebar dalam rentang sesi berjalan.
+─────────────────────────────────────────
+F.5.3 — FRONTEND: FORM CREATE SESSION
+─────────────────────────────────────────
 
-F. Responses Q&A & Wordcloud:
-   - Q&A: 30-50% participants isi response.
-   - Wordcloud: 60-80% isi response 1 kata acak.
+1. Cari form create session (kemungkinan di 
+   `frontend/app/(workspace)/dashboard/createsessions/page.tsx`).
 
-IDEMPOTENT:
-- TRUNCATE data milik guru@qurio.test saja.
-- Users guru + 30 siswa: pakai `INSERT ... ON CONFLICT (email)
-  DO NOTHING`.
-- Print progress setiap langkah.
-- Akhir: tampilkan COUNT(*) per tabel.
+2. Tambah input setelah judul:
+   ```
+   Jumlah siswa di kelas (opsional)
+   [ 30 ]  siswa
+   Helper: "Isi kalau mau sistem hitung tingkat kehadiran. 
+            Kosongkan kalau tidak perlu."
+   ```
+   Type=number, min=1, max=500.
 
-Jalankan: `node backend/scripts/seed-analytics.js`.
+3. Update `createSession()` di `frontend/lib/api.tsx`:
+   - Signature: `createSession(title: string, classSize: number | null, token: string)`
+   - Kirim `class_size` di body.
+   - Update semua pemanggil.
 
-═══════════════════════════════════════════════════════════════════
-BAGIAN D — ENDPOINT ANALYTICS
-═══════════════════════════════════════════════════════════════════
+4. Update tipe `Sessions` dan `SessionListItem` di `api.tsx`:
+   ```ts
+   class_size: number | null;
+   ```
 
-Buat `backend/src/routes/analytics.route.js` dan
-`backend/src/controllers/analytics.controller.js`.
+─────────────────────────────────────────
+F.5.4 — BACKEND: ANALYTICS PAKAI class_size
+─────────────────────────────────────────
 
-Semua endpoint di-protect `teacherLimit`. Filter hanya sesi milik
-guru yang login (`WHERE sessions.teacher_id = $1`).
+Update `getAnalyticsSummary` di `analytics.controller.js`:
 
-IDENTITY KEY LINTAS-SESI = `LOWER(TRIM(COALESCE(users.name,
-participants.name)))`.
+1. Tambah perhitungan `attendanceRate`:
+   ```
+   attendanceRate = (siswa unik yang join)
+                    / SUM(class_size sesi dengan class_size NOT NULL) * 100
+   ```
+   Hanya dari sesi yang punya `class_size`. Kalau tidak ada, return NULL.
 
-1. GET `/api/analytics/summary?period=7d|30d|all`
-   Return:
+2. Update response:
+   ```json
    {
-     totalStudents: number,       // COUNT DISTINCT nama siswa
-     averageScore: number,        // rata-rata skor semua kuis 0-100
-     participationRate: number,   // persen
-     totalSessions: number
+     "totalStudents": 30,
+     "averageScore": 69,
+     "participationRate": 100,
+     "attendanceRate": 83,            // BARU
+     "sessionsWithClassSize": 3,      // BARU
+     "totalSessions": 8
    }
+   ```
 
-2. GET `/api/analytics/scores?period=7d|30d|all`
-   Return array skor per siswa per sesi:
-   [
-     {
-       studentKey,        // lowercase name untuk grouping
-       studentName,       // display name
-       sessionId, sessionTitle,
-       score, correctCount, totalQuestions,
-       submittedAt
-     }, ...
-   ]
-   Query: JOIN responses + poll_options + polls + sessions
-          LEFT JOIN participants, LEFT JOIN users.
-   Filter: poll.type='quiz', is_correct IS NOT NULL.
+─────────────────────────────────────────
+F.5.5 — FRONTEND: TAMPILKAN DI ANALYTICS
+─────────────────────────────────────────
 
-3. GET `/api/analytics/students?period=7d|30d|all`
-   Return array partisipasi per siswa (grouped by nama):
-   [
-     {
-       studentKey,
-       studentName,
-       sessionsJoined,      // COUNT DISTINCT session_id
-       questionsAsked,      // COUNT dari questions
-       responsesSubmitted   // COUNT dari responses
-     }, ...
-   ]
-   JANGAN hitung upvote.
+1. Update tipe `AnalyticsSummary` di `api.tsx`:
+   ```ts
+   attendanceRate: number | null;
+   sessionsWithClassSize: number;
+   ```
 
-4. GET `/api/analytics/topics?period=7d|30d|all&limit=5`
-   Return topik tersulit:
-   [
-     {
-       questionId, questionText, sessionTitle,
-       incorrectRate,     // persen
-       totalAnswers
-     }, ...
-   ]
-   Filter poll.type='quiz', totalAnswers >= 5. Urutkan DESC.
+2. Ganti kartu "Tingkat Partisipasi" jadi 2 kondisi:
+   - `attendanceRate !== null` → "Tingkat Kehadiran" + detail 
+     "Dari X sesi yang punya data jumlah kelas"
+   - `attendanceRate === null` → "Tingkat Respons" + detail 
+     "Semua siswa yang join menjawab aktivitas"
 
-5. GET `/api/analytics/participation-trend?period=7d|14d|30d`
-   Return titik harian:
-   [{ date, label, participants }, ...]
-   Isi hari kosong dengan 0.
+3. Kartu "Sesi Dianalisis": tambah info kecil 
+   "X dari Y sesi punya data jumlah kelas" (kalau X > 0).
 
-ATURAN SQL:
-- Parameterized ($1, $2). Jangan string concat.
-- Hindari N+1.
-- GROUP BY LOWER(TRIM(...)) untuk identity.
+─────────────────────────────────────────
+F.5.6 — SEEDER
+─────────────────────────────────────────
 
-Daftarkan di `backend/server.js`:
-`app.use("/api/analytics", analyticsRoutes);`
-
-═══════════════════════════════════════════════════════════════════
-BAGIAN E — FRONTEND API HELPER
-═══════════════════════════════════════════════════════════════════
-
-Di `frontend/lib/api.tsx` tambahkan named export + tipe TS:
-- `getAnalyticsSummary(period)`
-- `getAnalyticsScores(period)`
-- `getAnalyticsStudents(period)`
-- `getAnalyticsTopics(period, limit?)`
-- `getAnalyticsParticipationTrend(period)`
-
-Ikuti pola fetch yang ada. Header Authorization Bearer.
-
-═══════════════════════════════════════════════════════════════════
-BAGIAN F — WIRE UP HALAMAN ANALYTICS
-═══════════════════════════════════════════════════════════════════
-
-Di `frontend/app/analytics/page.tsx`:
-
-1. HAPUS komponen untuk Bar Chart Distribusi Nilai dan Donut Tipe
-   Aktivitas (kalau ada di versi sekarang).
-
-2. FETCH paralel pakai `Promise.allSettled`.
-
-3. LAYOUT (urutan):
-   a. Header + tombol Refresh + Ekspor CSV + Ekspor PDF.
-   b. Grid 4 kartu ringkasan (summary endpoint).
-   c. AreaChart Tren Partisipasi (full width).
-   d. Horizontal BarChart Topik Paling Sulit (full width).
-   e. Tabel Leaderboard (2 tab).
+Update `backend/scripts/seed-analytics.js`:
+- 6 sesi pertama: `class_size = 30`
+- 2 sesi terakhir: `class_size = NULL` (untuk test fallback)
 
 ═══════════════════════════════════════════════════════════════════
 BAGIAN G — RECHARTS LEBIH RAME TAPI EFEKTIF
@@ -276,12 +176,12 @@ BAGIAN G — RECHARTS LEBIH RAME TAPI EFEKTIF
    - Tooltip: soal, sesi, total jawaban, % salah.
 
 3. **Sparkline di Leaderboard**
-   Komponen kecil `<MiniBarChart data={number[]} />` ukuran ~80x28.
+   Komponen `<MiniBarChart data={number[]} />` ukuran ~80x28.
    Tidak pakai axis/grid/tooltip. Bar radius 2.
 
 4. **Kartu Ringkasan dengan micro chart**
    Di bawah angka besar, mini LineChart 100x30 tren 7 hari.
-   Contoh di kartu "Tingkat Partisipasi".
+   Contoh di kartu "Tingkat Kehadiran".
 
 5. **Animasi**: turunkan `animationDuration={600}` di semua chart.
 
@@ -297,7 +197,8 @@ BAGIAN H — EXPORT CSV & PDF
 2. PDF: `npm install jspdf jspdf-autotable`
    Buat `frontend/lib/export-pdf.ts`:
    - Header: "Laporan Analitik Qurio" + tanggal
-   - Section kartu metrik ringkasan
+   - Section kartu metrik ringkasan (termasuk Tingkat Kehadiran 
+     kalau ada)
    - Tabel Leaderboard (10 teratas)
    - Tabel Topik Tersulit (5 teratas)
 
@@ -305,20 +206,25 @@ BAGIAN H — EXPORT CSV & PDF
 BAGIAN I — JALANKAN & VERIFIKASI
 ═══════════════════════════════════════════════════════════════════
 
-1. `node backend/scripts/seed-analytics.js`
-2. Restart backend.
-3. Test curl endpoint (tampilkan output).
-4. Restart frontend.
-5. Buka `http://localhost:3000/analytics`:
-   - 4 kartu terisi angka.
+1. `node backend/scripts/run-migration.js`
+2. `node backend/scripts/seed-analytics.js`
+3. Restart backend.
+4. Test curl endpoint:
+   `curl http://localhost:5000/api/analytics/summary?period=all -H "Authorization: Bearer <token>"`
+   Cek: ada `attendanceRate` dan `sessionsWithClassSize`.
+5. Restart frontend.
+6. Buka `/analytics`:
+   - Kartu "Tingkat Kehadiran" tampil dengan angka < 100% (karena 
+     ada class_size dan ada siswa bolos).
    - AreaChart tampil + ReferenceLine.
    - Horizontal Bar tampil + label persen.
-   - Leaderboard 2 tab bisa switch.
+   - Leaderboard 2 tab switch.
    - Export CSV & PDF jalan.
    - Console: 0 error.
-6. Buka `/register`:
-   - Tidak ada selector role.
-   - Default guru.
+7. Buka `/dashboard/createsessions`:
+   - Input "Jumlah siswa" muncul.
+   - Coba buat sesi dengan class_size=10, join 3 siswa.
+   - Kehadiran harus 30%, bukan 100%.
 
 ═══════════════════════════════════════════════════════════════════
 ATURAN KERJA
@@ -327,9 +233,55 @@ ATURAN KERJA
 - JANGAN sentuh fitur quiz (controller/routes/components).
 - JANGAN sentuh fitur polling.
 - JANGAN buat Bar Chart Distribusi Nilai / Donut Tipe Aktivitas.
+- Field `class_size` OPSIONAL. Fallback harus jalan kalau kosong.
 - Semua file baru diberi komentar singkat.
 - Kalau ada ambiguitas, TANYA SAYA dulu.
-- Pause setelah setiap bagian (A, C, D, E, F, G, H, I) dan tunggu
-  saya bilang "lanjut".
+- Pause setelah setiap sub-bagian (F.5.1, F.5.2, ..., G, H, I) dan 
+  tunggu saya bilang "lanjut".
 
-MULAI DARI BAGIAN A (hapus selector role di register page).
+MULAI DARI BAGIAN F.5.1 (migration). Tampilkan file migration dulu.
+```
+
+---
+
+## 🎯 Urutan yang Benar Sekarang
+
+```
+✅ Bagian A — Register page (selesai)
+✅ Bagian B — (skip, tidak perlu)
+✅ Bagian C — Seeder (selesai)
+✅ Bagian D — Endpoint analytics (selesai)
+✅ Bagian E — API helper (selesai)
+✅ Bagian F — Wire up analytics (selesai)
+🔄 Bagian F.5 — Class size + kehadiran (BARU — mulai dari sini)
+⏳ Bagian G — Recharts lebih rame
+⏳ Bagian H — Export CSV & PDF
+⏳ Bagian I — Verifikasi
+```
+
+---
+
+## 📌 Kenapa F.5 Diselipkan (Bukan Ditaruh Paling Akhir)?
+
+Karena:
+
+1. **Bagian G** (Recharts) akan menambah **micro chart di kartu ringkasan** — salah satunya "Tingkat Partisipasi". Kalau F.5 selesai dulu, label-nya sudah "Tingkat Kehadiran" dan micro chart bisa langsung disesuaikan.
+
+2. **Bagian H** (PDF Export) akan mengekspor metrik ringkasan — harus sudah final. Kalau F.5 belum selesai, PDF akan mengekspor "Tingkat Partisipasi 100%" yang salah.
+
+3. **Bagian I** (Verifikasi) harus memverifikasi semua fitur yang sudah jadi. Kalau F.5 ditunda, verifikasi tidak lengkap.
+
+**Kesimpulan:** F.5 harus selesai **sebelum** G dan H.
+
+---
+
+## 🤔 Pertanyaan Balik
+
+1. **Bagian C–F sudah selesai semua?** Atau ada yang belum?
+   Kalau ada yang belum, kabari saya — saya sesuaikan prompt-nya.
+
+2. **Migration runner (`run-migration.js`) sudah ada atau belum?**
+   - Kalau belum → Copilot akan buat baru di F.5.1.
+   - Kalau sudah → Copilot tinggal pakai.
+
+3. **Setelah prompt ini selesai, mau lanjut Bagian G atau ada yang mau diubah dulu?**

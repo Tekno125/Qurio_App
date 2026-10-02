@@ -41,6 +41,7 @@ const questionTypeItems = {
 
 interface SessionFormInput {
   title: string;
+  class_size?: number | null;
   type: string;
   question: string;
   correctIndex: number;
@@ -81,7 +82,15 @@ function CreateSessionsPage() {
     }
 
     try {
-      const createdSession = await createSession(formData.title, "");
+      const normalizedClassSize =
+        formData.class_size === undefined || formData.class_size === null
+          ? null
+          : Number(formData.class_size);
+
+      const createdSession = await createSession(
+        formData.title,
+        normalizedClassSize,
+      );
       const newSessionId = createdSession?.id;
 
       if (!newSessionId) {
@@ -166,6 +175,35 @@ function CreateSessionsPage() {
               {errors.title && (
                 <div className="mt-1 text-xs font-semibold text-destructive">
                   {errors.title.message}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="session-class-size">
+                Jumlah siswa di kelas (opsional)
+              </Label>
+              <Input
+                id="session-class-size"
+                {...register("class_size", {
+                  setValueAs: (value) =>
+                    value === "" || value === undefined || value === null
+                      ? null
+                      : Number(value),
+                  validate: (value) =>
+                    value == null ||
+                    (Number.isInteger(value) && value >= 1 && value <= 500) ||
+                    "Jumlah siswa harus berupa angka antara 1 dan 500.",
+                })}
+                className="h-11"
+                type="number"
+                min={1}
+                max={500}
+                placeholder="Contoh: 35"
+              />
+              {errors.class_size && (
+                <div className="mt-1 text-xs font-semibold text-destructive">
+                  {errors.class_size.message}
                 </div>
               )}
             </div>

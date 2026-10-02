@@ -12,11 +12,36 @@ function generateAccessCode() {
   return randomNumber.toString();
 }
 
+function validateClassSize(classSize) {
+  const normalizedClassSize =
+    classSize === undefined || classSize === null || classSize === ""
+      ? null
+      : classSize;
+
+  if (
+    normalizedClassSize !== null &&
+    (typeof normalizedClassSize !== "number" ||
+      !Number.isInteger(normalizedClassSize) ||
+      normalizedClassSize < 1 ||
+      normalizedClassSize > 500)
+  ) {
+    return {
+      valid: false,
+      message: "Jumlah siswa harus berupa angka antara 1 dan 500.",
+    };
+  }
+
+  return {
+    valid: true,
+    value: normalizedClassSize,
+  };
+}
+
 // ====================================================================
 // POST SESSION (Guru membuat sesi baru)
 // ====================================================================
 export const createSession = async (req, res) => {
-  const { title } = req.body;
+  const { title, class_size } = req.body;
 
   // Step 1: Ambil ID guru dari token JWT yang sudah diverifikasi
   const teacherId = req.user ? req.user.id : null;
@@ -36,11 +61,19 @@ export const createSession = async (req, res) => {
     });
   }
 
+  const classSizeValidation = validateClassSize(class_size);
+  if (!classSizeValidation.valid) {
+    return res.status(400).json({
+      success: false,
+      message: classSizeValidation.message,
+    });
+  }
+
   try {
     // Step 3: Buat sesi baru di database dengan kode akses acak
     const createdSessionResult = await pool.query(
-      "INSERT INTO sessions (title, teacher_id, access_code) VALUES ($1, $2, $3) RETURNING *",
-      [title, teacherId, generateAccessCode()],
+      "INSERT INTO sessions (title, teacher_id, access_code, status, class_size) VALUES ($1, $2, $3, 'active', $4) RETURNING *",
+      [title, teacherId, generateAccessCode(), classSizeValidation.value],
     );
 
     const newSession = createdSessionResult.rows[0];
@@ -171,13 +204,22 @@ export const getPublicSession = async (req, res) => {
 // ====================================================================
 export const updateSession = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, class_size } = req.body;
 
   try {
-    if (status !== "active" && status !== "ended") {
+    if (status !== undefined && status !== null && status !== "active" && status !== "ended") {
       return res.status(400).json({
         success: false,
         message: "Status sesi harus active atau ended.",
+      });
+    }
+
+    const hasClassSizeField = Object.prototype.hasOwnProperty.call(req.body, "class_size");
+    const classSizeValidation = validateClassSize(class_size);
+    if (hasClassSizeField && class_size !== undefined && class_size !== null && !classSizeValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: classSizeValidation.message,
       });
     }
 
@@ -201,14 +243,37 @@ export const updateSession = async (req, res) => {
       });
     }
 
-    const endedAt = status === "ended" ? new Date() : null;
+    const updates = [];
+    const values = [];
+
+    if (status !== undefined && status !== null) {
+      updates.push("status = $" + (values.length + 1));
+      values.push(status);
+
+      const endedAt = status === "ended" ? new Date() : null;
+      updates.push("ended_at = $" + (values.length + 1));
+      values.push(endedAt);
+    }
+
+    if (hasClassSizeField) {
+      updates.push("class_size = $" + (values.length + 1));
+      values.push(classSizeValidation.value);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Tidak ada data yang diubah.",
+      });
+    }
+
+    values.push(id);
     const updatedSessionResult = await pool.query(
       `UPDATE sessions
-             SET status = $1,
-                 ended_at = $2
-             WHERE id = $3
+             SET ${updates.join(", ")}
+             WHERE id = $${values.length}
              RETURNING *`,
-      [status, endedAt, id],
+      values,
     );
 
     const updatedSession = updatedSessionResult.rows[0];

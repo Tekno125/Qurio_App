@@ -364,6 +364,7 @@ async function runSeed() {
                         ? new Date(createdAt.getTime() + durationMinutes * 60 * 1000)
                         : null,
                 durationMinutes,
+                classSize: index < 6 ? 30 : null,
                 participants: sample(students, randomInt(20, 28)).map((student) => ({
                     id: randomUUID(),
                     student,
@@ -378,13 +379,14 @@ async function runSeed() {
         await insertRows(
             client,
             "sessions",
-            ["id", "teacher_id", "title", "access_code", "status", "created_at", "ended_at"],
+            ["id", "teacher_id", "title", "access_code", "status", "class_size", "created_at", "ended_at"],
             sessions.map((session) => [
                 session.id,
                 session.teacherId,
                 session.topic.title,
                 session.accessCode,
                 session.status,
+                session.classSize,
                 session.createdAt,
                 session.endedAt,
             ]),
