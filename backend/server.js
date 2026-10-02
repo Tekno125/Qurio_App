@@ -18,21 +18,27 @@ dotenv.config({ quiet: true });
 
 const app = express();
 const PORT = process.env.PORT || process.env.SERVER_PORT || 5000;
-const FRONTEND_URLS = (
-    process.env.FRONTEND_URL || "http://localhost:3000,http://192.168.1.9:3000"
-)
+const rawOrigins = process.env.FRONTEND_URL || "";
+const allowedOrigins = rawOrigins
     .split(",")
-    .map((url) => url.trim())
+    .map((origin) => origin.trim())
     .filter(Boolean);
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin || FRONTEND_URLS.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Origin tidak diizinkan oleh CORS"));
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
         }
+        if (/^http:\/\/localhost(:\d+)?$/.test(origin)) {
+            return callback(null, true);
+        }
+        if (/^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`Origin ${origin} not allowed by CORS`));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // =====================
@@ -40,7 +46,7 @@ const corsOptions = {
 // =====================
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-    cors: { ...corsOptions, methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+    cors: corsOptions,
 });
 
 // Simpan io ke app agar bisa dipakai di controller (req.app.get("io"))

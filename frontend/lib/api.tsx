@@ -104,8 +104,8 @@ interface JoinSessionResponse {
   success: boolean;
   message: string;
   data: {
-    id: string; // ID Participant
-    session_id: string; // ID Sesi yang
+    id: string;
+    session_id: string;
     name: string;
     absen: number;
   };
@@ -134,6 +134,15 @@ export interface responseAnswer {
 export type AnalyticsPeriod = "7d" | "30d" | "all";
 export type ParticipationTrendPeriod = "7d" | "14d" | "30d";
 
+/** Satu baris breakdown kehadiran per sesi dari endpoint analytics summary. */
+export interface AttendanceBreakdownItem {
+  sessionId: string;
+  title: string;
+  classSize: number;
+  joined: number;
+  rate: number;
+}
+
 export interface AnalyticsSummary {
   totalStudents: number;
   averageScore: number;
@@ -141,6 +150,7 @@ export interface AnalyticsSummary {
   attendanceRate: number;
   totalSessions: number;
   sessionsWithClassSize: number;
+  attendanceBreakdown: AttendanceBreakdownItem[];
 }
 
 export interface StudentScore {
@@ -491,7 +501,6 @@ export const updateSinglePolls = async (
   token: string | null,
 ): Promise<Poll> => {
   try {
-    // 1. Perbaiki URL: gunakan '/status' secara literal di ujung path
     const response = await fetch(`${API_URL}/api/polls/${pollId}/status`, {
       method: "PATCH",
       headers: {
@@ -501,15 +510,13 @@ export const updateSinglePolls = async (
       body: JSON.stringify({ status }),
     });
 
-    // 2. Tangkap jika backend mengembalikan status HTTP error (4xx / 5xx)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || "Gagal mengupdate status poll");
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
-    return result.data; // atau 'result' sesuai struktur response backend kamu
+    return result.data;
   } catch (error) {
     console.error("Gagal mengupdate status:", error);
     throw error;
@@ -522,7 +529,6 @@ export const updateStatusSession = async (
   token: string | null,
 ): Promise<SessionData> => {
   try {
-    // Backend hanya menyediakan route PUT untuk update session (lihat routes/sessions.js)
     const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
       method: "PUT",
       headers: {
@@ -532,7 +538,6 @@ export const updateStatusSession = async (
       body: JSON.stringify({ status }),
     });
 
-    // 2. Tangkap jika backend mengembalikan status HTTP error (4xx / 5xx)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
@@ -541,9 +546,8 @@ export const updateStatusSession = async (
       );
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
-    return result.data; // struktur response backend: { success, data: session }
+    return result.data;
   } catch (error) {
     console.error("Gagal mengupdate status:", error);
     throw error;
@@ -570,7 +574,6 @@ export const fetchUserParticipant = async (
       throw new Error(errorData.message || `Gagal memasuki sesi!`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {
@@ -599,7 +602,6 @@ export const fetchCurrentPoll = async (sessionId: string): Promise<Poll> => {
       throw error;
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result.data;
   } catch (error) {
@@ -631,7 +633,6 @@ export const fetchResponsePoll = async (
       throw new Error(errorData.message || `Respon gagal`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {
@@ -746,7 +747,6 @@ export const fetchResponseGetPoll = async (
       throw new Error(errorData.message || `Respon gagal`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {

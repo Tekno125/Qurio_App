@@ -113,6 +113,16 @@ function EmptyBlock({
   );
 }
 
+/**
+ * Warna progress bar berdasarkan tingkat kehadiran.
+ * >=80% hijau, >=60% kuning, <60% merah.
+ */
+function getAttendanceColor(rate: number) {
+  if (rate >= 80) return "bg-emerald-500";
+  if (rate >= 60) return "bg-amber-500";
+  return "bg-rose-500";
+}
+
 // -------------------------------------------------------------
 // Halaman utama
 // -------------------------------------------------------------
@@ -340,31 +350,18 @@ function AnalyticsPage() {
             : "Menunggu data jawaban kuis",
       },
       {
-        label:
-          summary && summary.sessionsWithClassSize > 0
-            ? "Tingkat Kehadiran"
-            : "Tingkat Partisipasi",
-        value: summary
-          ? `${Math.round(
-            summary.sessionsWithClassSize > 0
-              ? summary.attendanceRate
-              : summary.participationRate,
-          )}%`
-          : "-",
-        detail:
-          summary
-            ? summary.sessionsWithClassSize > 0
-              ? "Persentase kehadiran berdasarkan kapasitas kelas"
-              : "Siswa yang berpartisipasi di sesi yang diikuti"
-            : "Menunggu data respons",
+        label: "Tingkat Kehadiran",
+        value: summary ? `${Math.round(summary.attendanceRate)}%` : "-",
+        detail: summary
+          ? `${summary.sessionsWithClassSize} dari ${summary.totalSessions} sesi terukur`
+          : "Menunggu data kehadiran",
       },
       {
         label: "Sesi Dianalisis",
         value: summary ? String(summary.totalSessions) : "-",
-        detail:
-          fetchedAt !== null
-            ? `Diperbarui ${timeFormatter.format(new Date(fetchedAt))}`
-            : "Memuat...",
+        detail: summary
+          ? `${summary.sessionsWithClassSize} dari ${summary.totalSessions} sesi punya data kelas`
+          : "Memuat...",
       },
     ];
 
@@ -460,6 +457,56 @@ function AnalyticsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Panel: Kehadiran per Sesi (breakdown). */}
+      {summary &&
+        summary.attendanceBreakdown &&
+        summary.attendanceBreakdown.length > 0 && (
+          <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
+            <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
+              <CardTitle className="text-base font-semibold text-foreground">
+                Kehadiran per Sesi
+              </CardTitle>
+              <CardDescription>
+                Sesi dengan kehadiran terendah ditampilkan lebih dulu
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
+              <ul className="flex flex-col gap-1">
+                {summary.attendanceBreakdown.map((item) => (
+                  <li
+                    key={item.sessionId}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                      {item.title}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-24 overflow-hidden rounded-full bg-muted"
+                      >
+                        <span
+                          className={cn(
+                            "block h-full rounded-full",
+                            getAttendanceColor(item.rate),
+                          )}
+                          style={{ width: `${item.rate}%` }}
+                        />
+                      </span>
+                      <span className="w-16 text-right text-xs font-semibold tabular-nums text-muted-foreground">
+                        {item.joined}/{item.classSize}
+                      </span>
+                      <span className="w-12 text-right text-sm font-bold tabular-nums text-foreground">
+                        {Math.round(item.rate)}%
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Tren partisipasi harian. */}
       <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
