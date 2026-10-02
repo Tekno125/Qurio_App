@@ -126,7 +126,7 @@ interface DailyPoint {
 
 // Konfigurasi label dan warna chart: tren dan distribusi status.
 const trendChartConfig = {
-  students: { label: "Jumlah siswa", color: "var(--chart-2)" }
+  students: { label: "Jumlah siswa", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
 // Format tanggal-waktu dari API, fallback "-" bila kosong atau tidak valid.
@@ -280,7 +280,7 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
   const lastSessionAt = sessions.reduce<number | null>(
     (latest, session) =>
       session.startedAt !== null &&
-        (latest === null || session.startedAt > latest)
+      (latest === null || session.startedAt > latest)
         ? session.startedAt
         : latest,
     null,
@@ -317,6 +317,51 @@ function buildAnalytics(sessions: TimedSession[], now: number) {
         : 0,
     lastSessionAt,
   };
+}
+
+// Ringkasan nilai siswa, digabung dari properti participants tiap sesi.
+interface ScoreSummary {
+  scoredParticipants: number;
+  averageScore: number;
+  topScore: number;
+  topScorerNames: string[];
+}
+
+// Susun metrik nilai (rata-rata, nilai tertinggi, dan pemiliknya) dari semua
+// sesi. Setiap entri `participants.scores` mewakili satu siswa di satu sesi.
+function buildScoreSummary(sessions: SessionListItem[]): ScoreSummary {
+  let totalScore = 0;
+  let scoredParticipants = 0;
+  let topScore = 0;
+  const topScorerNames: string[] = [];
+
+  sessions.forEach((session) => {
+    (session.participants?.scores ?? []).forEach((entry) => {
+      totalScore += entry.score;
+      scoredParticipants += 1;
+
+      if (entry.score > topScore) {
+        topScore = entry.score;
+        topScorerNames.length = 0;
+        topScorerNames.push(entry.name);
+      } else if (entry.score === topScore && entry.score > 0) {
+        // Nilai seri: kumpulkan semua nama yang mencapai nilai tertinggi.
+        topScorerNames.push(entry.name);
+      }
+    });
+  });
+
+  return {
+    scoredParticipants,
+    averageScore: scoredParticipants > 0 ? totalScore / scoredParticipants : 0,
+    topScore,
+    topScorerNames,
+  };
+}
+
+// Format nilai: bulat bila utuh, satu desimal bila berupa pecahan.
+function formatScore(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function AnalyticsPage() {
@@ -403,6 +448,17 @@ function AnalyticsPage() {
     toTimedSession(session, referenceTime),
   );
   const analytics = buildAnalytics(sessions, referenceTime);
+  const scoreSummary = buildScoreSummary(rawSessions);
+  // Nama peraih nilai tertinggi; bila seri, tampilkan satu nama + jumlah sisanya.
+  const topScorerName = scoreSummary.topScorerNames[0] ?? "-";
+  const topScorerDetail =
+    scoreSummary.topScorerNames.length > 1
+      ? `+${scoreSummary.topScorerNames.length - 1} siswa lain bernilai sama`
+      : scoreSummary.topScorerNames.length === 1
+        ? "Peraih nilai terbanyak"
+        : scoreSummary.scoredParticipants > 0
+          ? "Belum ada jawaban benar"
+          : "Belum ada nilai siswa";
   const trendSeries = buildDailySeries(
     sessions,
     Number(trendRange),
@@ -461,29 +517,53 @@ function AnalyticsPage() {
       </>
     );
 
-  // Delapan kartu ringkasan; dibuat sebagai data agar cukup dirender satu loop.
+  // Kartu ringkasan utama; dibuat sebagai data agar cukup dirender satu loop.
   const overviewItems: {
     label: string;
     value: string;
     detail: ReactNode;
     compact?: boolean;
   }[] = [
-      {
-        label: "Total Seluruh Sesi",
-        value: String(analytics.totalSessions),
-        detail: "Tercatat di akun Anda",
-      },
-      {
-        label: "Sesi Aktif",
-        value: String(analytics.activeSessions),
-        detail: "Sedang berlangsung",
-      },
-      {
-        label: "Sesi Selesai",
-        value: String(analytics.endedSessions),
-        detail: `${analytics.completionRate}% dari total sesi`,
-      },
-    ];
+    {
+      label: "Total Seluruh Sesi",
+      value: String(analytics.totalSessions),
+      detail: "Tercatat di akun Anda",
+    },
+    {
+      label: "Sesi Aktif",
+      value: String(analytics.activeSessions),
+      detail: "Sedang berlangsung",
+    },
+    {
+      label: "Sesi Selesai",
+      value: String(analytics.endedSessions),
+      detail: `${analytics.completionRate}% dari total sesi`,
+    },
+    {
+      label: "Nilai Rata-rata",
+      value: formatScore(scoreSummary.averageScore),
+      detail:
+        scoreSummary.scoredParticipants > 0
+          ? `Dari ${scoreSummary.scoredParticipants} siswa`
+          : "Belum ada nilai siswa",
+    },
+    {
+      label: "Nama Nilai Tertinggi",
+      value: topScorerName,
+      detail: topScorerDetail,
+      compact: true,
+    },
+    {
+      label: "Jumlah Nilai Tertinggi",
+      value: String(scoreSummary.topScore),
+      detail:
+        scoreSummary.topScorerNames.length > 0
+          ? `Diraih oleh ${scoreSummary.topScorerNames.length} siswa`
+          : scoreSummary.scoredParticipants > 0
+            ? "Belum ada jawaban benar"
+            : "Belum ada nilai siswa",
+    },
+  ];
 
   return (
     <section className="mx-auto w-full max-w-295 p-6 lg:p-8">
@@ -686,8 +766,7 @@ function AnalyticsPage() {
             </Card>
           </div>
 
-          <div className="mt-6 grid gap-3">
-          </div>
+          <div className="mt-6 grid gap-3"></div>
 
           <Card className="mt-6 rounded-[20px] border-border py-0 shadow-[0_8px_24px_rgb(15_23_42/0.05)] dark:shadow-none">
             <CardHeader className="p-5 pb-0 sm:p-6 sm:pb-0">
@@ -728,12 +807,13 @@ function AnalyticsPage() {
                           <span
                             className="block h-full rounded-full bg-primary"
                             style={{
-                              width: `${mostPopulatedSessions[0].studentCount > 0
-                                ? (session.studentCount /
-                                  mostPopulatedSessions[0].studentCount) *
-                                100
-                                : 0
-                                }%`,
+                              width: `${
+                                mostPopulatedSessions[0].studentCount > 0
+                                  ? (session.studentCount /
+                                      mostPopulatedSessions[0].studentCount) *
+                                    100
+                                  : 0
+                              }%`,
                             }}
                           />
                         </span>
