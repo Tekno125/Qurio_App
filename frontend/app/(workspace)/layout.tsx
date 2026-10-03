@@ -16,6 +16,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { SettingsDialog } from "@/components/SettingsModal";
+import { Toaster } from "@/components/ui/toast"; // ← ✨ TAMBAHKAN INI
 import LogoQurio from "../../public/Qurio-Cropped.svg";
 
 const navigation = [
@@ -139,6 +140,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="min-h-screen lg:pl-65">{children}</main>
+
+      {/* ✨ TAMBAHKAN INI — supaya semua toast.add() bisa tampil */}
+      <Toaster />
+
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}

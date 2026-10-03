@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import {
   Card,
@@ -13,7 +13,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { email, z } from "zod";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,13 +23,6 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // interface RegisterFormData {
 //   name: string;
@@ -45,7 +38,7 @@ const formSchema = z.object({
     .email("Email tidak valid")
     .endsWith("gmail.com", "Isi input dengan format (gmail.com) "),
   password: z.string().min(8, "Password minimal 8 karakter"),
-  role: z.string(),
+  role: z.literal("guru"),
 });
 
 type RegisterFormData = z.infer<typeof formSchema>;
@@ -57,10 +50,12 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    control,
     setError,
     formState: { errors },
-  } = useForm<RegisterFormData>({ resolver: zodResolver(formSchema) });
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { role: "guru" },
+  });
 
   const onSubmit = async (data: RegisterFormData) => {
     console.log("Form data:", data);
@@ -98,10 +93,10 @@ export default function RegisterPage() {
       <Card className="max-w-120 w-full shadow-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary">
-            Daftar Akun Baru
+            Daftar Akun Guru
           </CardTitle>
           <CardDescription className="text-sm text-zinc-500">
-            Bergabung dengan Qurio untuk pengalaman kelas interaktif
+            Buat akun guru untuk mengelola kelas interaktif Qurio
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,45 +177,6 @@ export default function RegisterPage() {
               {errors.password && (
                 <span className="text-xs text-destructive">
                   {errors.password.message}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
-                Role
-              </Label>
-              <Controller
-                name="role"
-                control={control}
-                rules={{ required: "Role wajib dipilih" }}
-                render={({ field }) => (
-                  <Select
-                    value={field.value ?? ""}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger className="w-full h-11!">
-                      <SelectValue placeholder="Pilih role Anda" />
-                    </SelectTrigger>
-                    <SelectContent
-                      side="bottom"
-                      sideOffset={4}
-                      alignItemWithTrigger={false}
-                    >
-                      <SelectItem value="guru" className="h-11!">
-                        Guru
-                      </SelectItem>
-                      <SelectItem value="siswa" className="h-11!">
-                        Siswa
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-
-              {errors.role && (
-                <span className="text-xs text-destructive">
-                  {errors.role.message}
                 </span>
               )}
             </div>

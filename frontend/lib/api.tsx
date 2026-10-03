@@ -91,6 +91,8 @@ export interface SessionListItem {
   teacher_id: string;
   title: string;
   access_code: string;
+  class_size: number | null;
+  participant_count: number;
   status: "active" | "ended";
   created_at: string;
   ended_at: string | null;
@@ -108,6 +110,7 @@ interface SessionDetailResponse {
     id: string;
     title: string;
     access_code: number;
+    class_size: number | null;
     type: "quiz" | "polling" | "qa" | "wordcloud";
     status: "active" | "ended";
   };
@@ -117,8 +120,8 @@ interface JoinSessionResponse {
   success: boolean;
   message: string;
   data: {
-    id: string; // ID Participant
-    session_id: string; // ID Sesi yang
+    id: string;
+    session_id: string;
     name: string;
     absen: number;
   };
@@ -142,6 +145,61 @@ export interface responseAnswer {
     incorrect_count: number;
     total_count: number;
   }>;
+}
+
+export type AnalyticsPeriod = "7d" | "30d" | "all";
+export type ParticipationTrendPeriod = "7d" | "14d" | "30d";
+
+/** Satu baris breakdown kehadiran per sesi dari endpoint analytics summary. */
+export interface AttendanceBreakdownItem {
+  sessionId: string;
+  title: string;
+  classSize: number;
+  joined: number;
+  rate: number;
+}
+
+export interface AnalyticsSummary {
+  totalStudents: number;
+  averageScore: number;
+  participationRate: number;
+  attendanceRate: number;
+  totalSessions: number;
+  sessionsWithClassSize: number;
+  attendanceBreakdown: AttendanceBreakdownItem[];
+}
+
+export interface StudentScore {
+  studentKey: string;
+  studentName: string;
+  sessionId: string;
+  sessionTitle: string;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  submittedAt: string;
+}
+
+export interface StudentParticipation {
+  studentKey: string;
+  studentName: string;
+  sessionsJoined: number;
+  questionsAsked: number;
+  responsesSubmitted: number;
+}
+
+export interface TopTopic {
+  questionId: string;
+  questionText: string;
+  sessionTitle: string;
+  incorrectRate: number;
+  totalAnswers: number;
+}
+
+export interface ParticipationTrendPoint {
+  date: string;
+  label: string;
+  participants: number;
 }
 
 const API_URL = (
@@ -281,8 +339,14 @@ const postType = async (
 
 const createSession = async (
   title: string,
-  token: string,
+  classSize?: number | null | string,
+  token?: string,
 ): Promise<Sessions> => {
+  const normalizedClassSize =
+    classSize === undefined || classSize === null || classSize === ""
+      ? null
+      : Number(classSize);
+
   try {
     const response = await fetch(`${API_URL}/api/sessions`, {
       method: "POST",
@@ -290,7 +354,10 @@ const createSession = async (
         "content-type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({
+        title,
+        class_size: normalizedClassSize,
+      }),
     });
 
     if (!response.ok) {
@@ -450,7 +517,6 @@ export const updateSinglePolls = async (
   token: string | null,
 ): Promise<Poll> => {
   try {
-    // 1. Perbaiki URL: gunakan '/status' secara literal di ujung path
     const response = await fetch(`${API_URL}/api/polls/${pollId}/status`, {
       method: "PATCH",
       headers: {
@@ -460,15 +526,13 @@ export const updateSinglePolls = async (
       body: JSON.stringify({ status }),
     });
 
-    // 2. Tangkap jika backend mengembalikan status HTTP error (4xx / 5xx)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || "Gagal mengupdate status poll");
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
-    return result.data; // atau 'result' sesuai struktur response backend kamu
+    return result.data;
   } catch (error) {
     console.error("Gagal mengupdate status:", error);
     throw error;
@@ -481,7 +545,6 @@ export const updateStatusSession = async (
   token: string | null,
 ): Promise<SessionData> => {
   try {
-    // Backend hanya menyediakan route PUT untuk update session (lihat routes/sessions.js)
     const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, {
       method: "PUT",
       headers: {
@@ -491,18 +554,16 @@ export const updateStatusSession = async (
       body: JSON.stringify({ status }),
     });
 
-    // 2. Tangkap jika backend mengembalikan status HTTP error (4xx / 5xx)
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-        `Gagal memperbarui status sesi (HTTP ${response.status})`,
+          `Gagal memperbarui status sesi (HTTP ${response.status})`,
       );
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
-    return result.data; // struktur response backend: { success, data: session }
+    return result.data;
   } catch (error) {
     console.error("Gagal mengupdate status:", error);
     throw error;
@@ -529,7 +590,6 @@ export const fetchUserParticipant = async (
       throw new Error(errorData.message || `Gagal memasuki sesi!`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {
@@ -558,7 +618,6 @@ export const fetchCurrentPoll = async (sessionId: string): Promise<Poll> => {
       throw error;
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result.data;
   } catch (error) {
@@ -590,7 +649,6 @@ export const fetchResponsePoll = async (
       throw new Error(errorData.message || `Respon gagal`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {
@@ -705,7 +763,6 @@ export const fetchResponseGetPoll = async (
       throw new Error(errorData.message || `Respon gagal`);
     }
 
-    // 3. Extract JSON dan kembalikan datanya
     const result = await response.json();
     return result;
   } catch (error) {
@@ -713,6 +770,92 @@ export const fetchResponseGetPoll = async (
     throw error;
   }
 };
+
+function getAnalyticsHeaders(token?: string): Headers {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  let authToken = token;
+
+  if (!authToken && typeof window !== "undefined") {
+    try {
+      authToken = window.localStorage.getItem("token") ?? undefined;
+    } catch {
+      authToken = undefined;
+    }
+  }
+
+  if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
+  return headers;
+}
+
+async function fetchAnalyticsData<T>(path: string, token?: string): Promise<T> {
+  const response = await fetch(`${API_URL}/api/analytics/${path}`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+    headers: getAnalyticsHeaders(token),
+  });
+
+  const result = (await response.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: T;
+    message?: string;
+    error?: string;
+  };
+
+  if (!response.ok || !result.success || result.data === undefined) {
+    throw new Error(
+      result.message || result.error || "Data analytics gagal dimuat.",
+    );
+  }
+
+  return result.data;
+}
+
+export const getAnalyticsSummary = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<AnalyticsSummary> =>
+  fetchAnalyticsData<AnalyticsSummary>(
+    `summary?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsScores = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<StudentScore[]> =>
+  fetchAnalyticsData<StudentScore[]>(
+    `scores?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsStudents = (
+  period: AnalyticsPeriod = "7d",
+  token?: string,
+): Promise<StudentParticipation[]> =>
+  fetchAnalyticsData<StudentParticipation[]>(
+    `students?period=${encodeURIComponent(period)}`,
+    token,
+  );
+
+export const getAnalyticsTopics = (
+  period: AnalyticsPeriod = "7d",
+  limit = 5,
+  token?: string,
+): Promise<TopTopic[]> =>
+  fetchAnalyticsData<TopTopic[]>(
+    `topics?period=${encodeURIComponent(period)}&limit=${encodeURIComponent(String(limit))}`,
+    token,
+  );
+
+export const getAnalyticsParticipationTrend = (
+  period: ParticipationTrendPeriod = "7d",
+  token?: string,
+): Promise<ParticipationTrendPoint[]> =>
+  fetchAnalyticsData<ParticipationTrendPoint[]>(
+    `participation-trend?period=${encodeURIComponent(period)}`,
+    token,
+  );
 
 export {
   fetchUserLogin,

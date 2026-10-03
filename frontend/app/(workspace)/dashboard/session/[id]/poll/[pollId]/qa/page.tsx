@@ -51,8 +51,7 @@ export default function QaPollPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="bg-white border rounded-xl p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Session {sessionId}</p>
-          <h1 className="mt-2 text-2xl font-black text-gray-900">Daftar Pertanyaan</h1>
+          <h1 className="text-2xl font-black text-gray-900">Daftar Pertanyaan</h1>
         </div>
 
         {error && (

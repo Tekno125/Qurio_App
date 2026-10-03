@@ -2,27 +2,59 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { fetchWordcloudList } from "@/lib/api";
+import { fetchWordcloudList, getAllDataPolls } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type WordcloudItem = { text: string; value: number };
 type PositionedWord = WordcloudItem & {
-  x: number; // persen (0-100) dari lebar container
-  y: number; // persen (0-100) dari tinggi container
-  fontSize: number; // px
+  x: number;
+  y: number;
+  fontSize: number;
   color: string;
 };
 
-// Ruang virtual untuk perhitungan tata letak (dikonversi ke % saat render)
+// -------------------------------------------------------------
+// Konfigurasi layout
+// -------------------------------------------------------------
 const CANVAS_W = 1000;
 const CANVAS_H = 560;
 
 const MIN_FONT = 18;
 const MAX_FONT = 56;
-const PADDING = 10; // jarak minimal antar kata (px virtual)
+const PADDING = 10;
 
-const COLORS = ["#0f172a", "#0f766e", "#7c3aed", "#ea580c", "#be185d", "#1d4ed8"];
+const COLORS = [
+  "#0f172a",
+  "#0f766e",
+  "#7c3aed",
+  "#ea580c",
+  "#be185d",
+  "#1d4ed8",
+];
 
-/** Hitung posisi semua kata: kata terbesar di tengah, sisanya spiral keluar tanpa tumpang tindih. */
+// -------------------------------------------------------------
+// Stopword list — kata umum yang biasanya jadi noise di wordcloud.
+// Set true untuk mengaktifkan filter, false untuk mematikan.
+// -------------------------------------------------------------
+const ENABLE_STOPWORDS = true;
+
+const STOPWORDS = new Set([
+  // Kata umum sekolah
+  "guru", "kelas", "belajar", "materi", "contoh", "penting",
+  "cara", "mudah", "menarik", "proses", "kegiatan", "penjelasan",
+  "siswa", "murid", "sekolah", "pelajaran", "hari", "ini",
+  "itu", "yang", "dan", "atau", "juga", "saja", "sudah",
+  "belum", "bisa", "tidak", "bukan", "adalah", "akan",
+  // Kata sifat umum
+  "bagus", "seru", "asik", "jelek", "susah", "sulit",
+  "senang", "sedih", "biasa", "lumayan",
+  // Kata teknis netral
+  "teori", "konsep", "data", "info", "informasi",
+]);
+
+// -------------------------------------------------------------
+// Layout spiral untuk wordcloud
+// -------------------------------------------------------------
 function layoutWords(items: WordcloudItem[]): PositionedWord[] {
   if (!items.length) return [];
 
@@ -34,27 +66,34 @@ function layoutWords(items: WordcloudItem[]): PositionedWord[] {
   const placed: { x: number; y: number; w: number; h: number }[] = [];
   const result: PositionedWord[] = [];
 
+  const aspect = CANVAS_W / CANVAS_H;
+
   sorted.forEach((item, index) => {
     const norm = max === min ? 0.5 : (item.value - min) / (max - min);
     const fontSize = MIN_FONT + norm * (MAX_FONT - MIN_FONT);
 
-    // Perkiraan ukuran kotak kata (font black ≈ 0.62em per huruf)
-    const w = item.text.length * fontSize * 0.62 + PADDING * 2;
-    const h = fontSize * 1.2 + PADDING;
+    // Estimasi bounding box lebih konservatif
+    const w = item.text.length * fontSize * 0.72 + PADDING * 2;
+    const h = fontSize * 1.3 + PADDING;
 
     let angle = 0;
-    for (let step = 0; step < 4000; step++) {
+    for (let step = 0; step < 6000; step++) {
       const r = 3 * angle;
-      const x = CANVAS_W / 2 + r * Math.cos(angle) * 1.8; // dilebarkan untuk layout landscape
+      const x = CANVAS_W / 2 + r * Math.cos(angle) * aspect;
       const y = CANVAS_H / 2 + r * Math.sin(angle);
-      angle += 0.2;
+      angle += 0.35;
 
       const inside =
-        x - w / 2 >= 0 && x + w / 2 <= CANVAS_W && y - h / 2 >= 0 && y + h / 2 <= CANVAS_H;
+        x - w / 2 >= 0 &&
+        x + w / 2 <= CANVAS_W &&
+        y - h / 2 >= 0 &&
+        y + h / 2 <= CANVAS_H;
       if (!inside) continue;
 
       const collide = placed.some(
-        (p) => Math.abs(x - p.x) < (w + p.w) / 2 && Math.abs(y - p.y) < (h + p.h) / 2
+        (p) =>
+          Math.abs(x - p.x) < (w + p.w) / 2 &&
+          Math.abs(y - p.y) < (h + p.h) / 2,
       );
       if (collide) continue;
 
@@ -68,70 +107,177 @@ function layoutWords(items: WordcloudItem[]): PositionedWord[] {
       });
       break;
     }
-    // Jika tidak ada ruang tersisa, kata dilewati.
   });
 
   return result;
 }
 
+// -------------------------------------------------------------
+// Halaman
+// -------------------------------------------------------------
 export default function WordcloudPage() {
   const params = useParams();
   const pollId = params.pollId as string;
   const sessionId = params.id as string;
 
-  const [items, setItems] = useState<WordcloudItem[]>([]);
+  const [rawItems, setRawItems] = useState<WordcloudItem[]>([]);
+  const [questionText, setQuestionText] = useState<string | null>(null);
+  const [pollStatus, setPollStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // -------------------------------------------------------------
+  // Fetch data: poll detail + daftar kata
+  // -------------------------------------------------------------
   useEffect(() => {
     let ignore = false;
 
     const load = async () => {
       try {
-        const data = await fetchWordcloudList(pollId);
-        const list = Array.isArray(data)
-          ? data
-          : (data as any)?.items || (data as any)?.data || [];
+        const [allPolls, wordcloudData] = await Promise.all([
+          getAllDataPolls(sessionId, null).catch((err) => {
+            console.error("Gagal memuat daftar poll:", err);
+            return [];
+          }),
+          fetchWordcloudList(pollId).catch((err) => {
+            console.error("Gagal memuat wordcloud:", err);
+            return [];
+          }),
+        ]);
 
         if (ignore) return;
 
-        // Gabungkan kata yang sama (case-insensitive) dan jumlahkan nilainya
+        const matchedPoll = (
+          allPolls as Array<{
+            id?: string;
+            question?: string;
+            status?: string;
+          }>
+        ).find((poll) => poll.id === pollId);
+
+        if (matchedPoll) {
+          setQuestionText(matchedPoll.question ?? null);
+          setPollStatus(matchedPoll.status ?? null);
+        }
+
+        const rawList = Array.isArray(wordcloudData)
+          ? wordcloudData
+          : (wordcloudData as { items?: unknown[]; data?: unknown[] } | null)
+            ?.items ??
+          (wordcloudData as { items?: unknown[]; data?: unknown[] } | null)
+            ?.data ??
+          [];
+
         const map = new Map<string, number>();
-        (list as any[]).forEach((item: any) => {
-          const t = String(item.text ?? item.word ?? item).trim().toLowerCase();
+        (rawList as unknown[]).forEach((entry) => {
+          const item =
+            typeof entry === "object" && entry !== null
+              ? (entry as Record<string, unknown>)
+              : {};
+          const textValue = item.text ?? item.word ?? entry;
+          const t = String(textValue).trim().toLowerCase();
           if (!t) return;
+
           const v = Number(item.value ?? item.count ?? 1) || 1;
           map.set(t, (map.get(t) || 0) + v);
         });
 
-        setItems(Array.from(map.entries()).map(([text, value]) => ({ text, value })));
+        setRawItems(
+          Array.from(map.entries()).map(([text, value]) => ({ text, value })),
+        );
       } catch (err) {
-        console.error("Gagal memuat wordcloud:", err);
+        console.error("Gagal memuat data:", err);
       } finally {
         if (!ignore) setLoading(false);
       }
     };
 
-    if (pollId) load();
+    if (pollId && sessionId) load();
     return () => {
       ignore = true;
     };
-  }, [pollId]);
+  }, [pollId, sessionId]);
 
+  // -------------------------------------------------------------
+  // Filter stopwords (kalau diaktifkan)
+  // -------------------------------------------------------------
+  const items = useMemo(() => {
+    if (!ENABLE_STOPWORDS) return rawItems;
+
+    const filtered = rawItems.filter(
+      (item) => !STOPWORDS.has(item.text.toLowerCase()),
+    );
+
+    // Kalau filter bikin data kosong (semua kata terfilter),
+    // fallback ke raw items supaya halaman tidak kosong.
+    return filtered.length > 0 ? filtered : rawItems;
+  }, [rawItems]);
+
+  const filteredCount = rawItems.length - items.length;
+
+  // -------------------------------------------------------------
+  // Turunan data untuk kartu insight
+  // -------------------------------------------------------------
   const positionedWords = useMemo(() => layoutWords(items), [items]);
   const hiddenCount = items.length - positionedWords.length;
 
+  const totalResponses = useMemo(
+    () => items.reduce((sum, item) => sum + item.value, 0),
+    [items],
+  );
+
+  const uniqueWords = items.length;
+
+  const topWords = useMemo(
+    () => [...items].sort((a, b) => b.value - a.value).slice(0, 3),
+    [items],
+  );
+
+  const rareWords = useMemo(
+    () => items.filter((item) => item.value === 1).slice(0, 6),
+    [items],
+  );
+
+  // -------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------
   return (
     <div className="w-full min-h-screen bg-slate-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-4 bg-white border rounded-xl p-5">
-          <p className="text-sm uppercase tracking-[0.2em] text-slate-500">SESSION {sessionId}</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-800">Wordcloud Response</h1>
+      <div className="mx-auto max-w-6xl">
+        {/* Header + soal */}
+        <div className="mb-4 rounded-xl border bg-white p-5">
+          <h1 className="mt-2 text-3xl font-black text-slate-800">
+            Wordcloud Response
+          </h1>
+
+          {questionText && (
+            <div className="mt-4 border-t pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Pertanyaan
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-700">
+                {questionText}
+              </p>
+              {pollStatus && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Status:{" "}
+                  {pollStatus === "published"
+                    ? "Sedang berjalan"
+                    : pollStatus === "closed"
+                      ? "Selesai"
+                      : "Draft"}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Rasio tetap 1000:560 supaya posisi persen selalu proporsional */}
+        {/* Wordcloud visual */}
         <div
-          className="relative w-full overflow-hidden rounded-2xl border bg-white isolate"
-          style={{ aspectRatio: `${CANVAS_W} / ${CANVAS_H}`, minHeight: 320 }}
+          className="isolate relative w-full overflow-hidden rounded-2xl border bg-white"
+          style={{
+            aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+            minHeight: 320,
+          }}
         >
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center text-slate-500">
@@ -146,7 +292,7 @@ export default function WordcloudPage() {
               <span
                 key={word.text}
                 title={`${word.text} (${word.value})`}
-                className="absolute font-black whitespace-nowrap select-none leading-none"
+                className="absolute select-none whitespace-nowrap font-black leading-none"
                 style={{
                   left: `${word.x}%`,
                   top: `${word.y}%`,
@@ -161,11 +307,101 @@ export default function WordcloudPage() {
           )}
         </div>
 
-        {!loading && hiddenCount > 0 && (
-          <p className="mt-2 text-sm text-slate-500">
-            {hiddenCount} kata tidak ditampilkan karena ruang penuh.
-          </p>
-        )}
+        {/* Info footer kecil */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+          {!loading && hiddenCount > 0 && (
+            <span>
+              {hiddenCount} kata tidak ditampilkan karena ruang penuh.
+            </span>
+          )}
+          {!loading && ENABLE_STOPWORDS && filteredCount > 0 && (
+            <span>
+              {filteredCount} kata umum disembunyikan (mis. &quot;guru&quot;,
+              &quot;kelas&quot;).
+            </span>
+          )}
+        </div>
+
+        {/* Kartu insight */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {/* Kartu 1: Top 3 kata dominan */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Kata Paling Sering</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topWords.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Belum ada data
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-1.5">
+                  {topWords.map((word, index) => (
+                    <li
+                      key={word.text}
+                      className="flex items-baseline justify-between gap-2"
+                    >
+                      <span className="flex items-baseline gap-1.5">
+                        <span className="text-[11px] font-bold tabular-nums text-muted-foreground">
+                          #{index + 1}
+                        </span>
+                        <span className="text-base font-bold text-foreground">
+                          {word.text}
+                        </span>
+                      </span>
+                      <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                        {word.value}x
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Kartu 2: Statistik respons */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Ringkasan Respons</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{totalResponses}</p>
+              <p className="text-xs text-muted-foreground">
+                Total jawaban dari {uniqueWords} kata unik
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Kartu 3: Kata langka (muncul 1x) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Kata Langka</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {rareWords.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Tidak ada kata yang muncul hanya sekali.
+                </p>
+              ) : (
+                <>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {rareWords.map((word) => (
+                      <li
+                        key={word.text}
+                        className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                      >
+                        {word.text}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Muncul sekali — mungkin ide unik dari siswa
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
