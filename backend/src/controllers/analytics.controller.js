@@ -319,8 +319,8 @@ export const getAnalyticsTopics = async (req, res) => {
   }
 };
 
-// Return a complete daily series of distinct student participation.
-export const getAnalyticsParticipationTrend = async (req, res) => {
+// Return a complete daily series of scored quiz responses.
+export const getAnalyticsScoreTrend = async (req, res) => {
   const periodDays = parsePeriod(req, res, ["7d", "14d", "30d"]);
   if (periodDays === undefined) return;
 
@@ -333,38 +333,37 @@ export const getAnalyticsParticipationTrend = async (req, res) => {
            CURRENT_DATE,
            INTERVAL '1 day'
          ) AS generated_day
-       ), daily_participants AS (
+       ), daily_scores AS (
          SELECT
-           p.joined_at::date AS date,
-           COUNT(DISTINCT LOWER(TRIM(p.name)))::int AS participants
-         FROM participants p
+           r.submitted_at::date AS date,
+           ROUND(
+             COUNT(*) FILTER (WHERE r.is_correct = TRUE)::numeric
+             / NULLIF(COUNT(*) FILTER (WHERE r.is_correct IS NOT NULL), 0)
+             * 100,
+             1
+           )::float AS avg_score,
+           COUNT(*) FILTER (WHERE r.is_correct IS NOT NULL)::int AS total_responses
+         FROM responses r
+         JOIN polls p ON p.id = r.poll_id AND p.type = 'quiz'
          JOIN sessions s ON s.id = p.session_id
          WHERE s.teacher_id = $1
-           AND p.joined_at >= CURRENT_DATE - ($2::int - 1)
-           AND p.joined_at < CURRENT_DATE + 1
-           AND NULLIF(TRIM(p.name), '') IS NOT NULL
-         GROUP BY p.joined_at::date
+           AND r.submitted_at >= CURRENT_DATE - ($2::int - 1)
+           AND r.submitted_at < CURRENT_DATE + 1
+           AND r.is_correct IS NOT NULL
+         GROUP BY r.submitted_at::date
        )
        SELECT
          TO_CHAR(days.date, 'YYYY-MM-DD') AS date,
-         COALESCE(daily_participants.participants, 0)::int AS participants
+         COALESCE(daily_scores.avg_score, 0)::float AS "avgScore",
+         COALESCE(daily_scores.total_responses, 0)::int AS "totalResponses"
        FROM days
-       LEFT JOIN daily_participants USING (date)
+       LEFT JOIN daily_scores USING (date)
        ORDER BY days.date ASC`,
       [req.user.id, periodDays],
     );
 
-    const data = result.rows.map((row) => ({
-      ...row,
-      label: new Date(`${row.date}T12:00:00Z`).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        timeZone: "UTC",
-      }),
-    }));
-
-    return res.status(200).json({ success: true, data });
+    return res.status(200).json({ success: true, data: result.rows });
   } catch (error) {
-    return sendQueryError(res, "Get analytics participation trend error", error);
+    return sendQueryError(res, "Get analytics score trend error", error);
   }
 };

@@ -1,7 +1,7 @@
 import express from "express";
 import { teacherLimit } from "../middlewares/auth.middleware.js";
 import {
-    getAnalyticsParticipationTrend,
+    getAnalyticsScoreTrend,
     getAnalyticsScores,
     getAnalyticsStudents,
     getAnalyticsSummary,
@@ -15,6 +15,6 @@ router.get("/summary", teacherLimit, getAnalyticsSummary);
 router.get("/scores", teacherLimit, getAnalyticsScores);
 router.get("/students", teacherLimit, getAnalyticsStudents);
 router.get("/topics", teacherLimit, getAnalyticsTopics);
-router.get("/participation-trend", teacherLimit, getAnalyticsParticipationTrend);
+router.get("/score-trend", teacherLimit, getAnalyticsScoreTrend);
 
 export default router;
