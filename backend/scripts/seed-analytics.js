@@ -364,7 +364,7 @@ async function runSeed() {
                         ? new Date(createdAt.getTime() + durationMinutes * 60 * 1000)
                         : null,
                 durationMinutes,
-                classSize: index < 6 ? 30 : null,
+                classSize: 30,   // ← INI GANTI JADI: classSize: 30,
                 participants: sample(students, randomInt(20, 28)).map((student) => ({
                     id: randomUUID(),
                     student,
@@ -394,13 +394,15 @@ async function runSeed() {
         console.log("[seed] 8 sesi dibuat; 4 ended dan 4 active.");
 
         const participantRows = sessions.flatMap((session) =>
-            session.participants.map((participant) => [
-                participant.id,
-                session.id,
-                participant.student.name,
-                participant.student.absen,
-                participant.joinedAt,
-            ]),
+            session.participants
+                .filter((p) => p?.student?.name)
+                .map((p) => [
+                    p.id,
+                    session.id,
+                    p.student.name,
+                    p.student.absen,
+                    p.joinedAt,
+                ]),
         );
         await insertRows(
             client,
