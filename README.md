@@ -98,7 +98,7 @@ Data demo berisi 30 siswa, 4 sesi Quiz, dan 4 sesi interaktif (polling, word clo
 
 | Dashboard analitik                                | Sesi live                                   |
 | ------------------------------------------------- | ------------------------------------------- |
-| ![Analitik](docs/images/screenshot-analytics.png) | ![Sesi](docs/images/screenshot-session.png) |
+| ![Analitik](docs/images/screenshot-analytics.png) | ![Sesi](docs/images/screenshotsession.png) |
 
 <p align="right">(<a href="#readme-top">kembali ke atas</a>)</p>
 
