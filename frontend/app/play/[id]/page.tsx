@@ -52,6 +52,7 @@ export default function PlayPage() {
     <QuizView
       sessionId={sessionId}
       onInvalidParticipant={() => setJoinState("needs-join")}
+      onLeaveSession={() => setJoinState("needs-join")}
     />
   );
 }

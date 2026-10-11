@@ -1,10 +1,20 @@
 'use client'
 
-import { io } from "socket.io-client"
+import { io, type Socket } from "socket.io-client"
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
-import { IconCircleCheck, IconCircleCheckFilled, IconClock, IconSchool } from "@tabler/icons-react"
+import { IconCircleCheck, IconCircleCheckFilled, IconClock, IconLogout, IconSchool } from "@tabler/icons-react"
 import { toast } from "@/components/ui/toast"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
     fetchCurrentPoll,
     fetchQuestionPoll,
@@ -18,6 +28,8 @@ interface QuizViewProps {
     sessionId: string
     // dipanggil kalau server menolak participant_id (mis. sisa dari sesi lain)
     onInvalidParticipant?: () => void
+    // dipanggil setelah siswa menekan Keluar (slot absen langsung bebas)
+    onLeaveSession?: () => void
 }
 interface PollOption { id: string; poll_id: string; option_text: string; is_correct?: boolean; option_order: number }
 export interface Poll {
@@ -45,7 +57,7 @@ const writeSubmitted = (pollId: string) => {
     try { localStorage.setItem(getSubmittedKey(pollId), "true") } catch { /* abaikan */ }
 }
 
-function Header({ title }: { title?: string }) {
+function Header({ title, onLeave }: { title?: string; onLeave?: () => void }) {
     return (
         <div className="flex items-center justify-between mb-6">
             <div>
@@ -58,6 +70,16 @@ function Header({ title }: { title?: string }) {
                     </span>
                 </h1>
             </div>
+            {onLeave && (
+                <button
+                    type="button"
+                    onClick={onLeave}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-600 shadow-sm transition-all hover:border-red-200 hover:text-red-600"
+                >
+                    <IconLogout className="size-4" />
+                    Keluar
+                </button>
+            )}
         </div>
     )
 }
@@ -73,7 +95,7 @@ function Notice({ Icon, title, text, tone = "zinc" }: { Icon: typeof IconClock; 
     )
 }
 
-export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewProps) {
+export default function QuizView({ sessionId, onInvalidParticipant, onLeaveSession }: QuizViewProps) {
     const { register, reset, setValue, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>()
     const [poll, setPoll] = useState<Poll | null>(null)
     const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
@@ -81,9 +103,48 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
     const [sessionEnded, setSessionEnded] = useState(false)
     const [sessionData, setSessionData] = useState<PublicSession | null>(null)
     const [submitError, setSubmitError] = useState<string | null>(null)
+    const [leaveOpen, setLeaveOpen] = useState(false)
 
     const fetchRequestRef = useRef(0)
     const currentPollIdRef = useRef<string | null>(null)
+    const socketRef = useRef<Socket | null>(null)
+
+    // Identitas join untuk presence server (dipakai saat join & leave socket).
+    // Dibaca dari localStorage yang ditulis AccessForm; absen ada di data join.
+    const readJoinIdentity = () => {
+        try {
+            const participantId = localStorage.getItem("participant_id")
+            const raw = localStorage.getItem("participant")
+            let absen: string | null = null
+            if (raw) {
+                const stored = JSON.parse(raw) as { data?: { absen?: string | number }; absen?: string | number }
+                const value = stored?.data?.absen ?? stored?.absen
+                if (value !== undefined && value !== null) absen = String(value)
+            }
+            return { participantId, absen }
+        } catch {
+            return { participantId: null as string | null, absen: null as string | null }
+        }
+    }
+
+    // Keluar eksplisit: bebaskan slot absen di server seketika (tanpa tunggu),
+    // lalu kembali ke form join. Baris DB + jawaban TIDAK dihapus (histori nilai).
+    const handleLeaveSession = () => {
+        try {
+            const { participantId, absen } = readJoinIdentity()
+            socketRef.current?.emit("leave_session", { sessionId, participantId, absen })
+            socketRef.current?.removeAllListeners()
+            socketRef.current?.disconnect()
+        } catch { /* abaikan */ }
+        socketRef.current = null
+        try {
+            localStorage.removeItem("participant")
+            localStorage.removeItem("participant_id")
+            localStorage.removeItem("participant_session_id")
+        } catch { /* abaikan */ }
+        setLeaveOpen(false)
+        onLeaveSession?.()
+    }
 
     useEffect(() => {
         if (!sessionId) return
@@ -131,10 +192,14 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
         }
 
         const socket = io(SOCKET_URL)
+        socketRef.current = socket
         void fetchSession()
 
         const onConnect = () => {
-            socket.emit("join_session", sessionId)
+            // Kirim identitas agar server mencatat presence (sessionId, absen).
+            // Dicek SEKALI saat ada pendatang absen sama — tanpa polling timer.
+            const { participantId, absen } = readJoinIdentity()
+            socket.emit("join_session", { sessionId, participantId, absen })
             // dipanggil juga saat reconnect -> sinkron event yang terlewat
             void fetchPoll()
         }
@@ -173,9 +238,13 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
 
         return () => {
             cancelled = true
-            socket.emit("leave_session", sessionId)
+            try {
+                const { participantId, absen } = readJoinIdentity()
+                if (socket.connected) socket.emit("leave_session", { sessionId, participantId, absen })
+            } catch { /* abaikan */ }
             socket.removeAllListeners()
             socket.disconnect()
+            if (socketRef.current === socket) socketRef.current = null
         }
     }, [sessionId, reset])
 
@@ -233,7 +302,7 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
     return (
         <div className="min-h-screen bg-[#fafaf9] p-4 md:p-8">
             <div className="max-w-2xl mx-auto">
-                <Header title={sessionData?.title ?? "Sesi langsung"} />
+                <Header title={sessionData?.title ?? "Sesi langsung"} onLeave={() => setLeaveOpen(true)} />
 
                 {submitError && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm">{submitError}</div>}
 
@@ -297,6 +366,26 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
                     </div>
                 )}
             </div>
+
+            {/* Dialog konfirmasi keluar sesi (slot absen langsung bebas). */}
+            <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Keluar dari sesi?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Kamu akan keluar dari sesi ini dan nomor absenmu langsung
+                            bisa dipakai masuk kembali — tanpa waktu tunggu.
+                            Jawaban yang sudah terkirim tetap tersimpan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction variant="destructive" onClick={handleLeaveSession}>
+                            Ya, keluar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

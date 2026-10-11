@@ -107,11 +107,20 @@ export const joinSession = async (req, res) => {
         if (existingParticipants.rows.length > 0) {
             const dbParticipant = existingParticipants.rows[0]
             if (dbParticipant.id !== participant_id) {
-                return res.status(409).json({
-                    success: false,
-                    message: "Nomor absen ini sudah digunakan oleh orang lain di sesi ini!",
-                    data: null
-                })
+                // Cek SEKALI (on-demand, tanpa polling): tolak hanya jika pemilik
+                // lama masih benar-benar terhubung sekarang juga. Kalau sudah
+                // offline (keluar/tutup tab), serahkan kembali row lama agar
+                // pemilik bisa langsung balik tanpa waktu tunggu dan tanpa
+                // nomor absen baru. Baris DB dipertahankan untuk histori nilai.
+                const presence = req.app.get("presence");
+                const stillOnline = presence?.isSlotOnline?.(foundSessionId, absen) ?? true;
+                if (stillOnline) {
+                    return res.status(409).json({
+                        success: false,
+                        message: "Nomor absen ini masih dipakai perangkat lain yang terhubung di sesi ini!",
+                        data: null
+                    })
+                }
             }
         }
 
