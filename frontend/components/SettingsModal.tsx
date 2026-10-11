@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,6 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { Button } from "@/components/ui/button";
-import { getThemePreference, saveThemePreference } from "@/lib/db";
 import { IconLogout, IconPalette, IconUser } from "@tabler/icons-react";
 
 type Theme = "light" | "dark";
@@ -39,24 +38,6 @@ export function SettingsDialog({
   const [draftTheme, setDraftTheme] = useState<Theme>(theme);
   const [activeTab, setActiveTab] = useState<"account" | "theme">("account");
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    let active = true;
-
-    getThemePreference().then((storedTheme) => {
-      if (active && storedTheme) {
-        setDraftTheme(storedTheme);
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [open, theme]);
-
   const handleDraftThemeChange = (nextTheme: Theme) => {
     setDraftTheme(nextTheme);
   };
@@ -67,7 +48,6 @@ export function SettingsDialog({
 
   const handleApply = () => {
     onThemeChange(draftTheme);
-    saveThemePreference(draftTheme);
     onApply();
   };
 
