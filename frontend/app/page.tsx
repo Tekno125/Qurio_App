@@ -1,7 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
@@ -197,19 +202,24 @@ function DashboardPreview() {
     }
   };
 
-  const stats = activeTab === "quiz"
-    ? [
-        ["Total Siswa", "24", "Siswa yang ikut sesi"],
-        ["Rata-rata Skor Kuis", "78%", "Dari jawaban yang dinilai"],
-        ["Tingkat Kehadiran", "92%", "Rata-rata per sesi"],
-        ["Sesi Dianalisis", "8", "Sesi mode Quiz"],
-      ]
-    : [
-        ["Total Sesi Interaktif", "6", "Sesi tanpa penilaian"],
-        ["Total Partisipasi", "124", "Kehadiran di seluruh sesi"],
-        ["Rata-rata Peserta", "21", "Siswa per sesi"],
-        ["Aktivitas Digunakan", "—", "Segera hadir (Word Cloud, Q&A, Polling)"],
-      ];
+  const stats =
+    activeTab === "quiz"
+      ? [
+          ["Total Siswa", "24", "Siswa yang ikut sesi"],
+          ["Rata-rata Skor Kuis", "78%", "Dari jawaban yang dinilai"],
+          ["Tingkat Kehadiran", "92%", "Rata-rata per sesi"],
+          ["Sesi Dianalisis", "8", "Sesi mode Quiz"],
+        ]
+      : [
+          ["Total Sesi Interaktif", "6", "Sesi tanpa penilaian"],
+          ["Total Partisipasi", "124", "Kehadiran di seluruh sesi"],
+          ["Rata-rata Peserta", "21", "Siswa per sesi"],
+          [
+            "Aktivitas Digunakan",
+            "—",
+            "Segera hadir (Word Cloud, Q&A, Polling)",
+          ],
+        ];
 
   return (
     <div className="mt-14 overflow-hidden rounded-3xl border border-border bg-card shadow-[0_2px_4px_rgba(15,23,42,0.04),0_32px_64px_-24px_rgba(59,91,255,0.2)] sm:mt-16">
@@ -236,32 +246,62 @@ function DashboardPreview() {
           <span className="mb-5 flex min-h-10 items-center justify-center rounded-lg bg-brand-500 px-2 text-xs font-semibold text-white">
             + Buat Sesi Baru
           </span>
-          <p className="mb-2 px-2 text-xs font-semibold text-slate-500">Workspace</p>
+          <p className="mb-2 px-2 text-xs font-semibold text-slate-500">
+            Workspace
+          </p>
           <div className="space-y-1 text-xs font-medium text-slate-600">
-            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconLayoutGrid className="size-4" />Dashboard</span>
-            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconList className="size-4" />Session List</span>
-            <span className="flex min-h-9 items-center gap-2 rounded-lg bg-brand-500 px-2.5 font-semibold text-white"><IconTrendingUp className="size-4" />Analytics</span>
+            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5">
+              <IconLayoutGrid className="size-4" />
+              Dashboard
+            </span>
+            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5">
+              <IconList className="size-4" />
+              Session List
+            </span>
+            <span className="flex min-h-9 items-center gap-2 rounded-lg bg-brand-500 px-2.5 font-semibold text-white">
+              <IconTrendingUp className="size-4" />
+              Analytics
+            </span>
           </div>
         </aside>
 
         <div className="min-w-0 p-4 sm:p-6 lg:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div>
-              <h3 className="m-0 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Analitik Kelas</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">Pantau pemahaman dan keaktifan siswa di seluruh sesi kelas Anda</p>
+              <h3 className="m-0 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                Analitik Kelas
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                Pantau pemahaman dan keaktifan siswa di seluruh sesi kelas Anda
+              </p>
             </div>
-            <div className="flex flex-wrap gap-2" aria-label="Aksi contoh">
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Muat ulang</span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Ekspor CSV</span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Ekspor PDF</span>
+            <div
+              className="flex flex-wrap gap-2 justify-end"
+              aria-label="Aksi contoh"
+            >
+              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                Muat ulang
+              </span>
+              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                Ekspor CSV
+              </span>
+              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                Ekspor PDF
+              </span>
             </div>
           </div>
 
-          <div className="mt-5 flex border-b border-border" role="tablist" aria-label="Contoh tab analitik">
-            {([
-              ["quiz", "Performa Quiz"],
-              ["interactive", "Engagement Interaktif"],
-            ] as const).map(([tab, label]) => (
+          <div
+            className="mt-5 flex border-b border-border"
+            role="tablist"
+            aria-label="Contoh tab analitik"
+          >
+            {(
+              [
+                ["quiz", "Performa Quiz"],
+                ["interactive", "Engagement Interaktif"],
+              ] as const
+            ).map(([tab, label]) => (
               <button
                 key={tab}
                 id={`preview-tab-${tab}`}
@@ -284,13 +324,28 @@ function DashboardPreview() {
             ))}
           </div>
 
-          <div id="preview-tabpanel" role="tabpanel" aria-labelledby={`preview-tab-${activeTab}`} tabIndex={0} className="relative max-h-[620px] overflow-hidden pt-4 outline-none">
+          <div
+            id="preview-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`preview-tab-${activeTab}`}
+            tabIndex={0}
+            className="relative max-h-[620px] overflow-hidden pt-4 outline-none"
+          >
             <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4 sm:gap-3">
               {stats.map(([label, value, detail]) => (
-                <div key={label} className="min-w-0 rounded-xl border border-border bg-background p-3 sm:rounded-2xl sm:p-4">
-                  <p className="m-0 min-h-8 text-xs font-medium leading-snug text-muted-foreground sm:min-h-0">{label}</p>
-                  <p className="m-0 mt-1.5 text-xl font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">{value}</p>
-                  <p className="m-0 mt-1 hidden text-xs text-muted-foreground sm:block">{detail}</p>
+                <div
+                  key={label}
+                  className="min-w-0 rounded-xl border border-border bg-background p-3 sm:rounded-2xl sm:p-4"
+                >
+                  <p className="m-0 min-h-8 text-xs font-medium leading-snug text-muted-foreground sm:min-h-0">
+                    {label}
+                  </p>
+                  <p className="m-0 mt-1.5 text-xl font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">
+                    {value}
+                  </p>
+                  <p className="m-0 mt-1 hidden text-xs text-muted-foreground sm:block">
+                    {detail}
+                  </p>
                 </div>
               ))}
             </div>
@@ -298,27 +353,87 @@ function DashboardPreview() {
             {activeTab === "quiz" ? (
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Ringkasan Kelas</h4>
-                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%; Fotosintesis menjadi topik dengan persentase jawaban salah tertinggi.</p>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Ringkasan Kelas
+                  </h4>
+                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%;
+                    Fotosintesis menjadi topik dengan persentase jawaban salah
+                    tertinggi.
+                  </p>
                 </section>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Kehadiran per Sesi</h4>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Kehadiran per Sesi
+                  </h4>
                   <div className="mt-3 space-y-3">
-                    {[["Fotosintesis", 92], ["Tata Surya", 81], ["Energi", 62]].map(([name, pct]) => (
+                    {[
+                      ["Fotosintesis", 92],
+                      ["Tata Surya", 81],
+                      ["Energi", 62],
+                    ].map(([name, pct]) => (
                       <div key={name}>
-                        <div className="mb-1 flex justify-between gap-2 text-xs"><span className="truncate font-medium">{name}</span><span className="tabular-nums text-muted-foreground">{pct}%</span></div>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", Number(pct) >= 80 ? "bg-emerald-500" : Number(pct) >= 60 ? "bg-amber-500" : "bg-rose-500")} style={{ width: `${pct}%` }} /></div>
+                        <div className="mb-1 flex justify-between gap-2 text-xs">
+                          <span className="truncate font-medium">{name}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {pct}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              Number(pct) >= 80
+                                ? "bg-emerald-500"
+                                : Number(pct) >= 60
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500",
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
                 </section>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:col-span-2 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Topik Paling Sulit</h4>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Topik Paling Sulit
+                  </h4>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    {[["Fotosintesis", 68], ["Sistem Pernapasan", 54], ["Tata Surya", 41]].map(([name, pct]) => (
-                      <div key={name} className="min-w-0 rounded-xl bg-muted/50 p-3">
-                        <div className="mb-2 flex justify-between gap-2 text-xs"><span className="truncate font-medium">{name}</span><span className={cn("font-bold tabular-nums", Number(pct) >= 60 ? "text-rose-700" : "text-amber-700")}>{pct}%</span></div>
-                        <div className="h-2 overflow-hidden rounded-full bg-background"><div className={cn("h-full rounded-full", Number(pct) >= 60 ? "bg-rose-500" : "bg-amber-500")} style={{ width: `${pct}%` }} /></div>
+                    {[
+                      ["Fotosintesis", 68],
+                      ["Sistem Pernapasan", 54],
+                      ["Tata Surya", 41],
+                    ].map(([name, pct]) => (
+                      <div
+                        key={name}
+                        className="min-w-0 rounded-xl bg-muted/50 p-3"
+                      >
+                        <div className="mb-2 flex justify-between gap-2 text-xs">
+                          <span className="truncate font-medium">{name}</span>
+                          <span
+                            className={cn(
+                              "font-bold tabular-nums",
+                              Number(pct) >= 60
+                                ? "text-rose-700"
+                                : "text-amber-700",
+                            )}
+                          >
+                            {pct}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-background">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              Number(pct) >= 60
+                                ? "bg-rose-500"
+                                : "bg-amber-500",
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -327,35 +442,77 @@ function DashboardPreview() {
             ) : (
               <div className="mt-3 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {[["Word Cloud", "42 kata"], ["Tanya Jawab", "14 pertanyaan"], ["Polling", "32 suara"]].map(([label, value]) => (
-                    <div key={label} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 sm:p-4">
-                      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
-                      <span className="text-sm font-bold tabular-nums text-foreground">{value}</span>
+                  {[
+                    ["Word Cloud", "42 kata"],
+                    ["Tanya Jawab", "14 pertanyaan"],
+                    ["Polling", "32 suara"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 sm:p-4"
+                    >
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {label}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums text-foreground">
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <h4 className="m-0 text-sm font-bold text-foreground">Siswa Paling Aktif</h4>
-                      <p className="m-0 mt-1 text-xs text-muted-foreground">Contoh aktivitas dari sesi interaktif</p>
+                      <h4 className="m-0 text-sm font-bold text-foreground">
+                        Siswa Paling Aktif
+                      </h4>
+                      <p className="m-0 mt-1 text-xs text-muted-foreground">
+                        Contoh aktivitas dari sesi interaktif
+                      </p>
                     </div>
-                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">3 aktivitas</span>
+                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">
+                      3 aktivitas
+                    </span>
                   </div>
                   <div className="mt-3 divide-y divide-border">
-                    {[["A", "Alya Putri", "12 aktivitas", "Sangat Aktif"], ["B", "Bima Pratama", "8 aktivitas", "Aktif"], ["C", "Citra Nabila", "6 aktivitas", "Aktif"]].map(([initial, name, count, status]) => (
-                      <div key={name} className="flex items-center gap-3 py-2.5">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-800">{initial}</span>
-                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">{name}</span>
-                        <span className="hidden text-xs text-muted-foreground sm:inline">{count}</span>
-                        <span className={cn("rounded-full px-2 py-1 text-xs font-semibold", status === "Sangat Aktif" ? "bg-emerald-50 text-emerald-800" : "bg-brand-50 text-brand-800")}>{status}</span>
+                    {[
+                      ["A", "Alya Putri", "12 aktivitas", "Sangat Aktif"],
+                      ["B", "Bima Pratama", "8 aktivitas", "Aktif"],
+                      ["C", "Citra Nabila", "6 aktivitas", "Aktif"],
+                    ].map(([initial, name, count, status]) => (
+                      <div
+                        key={name}
+                        className="flex items-center gap-3 py-2.5"
+                      >
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-800">
+                          {initial}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
+                          {name}
+                        </span>
+                        <span className="hidden text-xs text-muted-foreground sm:inline">
+                          {count}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-1 text-xs font-semibold",
+                            status === "Sangat Aktif"
+                              ? "bg-emerald-50 text-emerald-800"
+                              : "bg-brand-50 text-brand-800",
+                          )}
+                        >
+                          {status}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </section>
               </div>
             )}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent" aria-hidden="true" />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent"
+              aria-hidden="true"
+            />
           </div>
         </div>
       </div>
@@ -414,12 +571,18 @@ export default function App() {
             <button
               type="button"
               className="grid size-11 shrink-0 place-items-center rounded-xl border-0 bg-transparent text-foreground transition-colors hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 md:hidden"
-              aria-label={mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+              aria-label={
+                mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+              }
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-main-navigation"
               onClick={() => setMobileMenuOpen((open) => !open)}
             >
-              {mobileMenuOpen ? <IconX className="size-5" /> : <IconMenu2 className="size-5" />}
+              {mobileMenuOpen ? (
+                <IconX className="size-5" />
+              ) : (
+                <IconMenu2 className="size-5" />
+              )}
             </button>
           </div>
         </div>
@@ -429,7 +592,12 @@ export default function App() {
             aria-label="Navigasi utama"
             className="absolute inset-x-0 top-full border-b border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-xl md:hidden"
           >
-            {[["Fitur", "#features"], ["Cara Kerja", "#modes"], ["FAQ", "#faq"], ["Untuk Guru", "#daftar-guru"]].map(([label, href]) => (
+            {[
+              ["Fitur", "#features"],
+              ["Cara Kerja", "#modes"],
+              ["FAQ", "#faq"],
+              ["Untuk Guru", "#daftar-guru"],
+            ].map(([label, href]) => (
               <a
                 key={href}
                 href={href}
@@ -444,22 +612,22 @@ export default function App() {
       </header>
 
       <div className="flex min-h-[calc(100svh-4rem)] flex-col sm:min-h-[calc(100svh-5rem)]">
-      {/* ============================== HERO ============================ */}
-      <section
-        className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background py-6 sm:py-8"
-        style={{
-          backgroundImage:
-            "radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
-      >
-        {/* Fade agar titik-titik hilang halus di tepi atas & bawah */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
-        {/* Glow biru lembut di belakang headline */}
-        <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/10 blur-3xl" />
+        {/* ============================== HERO ============================ */}
+        <section
+          className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background py-6 sm:py-8"
+          style={{
+            backgroundImage:
+              "radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+          }}
+        >
+          {/* Fade agar titik-titik hilang halus di tepi atas & bawah */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
+          {/* Glow biru lembut di belakang headline */}
+          <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/10 blur-3xl" />
 
-        <style>{`
+          <style>{`
           @keyframes float {
             0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
             50% { transform: translateY(-6px) rotate(var(--rot, 0deg)); }
@@ -469,212 +637,222 @@ export default function App() {
           }
         `}</style>
 
-        {/* 6 chip contoh hasil siswa, hanya desktop */}
-        <div
-          className="pointer-events-none absolute inset-0 hidden lg:block"
-          aria-hidden="true"
-        >
-          {/* 1 - Word Cloud */}
+          {/* 6 chip contoh hasil siswa, hanya desktop */}
           <div
-            className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)]"
-            style={floatStyle(-4, 5)}
+            className="pointer-events-none absolute inset-0 hidden lg:block"
+            aria-hidden="true"
           >
-            <p className="text-xl font-bold leading-tight text-emerald-800">
-              Fotosintesis
-            </p>
-            <p className="mt-0.5 text-xs text-emerald-700">dari 24 siswa</p>
-          </div>
+            {/* 1 - Word Cloud */}
+            <div
+              className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)]"
+              style={floatStyle(-4, 5)}
+            >
+              <p className="text-xl font-bold leading-tight text-emerald-800">
+                Fotosintesis
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-700">dari 24 siswa</p>
+            </div>
 
-          {/* 2 - Q&A */}
-          <div
-            className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)]"
-            style={floatStyle(3, 6, 0.5)}
-          >
-            <div className="flex items-start gap-2">
-              <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700" />
-              <div>
-                <p className="text-sm font-semibold leading-tight text-purple-900">
-                  Kenapa daun hijau?
-                </p>
-                <p className="mt-1 text-xs text-purple-700">
-                  18 upvote · Dijawab
+            {/* 2 - Q&A */}
+            <div
+              className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)]"
+              style={floatStyle(3, 6, 0.5)}
+            >
+              <div className="flex items-start gap-2">
+                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700" />
+                <div>
+                  <p className="text-sm font-semibold leading-tight text-purple-900">
+                    Kenapa daun hijau?
+                  </p>
+                  <p className="mt-1 text-xs text-purple-700">
+                    18 upvote · Dijawab
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 - Quiz */}
+            <div
+              className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)]"
+              style={floatStyle(2, 5.5, 1)}
+            >
+              <div className="flex items-center gap-2">
+                <IconCircleCheck className="size-4 text-blue-700" />
+                <div>
+                  <p className="text-sm font-bold text-blue-900">Mars</p>
+                  <p className="text-xs text-blue-700">78% benar</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 - Polling */}
+            <div
+              className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)]"
+              style={floatStyle(-3, 6.5, 1.5)}
+            >
+              <div className="mb-1.5 flex items-center gap-2">
+                <IconCheckbox className="size-4 text-amber-700" />
+                <p className="text-xs font-semibold text-amber-900">Jakarta</p>
+                <span className="text-xs font-bold text-amber-800">48%</span>
+              </div>
+              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
+                <div className="h-full w-[48%] rounded-full bg-amber-500" />
+              </div>
+            </div>
+
+            {/* 5 - Siswa */}
+            <div
+              className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)]"
+              style={floatStyle(5, 5.2, 0.8)}
+            >
+              <div className="flex items-center gap-2">
+                <IconTrophy className="size-4 text-rose-700" />
+                <div>
+                  <p className="text-xs font-bold text-rose-900">
+                    Vina Oktaviani
+                  </p>
+                  <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 6 - Status live */}
+            <div
+              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]"
+              style={floatStyle(-2, 4.8, 1.2)}
+            >
+              <div className="flex items-center gap-2">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                </span>
+                <p className="text-xs font-semibold text-foreground">
+                  24 siswa di kelas
                 </p>
               </div>
             </div>
           </div>
 
-          {/* 3 - Quiz */}
-          <div
-            className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)]"
-            style={floatStyle(2, 5.5, 1)}
-          >
-            <div className="flex items-center gap-2">
-              <IconCircleCheck className="size-4 text-blue-700" />
-              <div>
+          <div className="relative mx-auto w-full max-w-[1180px] px-6">
+            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
+                <span className="size-1.5 rounded-full bg-primary" />
+                Platform analitik kelas untuk guru
+              </span>
+
+              <h1 className="m-0 text-balance text-[clamp(34px,4.4vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground">
+                <span className="block">Transparansi</span>
+                <span className="block whitespace-nowrap">
+                  <span className="relative inline-block text-brand-700 after:absolute after:inset-x-0 after:bottom-[0.04em] after:-z-10 after:h-[0.14em] after:rounded-full after:bg-brand-200/80">
+                    Intelektual
+                  </span>{" "}
+                  Murid
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-[1.65] text-muted-foreground sm:text-lg">
+                Qurio membuat pemahaman setiap murid terlihat jelas: siapa yang
+                paham, siapa yang tertinggal, dan topik mana yang sulit,
+                langsung dari kuis, word cloud, Q&amp;A, dan polling real-time.
+              </p>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-7 sm:gap-4">
+                <Link
+                  href="/register"
+                  className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08),0_10px_24px_-8px_rgba(59,91,255,0.6)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                >
+                  Buat Sesi Gratis
+                  <IconArrowRight className="size-4" />
+                </Link>
+                <a
+                  href="#modes"
+                  className="inline-flex min-h-12 items-center rounded-xl border border-border bg-background px-6 py-3 text-sm font-bold text-brand-700 shadow-sm transition-colors duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                >
+                  Lihat Cara Kerja
+                </a>
+              </div>
+
+              <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground sm:mt-6 sm:text-sm">
+                {teacherBenefits.map((benefit) => (
+                  <li
+                    key={benefit}
+                    className="inline-flex items-center gap-1.5"
+                  >
+                    <IconCheck className="size-4 text-emerald-600" />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Mobile: chip ringkas, scroll horizontal */}
+            <div className="mt-5 flex gap-3 overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-6">
+              <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
+                <p className="text-sm font-bold text-emerald-800">
+                  Fotosintesis
+                </p>
+                <p className="text-xs text-emerald-700">dari 24 siswa</p>
+              </div>
+              <div className="shrink-0 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2.5">
+                <p className="text-sm font-semibold text-purple-900">
+                  Kenapa daun hijau?
+                </p>
+                <p className="text-xs text-purple-700">18 upvote · Dijawab</p>
+              </div>
+              <div className="shrink-0 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5">
                 <p className="text-sm font-bold text-blue-900">Mars</p>
                 <p className="text-xs text-blue-700">78% benar</p>
               </div>
-            </div>
-          </div>
-
-          {/* 4 - Polling */}
-          <div
-            className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)]"
-            style={floatStyle(-3, 6.5, 1.5)}
-          >
-            <div className="mb-1.5 flex items-center gap-2">
-              <IconCheckbox className="size-4 text-amber-700" />
-              <p className="text-xs font-semibold text-amber-900">Jakarta</p>
-              <span className="text-xs font-bold text-amber-800">48%</span>
-            </div>
-            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
-              <div className="h-full w-[48%] rounded-full bg-amber-500" />
-            </div>
-          </div>
-
-          {/* 5 - Siswa */}
-          <div
-            className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)]"
-            style={floatStyle(5, 5.2, 0.8)}
-          >
-            <div className="flex items-center gap-2">
-              <IconTrophy className="size-4 text-rose-700" />
-              <div>
-                <p className="text-xs font-bold text-rose-900">
+              <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5">
+                <p className="text-sm font-semibold text-amber-900">
+                  Jakarta · 48%
+                </p>
+                <div className="mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
+                  <div className="h-full w-[48%] rounded-full bg-amber-500" />
+                </div>
+              </div>
+              <div className="shrink-0 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5">
+                <p className="text-sm font-bold text-rose-900">
                   Vina Oktaviani
                 </p>
                 <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
               </div>
-            </div>
-          </div>
-
-          {/* 6 - Status live */}
-          <div
-            className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]"
-            style={floatStyle(-2, 4.8, 1.2)}
-          >
-            <div className="flex items-center gap-2">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
-                <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-              </span>
-              <p className="text-xs font-semibold text-foreground">
-                24 siswa di kelas
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-[1180px] px-6">
-          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
-              <span className="size-1.5 rounded-full bg-primary" />
-              Platform analitik kelas untuk guru
-            </span>
-
-            <h1 className="m-0 text-balance text-[clamp(34px,4.4vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground">
-              <span className="block">Transparansi</span>
-              <span className="block whitespace-nowrap">
-                <span className="relative inline-block text-brand-700 after:absolute after:inset-x-0 after:bottom-[0.04em] after:-z-10 after:h-[0.14em] after:rounded-full after:bg-brand-200/80">
-                  Intelektual
-                </span>{" "}
-                Murid
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-[1.65] text-muted-foreground sm:text-lg">
-              Qurio membuat pemahaman setiap murid terlihat jelas: siapa yang
-              paham, siapa yang tertinggal, dan topik mana yang sulit, langsung
-              dari kuis, word cloud, Q&amp;A, dan polling real-time.
-            </p>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-7 sm:gap-4">
-              <Link
-                href="/register"
-                className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08),0_10px_24px_-8px_rgba(59,91,255,0.6)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-              >
-                Buat Sesi Gratis
-                <IconArrowRight className="size-4" />
-              </Link>
-              <a
-                href="#modes"
-                className="inline-flex min-h-12 items-center rounded-xl border border-border bg-background px-6 py-3 text-sm font-bold text-brand-700 shadow-sm transition-colors duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-              >
-                Lihat Cara Kerja
-              </a>
-            </div>
-
-            <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground sm:mt-6 sm:text-sm">
-              {teacherBenefits.map((benefit) => (
-                <li key={benefit} className="inline-flex items-center gap-1.5">
-                  <IconCheck className="size-4 text-emerald-600" />
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Mobile: chip ringkas, scroll horizontal */}
-          <div className="mt-5 flex gap-3 overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-6">
-            <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
-              <p className="text-sm font-bold text-emerald-800">Fotosintesis</p>
-              <p className="text-xs text-emerald-700">dari 24 siswa</p>
-            </div>
-            <div className="shrink-0 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2.5">
-              <p className="text-sm font-semibold text-purple-900">
-                Kenapa daun hijau?
-              </p>
-              <p className="text-xs text-purple-700">18 upvote · Dijawab</p>
-            </div>
-            <div className="shrink-0 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5">
-              <p className="text-sm font-bold text-blue-900">Mars</p>
-              <p className="text-xs text-blue-700">78% benar</p>
-            </div>
-            <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5">
-              <p className="text-sm font-semibold text-amber-900">
-                Jakarta · 48%
-              </p>
-              <div className="mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
-                <div className="h-full w-[48%] rounded-full bg-amber-500" />
+              <div className="shrink-0 rounded-2xl border border-border bg-background px-4 py-2.5">
+                <p className="text-sm font-semibold text-foreground">
+                  24 siswa di kelas
+                </p>
               </div>
             </div>
-            <div className="shrink-0 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5">
-              <p className="text-sm font-bold text-rose-900">Vina Oktaviani</p>
-              <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
-            </div>
-            <div className="shrink-0 rounded-2xl border border-border bg-background px-4 py-2.5">
-              <p className="text-sm font-semibold text-foreground">
-                24 siswa di kelas
-              </p>
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ============================ MARQUEE =========================== */}
-      <section
-        className="marquee-mask group w-full overflow-hidden border-y border-border bg-secondary"
-        aria-label="Keunggulan utama Qurio"
-      >
-        <div className="marquee-track flex animate-marquee-scroll transition-none group-hover:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]">
-          {[false, true].map((hidden) => (
-            <div
-              key={String(hidden)}
-              className="marquee-group flex items-center gap-8 px-6 py-3.5 whitespace-nowrap text-xs font-bold uppercase tracking-wide text-secondary-foreground sm:gap-12 sm:py-4 sm:text-sm"
-              aria-hidden={hidden || undefined}
-            >
-              {marqueeItems.map((item, i) => (
-                <span key={item} className="inline-flex items-center gap-8 sm:gap-12">
-                  {item}
-                  {i < marqueeItems.length - 1 && (
-                    <span className="size-1 rounded-full bg-brand-500/50" />
-                  )}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
+        {/* ============================ MARQUEE =========================== */}
+        <section
+          className="marquee-mask group w-full overflow-hidden border-y border-border bg-secondary"
+          aria-label="Keunggulan utama Qurio"
+        >
+          <div className="marquee-track flex animate-marquee-scroll transition-none group-hover:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]">
+            {[false, true].map((hidden) => (
+              <div
+                key={String(hidden)}
+                className="marquee-group flex items-center gap-8 px-6 py-3.5 whitespace-nowrap text-xs font-bold uppercase tracking-wide text-secondary-foreground sm:gap-12 sm:py-4 sm:text-sm"
+                aria-hidden={hidden || undefined}
+              >
+                {marqueeItems.map((item, i) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-8 sm:gap-12"
+                  >
+                    {item}
+                    {i < marqueeItems.length - 1 && (
+                      <span className="size-1 rounded-full bg-brand-500/50" />
+                    )}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
       {/* ======================= AKSES SISWA (CTA) ====================== */}
@@ -688,8 +866,8 @@ export default function App() {
               Sudah punya kode kelas?
             </h2>
             <p className="m-0 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Masukkan kode akses, nama, dan nomor absen untuk langsung masuk
-              ke ruang kelas. Tanpa akun, tanpa aplikasi.
+              Masukkan kode akses, nama, dan nomor absen untuk langsung masuk ke
+              ruang kelas. Tanpa akun, tanpa aplikasi.
             </p>
           </div>
           <div className="flex w-full justify-center lg:justify-end">
@@ -773,8 +951,7 @@ export default function App() {
                   Word Cloud
                 </h3>
                 <p className="m-0 min-h-[3.25rem] text-sm leading-relaxed text-muted-foreground">
-                  Curah pendapat live yang memetakan kata dan pola pikir
-                  kelas.
+                  Curah pendapat live yang memetakan kata dan pola pikir kelas.
                 </p>
                 <div className="mt-auto flex min-h-40 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl bg-muted/60 p-4 pt-5">
                   <b className="text-[34px] leading-none text-brand-purple">
@@ -807,27 +984,35 @@ export default function App() {
                 </p>
 
                 <div className="mt-auto space-y-3 pt-4">
-                {[
-                  ["AJ", "Bisakah dijelaskan lagi?", "18 upvote · Direkomendasikan"],
-                  ["RN", "Contoh di kehidupan nyata?", "9 upvote · Menunggu moderasi"],
-                ].map(([initials, question, meta]) => (
-                  <div
-                    key={initials}
-                    className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3"
-                  >
-                    <span className="grid size-10 flex-none place-items-center rounded-full bg-secondary text-sm font-extrabold text-primary">
-                      {initials}
-                    </span>
-                    <div className="min-w-0">
-                      <b className="block text-sm font-semibold text-foreground">
-                        {question}
-                      </b>
-                      <small className="mt-0.5 block text-xs text-muted-foreground">
-                        {meta}
-                      </small>
+                  {[
+                    [
+                      "AJ",
+                      "Bisakah dijelaskan lagi?",
+                      "18 upvote · Direkomendasikan",
+                    ],
+                    [
+                      "RN",
+                      "Contoh di kehidupan nyata?",
+                      "9 upvote · Menunggu moderasi",
+                    ],
+                  ].map(([initials, question, meta]) => (
+                    <div
+                      key={initials}
+                      className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3"
+                    >
+                      <span className="grid size-10 flex-none place-items-center rounded-full bg-secondary text-sm font-extrabold text-primary">
+                        {initials}
+                      </span>
+                      <div className="min-w-0">
+                        <b className="block text-sm font-semibold text-foreground">
+                          {question}
+                        </b>
+                        <small className="mt-0.5 block text-xs text-muted-foreground">
+                          {meta}
+                        </small>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -872,23 +1057,46 @@ export default function App() {
 
             {/* Polling */}
             <Card className="h-full gap-0 border-border bg-card p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)] sm:p-7">
-              <span className="mb-5 block text-xs font-extrabold tracking-[0.12em] text-primary">04</span>
+              <span className="mb-5 block text-xs font-extrabold tracking-[0.12em] text-primary">
+                04
+              </span>
               <CardContent className="flex flex-1 flex-col p-0">
-                <h3 className="m-0 mb-3 text-[22px] font-bold tracking-tight">Polling</h3>
+                <h3 className="m-0 mb-3 text-[22px] font-bold tracking-tight">
+                  Polling
+                </h3>
                 <p className="m-0 min-h-[3.25rem] text-sm leading-relaxed text-muted-foreground">
-                  Ambil suara kelas dalam hitungan detik dan lihat hasilnya langsung.
+                  Ambil suara kelas dalam hitungan detik dan lihat hasilnya
+                  langsung.
                 </p>
                 <div className="mt-auto rounded-2xl bg-muted/60 p-4 pt-5">
-                  <p className="m-0 mb-4 text-sm font-semibold leading-snug text-foreground">Kota mana yang ingin kamu kunjungi?</p>
+                  <p className="m-0 mb-4 text-sm font-semibold leading-snug text-foreground">
+                    Kota mana yang ingin kamu kunjungi?
+                  </p>
                   <div className="space-y-3">
-                    {[["Jakarta", 48], ["Bandung", 32], ["Yogyakarta", 20]].map(([city, percent]) => (
+                    {[
+                      ["Jakarta", 48],
+                      ["Bandung", 32],
+                      ["Yogyakarta", 20],
+                    ].map(([city, percent]) => (
                       <div key={city}>
                         <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-foreground">{city}</span>
-                          <span className="font-bold tabular-nums text-muted-foreground">{percent}%</span>
+                          <span className="font-medium text-foreground">
+                            {city}
+                          </span>
+                          <span className="font-bold tabular-nums text-muted-foreground">
+                            {percent}%
+                          </span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-background">
-                          <div className={cn("h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none", city === "Jakarta" ? "bg-brand-500" : "bg-brand-300")} style={{ width: `${percent}%` }} />
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none",
+                              city === "Jakarta"
+                                ? "bg-brand-500"
+                                : "bg-brand-300",
+                            )}
+                            style={{ width: `${percent}%` }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -1047,10 +1255,19 @@ export default function App() {
             </p>
           </div>
 
-          <nav aria-label="Navigasi footer" className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-1 sm:justify-items-start">
-            <h2 className="col-span-2 m-0 text-sm font-bold text-foreground sm:col-span-1">Jelajahi Qurio</h2>
+          <nav
+            aria-label="Navigasi footer"
+            className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-1 sm:justify-items-start"
+          >
+            <h2 className="col-span-2 m-0 text-sm font-bold text-foreground sm:col-span-1">
+              Jelajahi Qurio
+            </h2>
             {footerLinks.map(([label, href]) => (
-              <a href={href} key={href} className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
+              <a
+                href={href}
+                key={href}
+                className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              >
                 {label}
               </a>
             ))}
@@ -1059,7 +1276,12 @@ export default function App() {
 
         <div className="mx-auto mt-8 flex w-full max-w-6xl flex-col gap-2 border-t border-border px-6 pt-5 text-xs text-muted-foreground sm:mt-10 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
           <span>© 2026 Qurio. Hak cipta dilindungi undang-undang.</span>
-          <a href="#top" className="min-h-11 inline-flex items-center hover:text-foreground">Kembali ke atas ↑</a>
+          <a
+            href="#top"
+            className="min-h-11 inline-flex items-center hover:text-foreground"
+          >
+            Kembali ke atas ↑
+          </a>
         </div>
       </footer>
     </main>
