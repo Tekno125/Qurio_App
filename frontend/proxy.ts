@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const middleware = () => {
+export const proxy = () => {
   return NextResponse.next();
 };
 
