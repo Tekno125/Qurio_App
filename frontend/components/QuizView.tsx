@@ -279,11 +279,20 @@ export default function QuizView({
     // Payload: { pollId, status, poll }. Soal LAIN yang ditutup tidak boleh
     // mengosongkan soal yang sedang tampil.
     const onPollUpdated = (data: { pollId?: string; status?: string }) => {
-      if (
-        data.status === "published" ||
-        data.pollId === currentPollIdRef.current
-      )
+      if (data.status === "published") {
         void fetchPoll();
+        return;
+      }
+
+      if (data.pollId === currentPollIdRef.current) {
+        if (data.status === "closed" || data.status === "draft") {
+          fetchRequestRef.current++;
+          applyPoll(null);
+          return;
+        }
+
+        void fetchPoll();
+      }
     };
 
     // Bulk update: tidak ada pollId -> tanya server lagi

@@ -148,18 +148,18 @@ export interface PollingDistributionItem {
 
 export type PollStats =
   | {
-    pollId: string;
-    pollType: "polling";
-    totalVotes: number;
-    distribution: PollingDistributionItem[];
-  }
+      pollId: string;
+      pollType: "polling";
+      totalVotes: number;
+      distribution: PollingDistributionItem[];
+    }
   | {
-    pollId: string;
-    pollType: "quiz";
-    correct_count: number;
-    incorrect_count: number;
-    total_count: number;
-  };
+      pollId: string;
+      pollType: "quiz";
+      correct_count: number;
+      incorrect_count: number;
+      total_count: number;
+    };
 
 export interface responseAnswer {
   success: boolean;
@@ -364,9 +364,7 @@ const createSession = async (
   token?: string,
 ): Promise<Sessions> => {
   const normalizedClassSize =
-    classSize === undefined || classSize === null
-      ? null
-      : Number(classSize);
+    classSize === undefined || classSize === null ? null : Number(classSize);
 
   try {
     const response = await fetch(`${API_URL}/api/sessions`, {
@@ -620,7 +618,9 @@ export const fetchUserParticipant = async (
   }
 };
 
-export const fetchCurrentPoll = async (sessionId: string): Promise<Poll> => {
+export const fetchCurrentPoll = async (
+  sessionId: string,
+): Promise<Poll | null> => {
   try {
     const response = await fetch(
       `${API_URL}/api/polls/sessions/${sessionId}/current`,
