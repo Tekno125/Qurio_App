@@ -20,11 +20,13 @@ import {
   IconChevronDown,
   IconCircleCheck,
   IconDeviceMobile,
+  IconDownload,
   IconFileDownload,
   IconLayoutGrid,
   IconList,
   IconMessageQuestion,
   IconMenu2,
+  IconRefresh,
   IconShieldCheck,
   IconTrendingUp,
   IconTrophy,
@@ -229,13 +231,13 @@ function DashboardPreview() {
           <span className="size-2.5 rounded-full bg-amber-300" />
           <span className="size-2.5 rounded-full bg-emerald-300" />
         </div>
-        <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-800">
+        <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
           Contoh tampilan · Data simulasi
         </span>
       </div>
 
       <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-border bg-slate-50/70 p-4 md:block">
+        <aside className="hidden border-r border-sidebar-border bg-sidebar p-4 md:block">
           <Image
             src="/Qurio-Cropped.svg"
             alt="Qurio"
@@ -246,10 +248,10 @@ function DashboardPreview() {
           <span className="mb-5 flex min-h-10 items-center justify-center rounded-lg bg-brand-500 px-2 text-xs font-semibold text-white">
             + Buat Sesi Baru
           </span>
-          <p className="mb-2 px-2 text-xs font-semibold text-slate-500">
+          <p className="mb-2 px-2 text-xs font-semibold text-[#64728d]">
             Workspace
           </p>
-          <div className="space-y-1 text-xs font-medium text-slate-600">
+          <div className="space-y-1 text-xs font-medium text-[#64728b]">
             <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5">
               <IconLayoutGrid className="size-4" />
               Dashboard
@@ -279,13 +281,16 @@ function DashboardPreview() {
               className="flex flex-wrap gap-2 justify-end"
               aria-label="Aksi contoh"
             >
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconRefresh className="size-4" />
                 Muat ulang
               </span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconDownload className="size-4" />
                 Ekspor CSV
               </span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconDownload className="size-4" />
                 Ekspor PDF
               </span>
             </div>
@@ -315,7 +320,7 @@ function DashboardPreview() {
                 className={cn(
                   "-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-4 sm:text-sm",
                   activeTab === tab
-                    ? "border-brand-500 text-brand-800"
+                    ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -470,7 +475,7 @@ function DashboardPreview() {
                         Contoh aktivitas dari sesi interaktif
                       </p>
                     </div>
-                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                       3 aktivitas
                     </span>
                   </div>
@@ -484,7 +489,7 @@ function DashboardPreview() {
                         key={name}
                         className="flex items-center gap-3 py-2.5"
                       >
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-800">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                           {initial}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
@@ -497,8 +502,8 @@ function DashboardPreview() {
                           className={cn(
                             "rounded-full px-2 py-1 text-xs font-semibold",
                             status === "Sangat Aktif"
-                              ? "bg-emerald-50 text-emerald-800"
-                              : "bg-brand-50 text-brand-800",
+                              ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-300",
                           )}
                         >
                           {status}
@@ -1119,19 +1124,22 @@ export default function App() {
 
           <div className="relative">
             {/* Garis penghubung antar langkah (desktop) */}
-            <div
-              className="pointer-events-none absolute top-[4.5rem] z-0 hidden h-px border-t-2 border-dashed border-brand-200 md:block"
-              style={{
-                left: "calc((100% - 6rem) / 6)",
-                right: "calc((100% - 6rem) / 6)",
-              }}
-            />
+            <div className="pointer-events-none absolute inset-0 z-0 hidden items-center md:flex">
+              <div
+                className="h-0 flex-1 border-t-2 border-dashed border-brand-200"
+                style={{
+                  marginLeft: "calc((100% - 6rem) / 6)",
+                  marginRight: "calc((100% - 6rem) / 6)",
+                }}
+              />
+            </div>
 
             <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
               {steps.map(([num, title, copy]) => (
                 <Card
                   key={num}
-                  className="relative gap-0 rounded-3xl border-border px-8 py-10 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)]"
+                  className="relative z-10 gap-0 rounded-3xl border-border px-8 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)]"
+                  style={{ paddingTop: 40, paddingBottom: 40 }}
                 >
                   <span className="mx-auto mb-7 grid size-16 place-items-center rounded-2xl bg-primary text-2xl font-extrabold text-primary-foreground shadow-[0_10px_24px_-8px_rgba(59,91,255,0.55)]">
                     {num}
