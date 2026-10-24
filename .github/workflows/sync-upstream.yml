@@ -1,0 +1,113 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure upstream
+        env:
+          UPSTREAM_TOKEN: ${{ secrets.UPSTREAM_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git remote add upstream \
+            "https://x-access-token:${UPSTREAM_TOKEN}@github.com/yugata-dev/Qurio_App.git"
+
+          git fetch upstream \
+            '+refs/heads/*:refs/remotes/upstream/*'
+
+      - name: Sync upstream branches
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          while IFS= read -r ref; do
+            branch="${ref#refs/remotes/upstream/}"
+
+            # Skip symbolic HEAD and the protected main branch.
+            [ "$branch" = "HEAD" ] && continue
+            [ "$branch" = "main" ] && continue
+            [ -n "$branch" ] || continue
+
+            echo "Syncing branch: $branch"
+
+            git push origin \
+              "+refs/remotes/upstream/$branch:refs/heads/$branch"
+          done < <(
+            git for-each-ref \
+              --format='%(refname)' \
+              refs/remotes/upstream/ |
+              grep -v '/HEAD$'
+          )
+
+      - name: Delete branches removed upstream
+        run: |
+          set -euo pipefail
+
+          git fetch origin
+
+          while IFS= read -r branch; do
+            [ -n "$branch" ] || continue
+            [ "$branch" = "main" ] && continue
+
+            if ! git show-ref --verify --quiet \
+              "refs/remotes/upstream/$branch"; then
+              echo "Deleting obsolete branch: $branch"
+              git push origin --delete "$branch"
+            fi
+          done < <(
+            git for-each-ref \
+              --format='%(refname:strip=3)' \
+              refs/remotes/origin/
+          )
+
+      - name: Sync main while preserving workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Save local workflow files outside the repository.
+          backup="$(mktemp -d)"
+          trap 'rm -rf "$backup"' EXIT
+
+          if [ -d .github/workflows ]; then
+            cp -a .github/workflows "$backup/workflows"
+          else
+            mkdir -p "$backup/workflows"
+          fi
+
+          # Update main to upstream.
+          git checkout main
+          git reset --hard upstream/main
+
+          # Restore the local workflow directory.
+          mkdir -p .github
+          rm -rf .github/workflows
+          cp -a "$backup/workflows" .github/workflows
+
+          # Commit the preserved workflow files.
+          git add .github/workflows
+
+          if ! git diff --cached --quiet; then
+            git -c user.name="github-actions[bot]" \
+                -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -m "Preserve local GitHub Actions workflows"
+          fi
+
+          # Push the resulting main branch.
+          git push origin main --force
