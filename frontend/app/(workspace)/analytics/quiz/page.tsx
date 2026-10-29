@@ -551,7 +551,7 @@ function AnalyticsPage() {
   const mobileTopics = topTopics.slice(0, ANALYTICS_THRESHOLDS.maximumTopicsDisplayed);
   const mobileTopicAverage = mobileTopics.length
     ? mobileTopics.reduce((total, topic) => total + topic.incorrectRate, 0) /
-      mobileTopics.length
+    mobileTopics.length
     : 0;
   const topicSegmentDegrees = mobileTopics.length ? 360 / mobileTopics.length : 0;
   const topicDonutBackground = mobileTopics
@@ -1012,7 +1012,7 @@ function AnalyticsPage() {
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Sumber data: {summary?.totalSessions ?? 0} sesi · {summary?.rangeStart
-            ? formatDateRange(summary.rangeStart, summary.rangeEnd ?? summary.rangeStart)
+              ? formatDateRange(summary.rangeStart, summary.rangeEnd ?? summary.rangeStart)
               : "belum ada rentang data"} · {lastUpdatedAt ? `Diperbarui hari ini ${timeFormatter.format(lastUpdatedAt)}` : "Belum diperbarui"}
           </p>
         </div>
@@ -1123,7 +1123,7 @@ function AnalyticsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5 pt-4 sm:p-6 sm:pt-4">
-      {isLoading || !summary || (studentScores.length === 0 && studentParticipation.length === 0) ? (
+          {isLoading || !summary || (studentScores.length === 0 && studentParticipation.length === 0) ? (
             <p className="text-sm text-muted-foreground">
               Insight akan muncul setelah ada data kuis dan partisipasi.
             </p>
@@ -1215,7 +1215,7 @@ function AnalyticsPage() {
                             "block h-full rounded-full",
                             getAttendanceColor(item.rate),
                           )}
-                        style={{ width: `${Math.min(100, item.rate)}%` }}
+                          style={{ width: `${Math.min(100, item.rate)}%` }}
                         />
                       </span>
                       <span className="w-16 text-right text-xs font-semibold tabular-nums text-muted-foreground">
@@ -1793,19 +1793,19 @@ function LeaderboardTable({
           {rows.map((row) => (
             <TableRow key={`${row.rank}-${row.name}`}>
               <TableCell className="px-3 py-3 text-center text-base font-semibold text-muted-foreground">
-              <span aria-label={mode === "attention" ? "Perlu perhatian" : mode === "monitoring" ? "Data terbatas" : `Peringkat ${row.rank}`}>
-                {mode === "attention" ? (
-                  <IconAlertTriangle className={cn("mx-auto size-4", row.reason?.includes("Rata-rata skor") ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400")} aria-hidden="true" />
-                ) : mode === "monitoring" ? (
-                  <span className="mx-auto block size-3 rounded-full bg-amber-500" aria-hidden="true" />
-                ) : mode === "top-score" && row.rank <= 3 ? row.rank === 1
+                <span aria-label={mode === "attention" ? "Perlu perhatian" : mode === "monitoring" ? "Data terbatas" : `Peringkat ${row.rank}`}>
+                  {mode === "attention" ? (
+                    <IconAlertTriangle className={cn("mx-auto size-4", row.reason?.includes("Rata-rata skor") ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400")} aria-hidden="true" />
+                  ) : mode === "monitoring" ? (
+                    <span className="mx-auto block size-3 rounded-full bg-amber-500" aria-hidden="true" />
+                  ) : mode === "top-score" && row.rank <= 3 ? row.rank === 1
                     ? "🥇"
                     : row.rank === 2
                       ? "🥈"
                       : row.rank === 3
                         ? "🥉"
                         : row.rank : row.rank}
-              </span>
+                </span>
               </TableCell>
               {mode === "attention" || mode === "monitoring" ? (
                 <>
