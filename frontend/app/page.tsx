@@ -312,7 +312,7 @@ function DashboardPreview() {
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
                   <h4 className="m-0 text-sm font-bold text-foreground">Ringkasan Kelas</h4>
-                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%; Fotosintesis menjadi topik dengan persentase jawaban salah tertinggi.</p>
+                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">Kehadiran contoh berada di 92%. Skor rata-rata kuis 78% Fotosintesis menjadi topik dengan persentase jawaban salah tertinggi.</p>
                 </section>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
                   <h4 className="m-0 text-sm font-bold text-foreground">Kehadiran per Sesi</h4>
@@ -680,10 +680,6 @@ export default function App() {
 
           <div className="relative z-10 mx-auto w-full max-w-[1180px] px-4 pt-20 pb-20 sm:px-6 sm:py-0">
             <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-              <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm sm:mb-6">
-                <span className="size-1.5 rounded-full bg-primary" />
-                Platform analitik kelas untuk guru
-              </span>
 
               <h1 className="m-0 text-balance text-[clamp(32px,8.8vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground sm:text-[clamp(34px,4.4vw,56px)]">
                 <span className="block">Transparansi</span>
@@ -742,11 +738,16 @@ export default function App() {
                 className="marquee-group flex items-center gap-5 px-6 py-4 whitespace-nowrap text-xs font-bold uppercase tracking-[0.06em] text-secondary-foreground sm:gap-12 sm:py-4 sm:text-sm sm:tracking-wide"
                 aria-hidden={hidden || undefined}
               >
-                {marqueeItems.map((item) => (
-                  <span key={item} className="inline-flex items-center gap-8 sm:gap-12">
-                    {item}
-                  </span>
+                {marqueeItems.map((item, index) => (
+                  <div key={item} className="inline-flex items-center gap-8 sm:gap-12">
+                    <span>{item}</span>
+                    {/* Memberikan pemisah kustom berupa dot kecil hanya jika bukan item terakhir */}
+                    {index < marqueeItems.length - 1 && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-border" aria-hidden="true" />
+                    )}
+                  </div>
                 ))}
+
               </div>
             ))}
           </div>
@@ -830,7 +831,7 @@ export default function App() {
       </section>
 
       {/* ======================== 4 INTERAKSI UTAMA ===================== */}
-      <section id="modes" className="bg-muted py-20 sm:py-28">
+      <section className="bg-muted py-20 sm:py-28">
         <div className="mx-auto w-full max-w-6xl px-6">
           <SectionHeading
             eyebrow="4 INTERAKSI UTAMA"
@@ -977,7 +978,7 @@ export default function App() {
       </section>
 
       {/* =========================== 3 LANGKAH ========================== */}
-      <section className="bg-background py-20 text-foreground sm:py-28">
+      <section id="modes" className="bg-background py-20 text-foreground sm:py-28">
         <div className="mx-auto w-full max-w-6xl px-6">
           <SectionHeading
             eyebrow="MULAI DALAM HITUNGAN DETIK"
