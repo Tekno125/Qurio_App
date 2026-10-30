@@ -24,12 +24,12 @@ const MAX_FONT = 56;
 const PADDING = 10;
 
 const COLORS = [
-  "#0f172a",
-  "#0f766e",
-  "#7c3aed",
-  "#ea580c",
-  "#be185d",
-  "#1d4ed8",
+  "var(--wordcloud-1)",
+  "var(--wordcloud-2)",
+  "var(--wordcloud-3)",
+  "var(--wordcloud-4)",
+  "var(--wordcloud-5)",
+  "var(--wordcloud-6)",
 ];
 
 // -------------------------------------------------------------
@@ -241,24 +241,24 @@ export default function WordcloudPage() {
   // Render
   // -------------------------------------------------------------
   return (
-    <div className="w-full min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen w-full bg-background p-6 text-foreground">
       <div className="mx-auto max-w-6xl">
         {/* Header + soal */}
-        <div className="mb-4 rounded-xl border bg-white p-5">
-          <h1 className="mt-2 text-3xl font-black text-slate-800">
+        <div className="mb-4 rounded-xl border border-border bg-card p-5">
+          <h1 className="mt-2 text-3xl font-black text-foreground">
             Wordcloud Response
           </h1>
 
           {questionText && (
             <div className="mt-4 border-t pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Pertanyaan
               </p>
-              <p className="mt-1 text-lg font-semibold text-slate-700">
+              <p className="mt-1 text-lg font-semibold text-foreground">
                 {questionText}
               </p>
               {pollStatus && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Status:{" "}
                   {pollStatus === "published"
                     ? "Sedang berjalan"
@@ -273,18 +273,18 @@ export default function WordcloudPage() {
 
         {/* Wordcloud visual */}
         <div
-          className="isolate relative w-full overflow-hidden rounded-2xl border bg-white"
+          className="isolate relative w-full overflow-hidden rounded-2xl border border-border bg-card"
           style={{
             aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
             minHeight: 320,
           }}
         >
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-500">
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
               Loading...
             </div>
           ) : positionedWords.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-500">
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
               Belum ada jawaban.
             </div>
           ) : (
@@ -308,7 +308,7 @@ export default function WordcloudPage() {
         </div>
 
         {/* Info footer kecil */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {!loading && hiddenCount > 0 && (
             <span>
               {hiddenCount} kata tidak ditampilkan karena ruang penuh.

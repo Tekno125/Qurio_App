@@ -46,46 +46,41 @@ type RegisterFormData = z.infer<typeof formSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { login } = useAuth();
   const {
     register,
     handleSubmit,
     setError,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { role: "guru" },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    console.log("Form data:", data);
-    try {
-      const response = await fetchUserRegister(
-        data.name,
-        data.email,
-        data.password,
-        data.role,
-      );
-      login(response.data.user);
-      alert("Register berhasil");
-      router.push("/dashboard");
-    } catch (err) {
-      console.error(err);
+    setFormError(null);
+    const response = await fetchUserRegister(
+      data.name,
+      data.email,
+      data.password,
+      data.role,
+    );
 
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat registrasi.";
-
-      if (message.toLowerCase().includes("email")) {
+    if (!response.success) {
+      if (response.message.toLowerCase().includes("email")) {
         setError("email", {
           type: "server",
           message: "Email ini sudah terdaftar. Silakan gunakan email lain.",
         });
       } else {
-        alert(message);
+        setFormError(response.message);
       }
+      return;
     }
+
+    login(response.data.user);
+    router.push("/dashboard");
   };
 
   return (
@@ -95,7 +90,7 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl font-bold text-primary">
             Daftar Akun Guru
           </CardTitle>
-          <CardDescription className="text-sm text-zinc-500">
+          <CardDescription className="text-sm text-muted-foreground">
             Buat akun guru untuk mengelola kelas interaktif Qurio
           </CardDescription>
         </CardHeader>
@@ -103,25 +98,36 @@ export default function RegisterPage() {
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-3"
+            noValidate
           >
+            {formError && (
+              <p
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive dark:border-destructive/40 dark:bg-destructive/20"
+                role="alert"
+              >
+                {formError}
+              </p>
+            )}
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
+              <Label htmlFor="name" className="text-sm font-semibold text-foreground">
                 Nama Lengkap
               </Label>
               <Input
                 {...register("name", { required: "Nama wajib diisi" })}
                 placeholder="Masukkan nama lengkap Anda"
                 className="w-full h-11"
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "name-error" : undefined}
               />
-              {errors.name && (
-                <span className="text-xs text-destructive">
+              {errors.name?.message && (
+                <p id="name-error" className="mt-1 text-sm font-medium text-destructive" role="alert">
                   {errors.name.message}
-                </span>
+                </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
+              <Label htmlFor="email" className="text-sm font-semibold text-foreground">
                 Email
               </Label>
               <Input
@@ -135,16 +141,18 @@ export default function RegisterPage() {
                 className="w-full h-11"
                 placeholder="nama@gmail.com"
                 type="email"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
-              {errors.email && (
-                <span className="text-xs text-destructive">
+              {errors.email?.message && (
+                <p id="email-error" className="mt-1 text-sm font-medium text-destructive" role="alert">
                   {errors.email.message}
-                </span>
+                </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
+              <Label htmlFor="password" className="text-sm font-semibold text-foreground">
                 Password
               </Label>
               <InputGroup className="w-full h-11">
@@ -159,6 +167,8 @@ export default function RegisterPage() {
                   className="h-11"
                   placeholder="Buat kata sandi minimal 8 karakter"
                   type={showPassword ? "text" : "password"}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                 />
                 <InputGroupButton
                   type="button"
@@ -174,19 +184,19 @@ export default function RegisterPage() {
                   {showPassword ? <IconEyeOff /> : <IconEye />}
                 </InputGroupButton>
               </InputGroup>
-              {errors.password && (
-                <span className="text-xs text-destructive">
+              {errors.password?.message && (
+                <p id="password-error" className="mt-1 text-sm font-medium text-destructive" role="alert">
                   {errors.password.message}
-                </span>
+                </p>
               )}
             </div>
 
-            <Button type="submit" className="w-full mt-6 h-11">
-              Daftar
+            <Button type="submit" className="w-full mt-6 h-11" disabled={isSubmitting}>
+              {isSubmitting ? "Mendaftar..." : "Daftar"}
             </Button>
           </form>
 
-          <p className="text-center text-sm text-zinc-500">
+          <p className="text-center text-sm text-muted-foreground">
             Sudah punya akun?{" "}
             <Link
               href="/login"
