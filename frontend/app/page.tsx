@@ -32,6 +32,7 @@ import {
   type Icon,
 } from "@tabler/icons-react";
 import { AccessForm } from "@/components/AccessForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -238,7 +239,7 @@ function DashboardPreview() {
       </div>
 
       <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-border bg-slate-50/70 p-4 md:block">
+        <aside className="hidden border-r border-border bg-muted/55 p-4 md:block">
           <Image
             src="/Qurio-Cropped.svg"
             alt="Qurio"
@@ -249,8 +250,8 @@ function DashboardPreview() {
           <span className="mb-5 flex min-h-10 items-center justify-center rounded-lg bg-brand-500 px-2 text-xs font-semibold text-white">
             + Buat Sesi Baru
           </span>
-          <p className="mb-2 px-2 text-xs font-semibold text-slate-500">Workspace</p>
-          <div className="space-y-1 text-xs font-medium text-slate-600">
+          <p className="mb-2 px-2 text-xs font-semibold text-muted-foreground">Workspace</p>
+          <div className="space-y-1 text-xs font-medium text-muted-foreground">
             <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconLayoutGrid className="size-4" />Dashboard</span>
             <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconList className="size-4" />Session List</span>
             <span className="flex min-h-9 items-center gap-2 rounded-lg bg-brand-500 px-2.5 font-semibold text-white"><IconTrendingUp className="size-4" />Analytics</span>
@@ -403,7 +404,7 @@ export default function App() {
   }, [mobileMenuOpen]);
 
   return (
-    <main id="top">
+    <main id="top" className="theme-transition transition-colors duration-300">
       {/* ============================ NAVBAR ============================ */}
       <header ref={headerRef} className="sticky top-0 z-40 h-16 border-b border-border/70 bg-background/90 backdrop-blur-xl sm:h-20">
         <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-8">
@@ -479,13 +480,17 @@ export default function App() {
         </nav>
       </header>
 
+      {/* Toggle tema selalu tersedia tanpa memenuhi area navbar. */}
+      <ThemeToggle
+        className="fixed bottom-6 right-6 z-50 size-12 rounded-full border-border bg-background/95 shadow-2xl backdrop-blur hover:bg-muted sm:bottom-8 sm:right-8"
+      />
+
       <div className="flex min-h-[calc(100svh-4rem)] flex-col sm:min-h-[calc(100svh-5rem)]">
         {/* ============================== HERO ============================ */}
         <section
           className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background py-3 sm:py-8"
           style={{
-            backgroundImage:
-              "radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px)",
+            backgroundImage: "var(--landing-dot-pattern)",
             backgroundSize: "22px 22px",
           }}
         >
@@ -493,7 +498,7 @@ export default function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
           {/* Glow biru lembut di belakang headline */}
-          <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ backgroundColor: "var(--landing-glow)" }} />
 
           <style>{`
           @keyframes float {
@@ -512,27 +517,27 @@ export default function App() {
           >
             {/* 1 - Word Cloud */}
             <div
-              className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)]"
+              className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:shadow-[0_8px_24px_-12px_rgba(16,185,129,0.25)]"
               style={floatStyle(-4, 5)}
             >
-              <p className="text-xl font-bold leading-tight text-emerald-800">
+              <p className="text-xl font-bold leading-tight text-emerald-800 dark:text-emerald-200">
                 Fotosintesis
               </p>
-              <p className="mt-0.5 text-xs text-emerald-700">dari 24 siswa</p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">dari 24 siswa</p>
             </div>
 
             {/* 2 - Q&A */}
             <div
-              className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)]"
+              className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)] dark:border-purple-800/70 dark:bg-purple-950/40 dark:shadow-[0_8px_24px_-12px_rgba(147,51,234,0.25)]"
               style={floatStyle(3, 6, 0.5)}
             >
               <div className="flex items-start gap-2">
-                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700" />
+                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700 dark:text-purple-300" />
                 <div>
-                  <p className="text-sm font-semibold leading-tight text-purple-900">
+                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">
                     Kenapa daun hijau?
                   </p>
-                  <p className="mt-1 text-xs text-purple-700">
+                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
                     18 upvote · Dijawab
                   </p>
                 </div>
@@ -541,52 +546,52 @@ export default function App() {
 
             {/* 3 - Quiz */}
             <div
-              className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)]"
+              className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)] dark:border-blue-800/70 dark:bg-blue-950/40 dark:shadow-[0_8px_24px_-12px_rgba(59,130,246,0.25)]"
               style={floatStyle(2, 5.5, 1)}
             >
               <div className="flex items-center gap-2">
-                <IconCircleCheck className="size-4 text-blue-700" />
+                <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
                 <div>
-                  <p className="text-sm font-bold text-blue-900">Mars</p>
-                  <p className="text-xs text-blue-700">78% benar</p>
+                  <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Mars</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">78% benar</p>
                 </div>
               </div>
             </div>
 
             {/* 4 - Polling */}
             <div
-              className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)]"
+              className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)] dark:border-amber-800/70 dark:bg-amber-950/40 dark:shadow-[0_8px_24px_-12px_rgba(245,158,11,0.25)]"
               style={floatStyle(-3, 6.5, 1.5)}
             >
               <div className="mb-1.5 flex items-center gap-2">
-                <IconCheckbox className="size-4 text-amber-700" />
-                <p className="text-xs font-semibold text-amber-900">Jakarta</p>
-                <span className="text-xs font-bold text-amber-800">48%</span>
+                <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Jakarta</p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">48%</span>
               </div>
-              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
+              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50">
                 <div className="h-full w-[48%] rounded-full bg-amber-500" />
               </div>
             </div>
 
             {/* 5 - Siswa */}
             <div
-              className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)]"
+              className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)] dark:border-rose-800/70 dark:bg-rose-950/40 dark:shadow-[0_8px_24px_-12px_rgba(244,63,94,0.25)]"
               style={floatStyle(5, 5.2, 0.8)}
             >
               <div className="flex items-center gap-2">
-                <IconTrophy className="size-4 text-rose-700" />
+                <IconTrophy className="size-4 text-rose-700 dark:text-rose-300" />
                 <div>
-                  <p className="text-xs font-bold text-rose-900">
+                  <p className="text-xs font-bold text-rose-900 dark:text-rose-100">
                     Vina Oktaviani
                   </p>
-                  <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">Konsisten 7 kuis</p>
                 </div>
               </div>
             </div>
 
             {/* 6 - Status live */}
             <div
-              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]"
+              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
               style={floatStyle(-2, 4.8, 1.2)}
             >
               <div className="flex items-center gap-2">
@@ -604,41 +609,41 @@ export default function App() {
           {/* Chip melayang versi mobile, memakai empat contoh utama desktop */}
           <div className="pointer-events-none absolute inset-x-2 top-2 bottom-2 lg:hidden" aria-hidden="true">
             <div
-              className="qurio-float absolute left-[2%] top-[3%] w-[44%] rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
+              className="qurio-float absolute left-[2%] top-[3%] w-[44%] rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:shadow-[0_8px_24px_-12px_rgba(16,185,129,0.25)] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
               style={floatStyle(-4, 5)}
             >
-              <p className="text-sm font-bold leading-tight text-emerald-800 sm:text-base">Fotosintesis</p>
-              <p className="mt-0.5 text-xs text-emerald-700">dari 24 siswa</p>
+              <p className="text-sm font-bold leading-tight text-emerald-800 dark:text-emerald-200 sm:text-base">Fotosintesis</p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">dari 24 siswa</p>
             </div>
 
             <div
-              className="qurio-float absolute right-[2%] top-[3%] w-[48%] rounded-2xl border border-purple-200 bg-purple-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)] sm:right-[5%] sm:w-auto sm:max-w-[230px] sm:px-4 sm:py-3"
+              className="qurio-float absolute right-[2%] top-[3%] w-[48%] rounded-2xl border border-purple-200 bg-purple-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)] dark:border-purple-800/70 dark:bg-purple-950/40 dark:shadow-[0_8px_24px_-12px_rgba(147,51,234,0.25)] sm:right-[5%] sm:w-auto sm:max-w-[230px] sm:px-4 sm:py-3"
               style={floatStyle(3, 6, 0.5)}
             >
               <div className="flex items-start gap-1.5 sm:gap-2">
-                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700" />
+                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700 dark:text-purple-300" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-tight text-purple-900">Kenapa daun hijau?</p>
-                  <p className="mt-1 text-xs text-purple-700">18 upvote · Dijawab</p>
+                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">Kenapa daun hijau?</p>
+                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">18 upvote · Dijawab</p>
                 </div>
               </div>
             </div>
 
             <div
-              className="qurio-float absolute bottom-[16%] left-[2%] w-[46%] rounded-2xl border border-rose-200 bg-rose-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)] sm:bottom-[20%] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
+              className="qurio-float absolute bottom-[16%] left-[2%] w-[46%] rounded-2xl border border-rose-200 bg-rose-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)] dark:border-rose-800/70 dark:bg-rose-950/40 dark:shadow-[0_8px_24px_-12px_rgba(244,63,94,0.25)] sm:bottom-[20%] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
               style={floatStyle(5, 5.2, 0.8)}
             >
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <IconTrophy className="size-4 shrink-0 text-rose-700" />
+                <IconTrophy className="size-4 shrink-0 text-rose-700 dark:text-rose-300" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold leading-tight text-rose-900 sm:text-sm">Vina Oktaviani</p>
-                  <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
+                  <p className="text-xs font-bold leading-tight text-rose-900 dark:text-rose-100 sm:text-sm">Vina Oktaviani</p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">Konsisten 7 kuis</p>
                 </div>
               </div>
             </div>
 
             <div
-              className="qurio-float absolute bottom-[16%] right-[2%] w-[46%] rounded-2xl border border-border bg-background px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] sm:bottom-[20%] sm:right-[5%] sm:w-auto sm:px-4 sm:py-3"
+              className="qurio-float absolute bottom-[16%] right-[2%] w-[46%] rounded-2xl border border-border bg-background px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)] sm:bottom-[20%] sm:right-[5%] sm:w-auto sm:px-4 sm:py-3"
               style={floatStyle(-2, 4.8, 1.2)}
             >
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -651,28 +656,28 @@ export default function App() {
             </div>
 
             <div
-              className="qurio-float absolute bottom-[3%] left-[4%] rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)] sm:bottom-[5%] sm:left-[8%] sm:px-4 sm:py-3"
+              className="qurio-float absolute bottom-[3%] left-[4%] rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)] dark:border-blue-800/70 dark:bg-blue-950/40 dark:shadow-[0_8px_24px_-12px_rgba(59,130,246,0.25)] sm:bottom-[5%] sm:left-[8%] sm:px-4 sm:py-3"
               style={floatStyle(2, 5.5, 1)}
             >
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <IconCircleCheck className="size-4 text-blue-700" />
+                <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
                 <div>
-                  <p className="text-sm font-bold leading-tight text-blue-900">Mars</p>
-                  <p className="text-xs text-blue-700">78% benar</p>
+                  <p className="text-sm font-bold leading-tight text-blue-900 dark:text-blue-100">Mars</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">78% benar</p>
                 </div>
               </div>
             </div>
 
             <div
-              className="qurio-float absolute bottom-[3%] right-[4%] rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)] sm:bottom-[5%] sm:right-[8%] sm:px-4 sm:py-3"
+              className="qurio-float absolute bottom-[3%] right-[4%] rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)] dark:border-amber-800/70 dark:bg-amber-950/40 dark:shadow-[0_8px_24px_-12px_rgba(245,158,11,0.25)] sm:bottom-[5%] sm:right-[8%] sm:px-4 sm:py-3"
               style={floatStyle(-3, 6.5, 1.5)}
             >
               <div className="mb-1 flex items-center gap-1.5 sm:mb-1.5 sm:gap-2">
-                <IconCheckbox className="size-4 text-amber-700" />
-                <p className="text-xs font-semibold text-amber-900">Jakarta</p>
-                <span className="text-xs font-bold text-amber-800">48%</span>
+                <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Jakarta</p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">48%</span>
               </div>
-              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-amber-200/70 sm:w-24">
+              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50 sm:w-24">
                 <div className="h-full w-[48%] rounded-full bg-amber-500" />
               </div>
             </div>
@@ -863,9 +868,9 @@ export default function App() {
                   <strong className="text-lg text-emerald-600">
                     Eksperimen
                   </strong>
-                  <span className="text-[15px] text-slate-500">Berani</span>
+                  <span className="text-[15px] text-muted-foreground">Berani</span>
                   <i className="text-xl not-italic text-teal-600">Ide</i>
-                  <small className="text-sm text-slate-400">Diskusi</small>
+                  <small className="text-sm text-muted-foreground">Diskusi</small>
                 </div>
               </CardContent>
             </Card>

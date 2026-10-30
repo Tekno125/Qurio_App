@@ -132,19 +132,19 @@ const PollCard = memo(function PollCard({
   );
 
   return (
-    <div className="bg-white border rounded-xl p-4">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               #{index + 1} • {poll.type === "qa" ? "TANYA JAWAB" : poll.type.toUpperCase()}
             </p>
             <span
               className={`text-xs px-2 py-0.5 rounded-full ${poll.status === "published"
-                ? "bg-green-100 text-green-700"
+                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
                 : poll.status === "closed"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-gray-100 text-gray-600"
+                  ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                  : "bg-muted text-muted-foreground"
                 }`}
             >
               {poll.status}
@@ -152,23 +152,23 @@ const PollCard = memo(function PollCard({
 
             {poll.type === "quiz" && isQuizStats && (
               <div className="flex items-center gap-2 ml-2">
-                <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-200">
+                <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
                   Benar: {stats.correct_count}
                 </span>
-                <span className="text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
+                <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
                   Salah: {stats.incorrect_count}
                 </span>
               </div>
             )}
 
             {poll.type === "polling" && isPollingStats && (
-              <div className="ml-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <div className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                 {stats.totalVotes} suara
               </div>
             )}
           </div>
 
-          <p className="font-medium text-gray-900">{poll.question}</p>
+          <p className="font-medium text-foreground">{poll.question}</p>
 
           {(poll.type === "quiz" || poll.type === "polling") &&
             sortedOptions.length > 0 && (
@@ -176,9 +176,9 @@ const PollCard = memo(function PollCard({
                 {sortedOptions.map((opt, optionIndex) => (
                   <div
                     key={opt.id}
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-muted/55 px-3 py-2 text-sm text-foreground"
                   >
-                    <span className="font-mono text-xs text-gray-500">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {String.fromCharCode(65 + optionIndex)}.
                     </span>
                     <span>{opt.option_text}</span>
@@ -200,7 +200,7 @@ const PollCard = memo(function PollCard({
           )}
 
           {poll.type === "quiz" && isQuizStats && stats.total_count === 0 && (
-            <p className="text-xs text-gray-400 mt-2">Belum ada jawaban masuk</p>
+            <p className="mt-2 text-xs text-muted-foreground">Belum ada jawaban masuk</p>
           )}
         </div>
       </div>
@@ -216,14 +216,14 @@ const PollCard = memo(function PollCard({
         <button
           onClick={() => onUpdate(poll.id, "closed")}
           disabled={poll.status === "closed"}
-          className="text-xs px-3 py-1.5 rounded-lg bg-white border text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:bg-muted disabled:opacity-50"
         >
           Tutup
         </button>
         {(poll.type === "qa" || poll.type === "wordcloud") && (
           <button
             onClick={() => onOpenDetail(poll)}
-            className="text-xs px-3 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-black ml-auto"
+            className="ml-auto rounded-lg bg-foreground px-3 py-1.5 text-xs text-background hover:opacity-90"
           >
             Lihat detail
           </button>
@@ -444,9 +444,9 @@ function SessionPage() {
                   </Badge>
                 )}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Kode:{" "}
-                <span className="font-mono font-semibold bg-gray-100 px-2 py-0.5 rounded">
+                <span className="rounded bg-muted px-2 py-0.5 font-mono font-semibold text-foreground">
                   {session?.access_code}
                 </span>
                 <CopyButton text={session?.access_code || ""} />
@@ -454,8 +454,8 @@ function SessionPage() {
             </div>
             <span
               className={`text-xs font-medium px-2.5 py-1 rounded-full ${session?.status === "active"
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-200 text-gray-600"
+                ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                : "bg-muted text-muted-foreground"
                 }`}
             >
               {session?.status === "ended" ? "Selesai" : "Aktif"}
@@ -466,14 +466,14 @@ function SessionPage() {
             <button
               onClick={() => void toggleSessionStatus("active")}
               disabled={session?.status === "active"}
-              className="text-sm px-4 py-2 rounded-lg bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               Aktifkan
             </button>
             <button
               onClick={() => void toggleSessionStatus("ended")}
               disabled={session?.status === "ended"}
-              className="text-sm px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-foreground px-4 py-2 text-sm text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Akhiri Sesi
             </button>
@@ -485,7 +485,7 @@ function SessionPage() {
                   router.push(`/dashboard/session/${sessionId}/create-poll`);
                 }
               }}
-              className="text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 ml-auto"
+              className="ml-auto rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
             >
               {session?.mode === "quiz" ? "+ Buat Soal Quiz" : "+ Buat Aktivitas"}
             </button>
@@ -493,22 +493,22 @@ function SessionPage() {
         </div>
 
         {errorMessage && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
             {errorMessage}
           </div>
         )}
         {successMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-lg">
+          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
             {successMessage}
           </div>
         )}
 
-        <h2 className="font-semibold text-gray-800 mb-3">
+        <h2 className="mb-3 font-semibold text-foreground">
           Daftar Pertanyaan ({polls?.length || 0})
         </h2>
 
         {!polls || polls.length === 0 ? (
-          <div className="bg-white border border-dashed rounded-xl p-10 text-center text-gray-500 text-sm">
+          <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
             Belum ada pertanyaan di sesi ini.
           </div>
         ) : (

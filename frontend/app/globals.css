@@ -2,7 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* next-themes writes data-theme on <html>; retain .dark support for embeds. */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
   /* Qurio brand blue, sampled from Qurio-Cropped.svg (#335EFF). */
@@ -127,6 +128,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --landing-dot-pattern: radial-gradient(rgb(23 32 51 / 18%) 1px, transparent 1.1px);
+  --landing-glow: rgb(51 94 255 / 14%);
+  --wordcloud-1: #0f172a;
+  --wordcloud-2: #0f766e;
+  --wordcloud-3: #7c3aed;
+  --wordcloud-4: #ea580c;
+  --wordcloud-5: #be185d;
+  --wordcloud-6: #1d4ed8;
 }
 
 [data-theme="dark"] {
@@ -162,6 +171,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* The dots need more luminance than in light mode; the blue glow stays soft
+     but gains enough opacity to create depth on the near-black canvas. */
+  --landing-dot-pattern: radial-gradient(rgb(226 232 240 / 28%) 1px, transparent 1.1px);
+  --landing-glow: rgba(57, 93, 214, 0.28);
+  --wordcloud-1: #e2e8f0;
+  --wordcloud-2: #5eead4;
+  --wordcloud-3: #c4b5fd;
+  --wordcloud-4: #fdba74;
+  --wordcloud-5: #f9a8d4;
+  --wordcloud-6: #93c5fd;
 }
 
 /* 2. KEYFRAMES UNTUK ANIMASI */
@@ -224,6 +243,18 @@
 
 /* 3. CUSTOM COMPONENTS (Opsional: Untuk merapikan class yang terlalu panjang) */
 @layer components {
+  /* Scope transisi saat token warna tema berubah, tanpa menganimasikan layout. */
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition::before,
+  .theme-transition::after,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+  }
+
   /* Contoh: Menggabungkan class tombol .primary dari sebelumnya */
   .btn-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2.5 rounded-xl border-0 bg-brand-500 px-6 py-3 font-extrabold text-base text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;

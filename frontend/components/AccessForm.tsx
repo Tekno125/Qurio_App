@@ -2,6 +2,7 @@
 
 import { fetchUserParticipant } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
@@ -15,9 +16,10 @@ interface ParticipantFormData {
 export interface ParticipantFormProps {
   sessionId?: string;
   onSuccess?: () => void;
+  className?: string;
 }
 
-export function AccessForm({ sessionId, onSuccess }: ParticipantFormProps) {
+export function AccessForm({ sessionId, onSuccess, className }: ParticipantFormProps) {
   const [message, setMessage] = useState("");
   const router = useRouter();
   const {
@@ -63,11 +65,14 @@ export function AccessForm({ sessionId, onSuccess }: ParticipantFormProps) {
   return (
     <form
       id="access"
-      className="mt-8 flex w-full max-w-lg flex-col gap-5 rounded-2xl border border-border bg-card px-5 py-6 text-left text-card-foreground shadow-[0_12px_36px_rgb(27_48_91/0.08)] sm:w-4/5 sm:min-w-sm sm:px-8 sm:py-8"
+      className={cn(
+        "mt-8 flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-border bg-card px-5 py-6 text-left text-card-foreground shadow-[0_12px_36px_rgb(27_48_91/0.08)] dark:shadow-[0_16px_40px_rgb(0_0_0/0.28)] sm:w-4/5 sm:min-w-sm sm:px-8 sm:py-7",
+        className,
+      )}
       onSubmit={handleSubmit(handleInputFormParticipant)}
       aria-label="Form masuk ruang kelas"
     >
-      <h3 className="mb-2 text-center text-lg font-bold tracking-tight">Masuk Ruang Kelas Instan</h3>
+      <h3 className="mb-1 text-center text-lg font-bold tracking-tight text-card-foreground">Masuk Ruang Kelas Instan</h3>
 
       {/* Kode Akses */}
       <div>
@@ -144,7 +149,7 @@ export function AccessForm({ sessionId, onSuccess }: ParticipantFormProps) {
       </div>
 
       <Button
-        className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border-0 bg-brand-500 px-6 py-4 text-base font-extrabold text-white shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border-0 bg-primary px-6 py-4 text-base font-extrabold text-primary-foreground shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-not-allowed disabled:opacity-60"
         type="submit"
         disabled={isSubmitting}
       >
@@ -153,12 +158,12 @@ export function AccessForm({ sessionId, onSuccess }: ParticipantFormProps) {
       </Button>
 
       {message && (
-        <p className="mt-3 text-[13px] text-red-700" role="status">
+        <p className="mt-2 text-[13px] text-red-700 dark:text-red-300" role="status">
           {message}
         </p>
       )}
 
-      <p className="mt-4 text-center text-xs text-muted-foreground">
+      <p className="mt-2 text-center text-xs text-muted-foreground">
         Tanpa perlu buat akun atau unduh aplikasi.
       </p>
     </form>

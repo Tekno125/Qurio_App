@@ -102,7 +102,7 @@ export function SettingsDialog({
           </TabsList>
 
           <TabsContent value="account" className="mt-0 px-0 pt-5">
-            <section className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50/80 to-background p-4 dark:border-rose-900/60 dark:from-rose-950/30 sm:p-5">
+            <section className="rounded-2xl border border-rose-200  from-rose-50/80 to-background p-4 dark:border-rose-900/60 dark:from-rose-950/30 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
                   <IconLogout className="size-5" aria-hidden="true" />

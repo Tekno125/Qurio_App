@@ -48,7 +48,7 @@ function Header({ title }: { title?: string }) {
     return (
         <div className="flex items-center justify-between mb-6">
             <div>
-                <p className="text-xs tracking-widest uppercase text-black font-semibold">Live Session</p>
+                <p className="text-xs tracking-widest uppercase text-muted-foreground font-semibold">Live Session</p>
                 <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
                     {title}
                     <span className="inline-flex items-center gap-1.5">
@@ -62,12 +62,12 @@ function Header({ title }: { title?: string }) {
 }
 
 function Notice({ Icon, title, text, tone = "zinc" }: { Icon: typeof IconClock; title: string; text: string; tone?: "zinc" | "green" }) {
-    const bubble = tone === "green" ? "bg-green-100 text-green-600" : "bg-zinc-100"
+    const bubble = tone === "green" ? "bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-300" : "bg-muted text-muted-foreground"
     return (
-        <div className="bg-white rounded-2xl border border-zinc-200 p-10 text-center shadow-sm">
+        <div className="bg-card rounded-2xl border border-border p-10 text-center shadow-sm">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl ${bubble}`}><Icon className="size-7" /></div>
-            <h3 className="font-bold text-zinc-800">{title}</h3>
-            <p className="text-sm text-zinc-500 mt-1">{text}</p>
+            <h3 className="font-bold text-foreground">{title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">{text}</p>
         </div>
     )
 }
@@ -239,16 +239,16 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
                         <p className="text-sm text-muted-foreground">Jawabanmu sudah tercatat.</p>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+                    <div className="bg-card rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden">
                         <div className="p-6 md:p-8">
                             <span className="inline-flex px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black tracking-widest uppercase">{poll.type}</span>
-                            <h2 className="text-xl md:text-2xl font-bold leading-tight mt-4 text-zinc-900">{poll.question}</h2>
+                            <h2 className="text-xl md:text-2xl font-bold leading-tight mt-4 text-foreground">{poll.question}</h2>
                         </div>
                         <div className="px-6 md:px-8 pb-8">
                             <form onSubmit={handleSubmit(onSubmitResponse)} className="space-y-3">
                                 {!isChoice ? (
                                     <div>
-                                        <textarea {...register("answerStudent", { required: "Jawaban wajib diisi" })} placeholder="Tulis jawabanmu disini..." className="mt-2 w-full bg-zinc-50 border-2 border-zinc-100 focus:border-zinc-900 focus:bg-white rounded-2xl h-36 text-sm outline-none py-4 px-4 resize-none transition-all" />
+                                        <textarea {...register("answerStudent", { required: "Jawaban wajib diisi" })} placeholder="Tulis jawabanmu disini..." className="mt-2 h-36 w-full resize-none rounded-2xl border-2 border-border bg-muted/50 px-4 py-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card" />
                                         {errors.answerStudent && <p className="text-xs text-red-500 mt-1">{errors.answerStudent.message}</p>}
                                     </div>
                                 ) : (
@@ -266,7 +266,7 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
                                                             setSelectedOptionId(opt.id)
                                                             setValue("answerStudent", opt.option_text, { shouldDirty: true, shouldValidate: true })
                                                         }}
-                                                        className={`w-full text-left flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/30 text-zinc-700"}`}
+                                                        className={`w-full text-left flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${isActive ? "border-primary bg-primary/10 shadow-sm" : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/30 text-foreground"}`}
                                                     >
                                                         <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{char}</div>
                                                         <span className={`flex-1 text-sm font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{opt.option_text}</span>
@@ -278,7 +278,7 @@ export default function QuizView({ sessionId, onInvalidParticipant }: QuizViewPr
                                         {errors.answerStudent && <p className="text-xs text-red-500">{errors.answerStudent.message}</p>}
                                     </>
                                 )}
-                                <button type="submit" disabled={!selectedOptionId || isSubmitting} className="w-full mt-6 bg-zinc-900 text-white text-sm font-bold rounded-2xl p-4 hover:bg-black active:scale-[0.98] disabled:opacity-50 transition-all">
+                                <button type="submit" disabled={!selectedOptionId || isSubmitting} className="w-full mt-6 bg-primary text-primary-foreground text-sm font-bold rounded-2xl p-4 hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50 transition-all">
                                     {isSubmitting ? "Mengirim..." : "Kirim Jawaban"}
                                 </button>
                             </form>

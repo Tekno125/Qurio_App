@@ -41,7 +41,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="theme-transition min-h-screen bg-background text-foreground transition-colors duration-300">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-65 flex-col border-r border-sidebar-border bg-sidebar px-6 py-6 lg:flex">
         <Link href="/dashboard" className="flex justify-center items-center px-2 py-1 shrink-0">
           <Image
@@ -64,7 +64,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           </Link>
         )}
         <nav className="mt-10 space-y-2" aria-label="Navigasi dashboard">
-          <p className="pb-1 text-xs font-semibold text-[#64748d]">Workspace</p>
+          <p className="pb-1 text-xs font-semibold text-muted-foreground">Workspace</p>
           {navigation.map(({ href, label, Icon }) => {
             const active =
               pathname === href ||
@@ -81,7 +81,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                   "flex h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold transition-colors",
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "text-[#64728b] hover:bg-sidebar-accent",
+                    : "text-muted-foreground hover:bg-sidebar-accent",
                 )}
               >
                 <Icon className="size-[18px]" />
@@ -181,7 +181,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </Link>
             )}
             <nav className="mt-7 space-y-2" aria-label="Navigasi dashboard">
-              <p className="pb-1 text-xs font-semibold text-[#64748d]">Workspace</p>
+              <p className="pb-1 text-xs font-semibold text-muted-foreground">Workspace</p>
               {navigation.map(({ href, label, Icon }) => {
                 const active =
                   pathname === href ||
@@ -196,7 +196,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                       "flex h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold transition-colors",
                       active
                         ? "bg-primary text-primary-foreground"
-                        : "text-[#64728b] hover:bg-sidebar-accent",
+                        : "text-muted-foreground hover:bg-sidebar-accent",
                     )}
                   >
                     <Icon className="size-[18px]" />
