@@ -166,11 +166,45 @@ export function AccessForm({ sessionId, onSuccess, className }: ParticipantFormP
           Nomer Absen Kamu
         </label>
         <input
-          {...register("absen", { required: "Nomor absen wajib diisi." })}
+          {...register("absen", {
+            required: "Nomor absen wajib diisi.",
+            pattern: {
+              value: /^\d+$/,
+              message: "Nomor absen hanya boleh berisi angka.",
+            },
+          })}
           id="absen"
           aria-invalid={Boolean(errors.absen)}
+          inputMode="numeric"
+          autoComplete="off"
           placeholder="Masukkan nomor absen"
           className="h-14 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-muted-foreground focus-visible:border-brand-500 focus-visible:ring-4 focus-visible:ring-brand-500/15 aria-invalid:border-destructive aria-invalid:ring-4 aria-invalid:ring-destructive/10"
+          onKeyDown={(event) => {
+            if (event.ctrlKey || event.metaKey || event.altKey) return;
+            if (event.key.length > 1) return;
+            if (!/^\d$/.test(event.key)) event.preventDefault();
+          }}
+          onPaste={(event) => {
+            event.preventDefault();
+            const cleaned = event.clipboardData
+              .getData("text")
+              .replace(/\D/g, "");
+            setValue("absen", cleaned, {
+              shouldValidate: false,
+              shouldDirty: true,
+            });
+          }}
+          onInput={(event) => {
+            const input = event.currentTarget;
+            const cleaned = input.value.replace(/\D/g, "");
+            if (input.value !== cleaned) {
+              input.value = cleaned;
+              setValue("absen", cleaned, {
+                shouldValidate: false,
+                shouldDirty: true,
+              });
+            }
+          }}
         />
         {errors.absen && (
           <div className="mt-2 text-xs font-semibold text-red-500">
