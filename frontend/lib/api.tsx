@@ -23,12 +23,19 @@ interface LoginUserFailed {
 
 type LoginUserResult = LoginUserSuccess | LoginUserFailed;
 
-interface RegisterUserResult {
-  success: boolean;
+interface RegisterUserSuccess {
+  success: true;
   data: {
     user: { id: string; name: string; role: string; email: string };
   };
 }
+
+interface RegisterUserFailed {
+  success: false;
+  message: string;
+}
+
+type RegisterUserResult = RegisterUserSuccess | RegisterUserFailed;
 
 export interface PollOption {
   id: string;
@@ -175,16 +182,19 @@ export interface AttendanceBreakdownItem {
   classSize: number;
   joined: number;
   rate: number;
+  overCapacity: boolean;
 }
 
 export interface AnalyticsSummary {
   totalStudents: number;
   averageScore: number;
-  participationRate: number;
+  scoreCorrectAnswers: number;
+  scoreGradedAnswers: number;
   attendanceRate: number;
   totalSessions: number;
-  sessionsWithClassSize: number;
   attendanceBreakdown: AttendanceBreakdownItem[];
+  rangeStart: string | null;
+  rangeEnd: string | null;
 }
 
 export interface StudentScore {
@@ -204,6 +214,10 @@ export interface StudentParticipation {
   sessionsJoined: number;
   questionsAsked: number;
   responsesSubmitted: number;
+  averageScore: number | null;
+  scoreSessions: number;
+  attendanceRate: number | null;
+  needsAttention: boolean;
 }
 
 export interface TopTopic {
@@ -212,6 +226,7 @@ export interface TopTopic {
   sessionTitle: string;
   incorrectRate: number;
   totalAnswers: number;
+  incorrectAnswers: number;
 }
 
 export interface ScoreBySessionPoint {
@@ -220,6 +235,7 @@ export interface ScoreBySessionPoint {
   createdAt: string;
   avgScore: number;
   totalAnswers: number;
+  correctAnswers: number;
 }
 
 const API_URL = (
@@ -238,15 +254,19 @@ const fetchUserLogin = async (
       body: JSON.stringify({ email, password }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || errorData.error || "Login Error");
-    }
+    if (response.ok) return await response.json() as LoginUserSuccess;
 
-    return await response.json();
-  } catch (error) {
-    console.error("Gagal login:", error);
-    throw error;
+    const errorData = await response.json().catch(() => null) as {
+      message?: string;
+      error?: string;
+    } | null;
+    return {
+      success: false,
+      message: errorData?.message || errorData?.error || "Login gagal. Silakan coba lagi.",
+    };
+  } catch {
+    // Kegagalan jaringan juga merupakan state UI, bukan error yang perlu dilempar.
+    return { success: false, message: "Tidak dapat terhubung ke server. Coba lagi." };
   }
 };
 
@@ -264,19 +284,18 @@ const fetchUserRegister = async (
       body: JSON.stringify({ name, email, role, password }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage =
-        errorData.message || errorData.error || "Register failed";
-      console.error("Detail error backend:", errorData);
-      throw new Error(errorMessage);
-    }
+    if (response.ok) return await response.json() as RegisterUserSuccess;
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Gagal register:", error);
-    throw error;
+    const errorData = await response.json().catch(() => null) as {
+      message?: string;
+      error?: string;
+    } | null;
+    return {
+      success: false,
+      message: errorData?.message || errorData?.error || "Pendaftaran gagal. Silakan coba lagi.",
+    };
+  } catch {
+    return { success: false, message: "Tidak dapat terhubung ke server. Coba lagi." };
   }
 };
 
@@ -871,9 +890,13 @@ export const getAnalyticsTopics = (
   );
 
 export const getAnalyticsScoreBySession = (
+  period: AnalyticsPeriod = "7d",
   token?: string,
 ): Promise<ScoreBySessionPoint[]> =>
-  fetchAnalyticsData<ScoreBySessionPoint[]>("score-by-session", token);
+  fetchAnalyticsData<ScoreBySessionPoint[]>(
+    `score-by-session?period=${encodeURIComponent(period)}`,
+    token,
+  );
 
 export {
   fetchUserLogin,

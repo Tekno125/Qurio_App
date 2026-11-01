@@ -5,9 +5,12 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "migrate": "node scripts/run-migration.js",
-    "prestart": "node scripts/run-migration.js",
-    "start": "node server.js"
+    "migrate": "node src/config/database/migrate.js",
+    "start": "node server.js",
+    "seed": "node scripts/seed.js",
+    "seed:reset": "node scripts/seed.js --reset --yes",
+    "verify:metrics": "node scripts/verify-analytics-metrics.js",
+    "sync:metrics": "node scripts/sync-analytics-metrics.js"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +20,6 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "email": "^0.2.7",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
@@ -28,5 +30,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

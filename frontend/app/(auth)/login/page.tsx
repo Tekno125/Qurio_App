@@ -30,8 +30,9 @@ interface FormLogin {
 function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isAuthLoading } = useAuth();
   const {
     register,
     handleSubmit,
@@ -39,29 +40,33 @@ function LoginPage() {
   } = useForm<FormLogin>();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
+    if (!isAuthLoading && isAuthenticated) {
+      router.replace("/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isAuthLoading, router]);
 
   const onSubmit = async (data: FormLogin) => {
-    try {
-      const response = await fetchUserLogin(data.email, data.password);
+    setFormError(null);
+    const response = await fetchUserLogin(data.email, data.password);
 
-      if (response.success && response.data) {
-        const dataUser = response.data.user;
-        login(dataUser);
-
-        alert("Login berhasil..");
-      }
-      // Simpan token (jika ada) dan redirect ke dashboard
-      router.push("/dashboard");
-    } catch (error) {
-      console.error("login error:", error);
+    if (!response.success) {
+      setFormError(response.message);
+      return;
     }
+
+    login(response.data.user);
+    router.push("/dashboard");
   };
 
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/80 p-4 text-sm text-muted-foreground">
+        Memeriksa sesi…
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col flex-1 items-center justify-center bg-secondary/80 font-sans min-h-screen p-4">
@@ -70,7 +75,7 @@ function LoginPage() {
           <CardTitle className="text-2xl font-bold text-primary">
             Masuk ke Akun
           </CardTitle>
-          <CardDescription className="text-sm text-zinc-500">
+          <CardDescription className="text-sm text-muted-foreground">
             Selamat datang kembali di Qurio
           </CardDescription>
         </CardHeader>
@@ -78,9 +83,18 @@ function LoginPage() {
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-3"
+            noValidate
           >
+            {formError && (
+              <p
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive dark:border-destructive/40 dark:bg-destructive/20"
+                role="alert"
+              >
+                {formError}
+              </p>
+            )}
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
+              <Label htmlFor="email" className="text-sm font-semibold text-foreground">
                 Email
               </Label>
               <Input
@@ -94,16 +108,18 @@ function LoginPage() {
                 placeholder="nama@gmail.com"
                 type="email"
                 className="w-full h-11"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
-              {errors.email && (
-                <span className="text-xs text-destructive">
+              {errors.email?.message && (
+                <p id="email-error" className="mt-1 text-sm font-medium text-destructive" role="alert">
                   {errors.email.message}
-                </span>
+                </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-semibold text-foreground">
+              <Label htmlFor="password" className="text-sm font-semibold text-foreground">
                 Password
               </Label>
               <InputGroup className="w-full h-11">
@@ -114,6 +130,8 @@ function LoginPage() {
                   placeholder="Masukkan kata sandi Anda"
                   type={showPassword ? "text" : "password"}
                   className="h-11"
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                 />
                 <InputGroupButton
                   type="button"
@@ -129,10 +147,10 @@ function LoginPage() {
                   {showPassword ? <IconEyeOff /> : <IconEye />}
                 </InputGroupButton>
               </InputGroup>
-              {errors.password && (
-                <span className="text-xs text-destructive">
+              {errors.password?.message && (
+                <p id="password-error" className="mt-1 text-sm font-medium text-destructive" role="alert">
                   {errors.password.message}
-                </span>
+                </p>
               )}
             </div>
 
@@ -145,7 +163,7 @@ function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-zinc-500">
+          <p className="text-center text-sm text-muted-foreground">
             Belum punya akun?{" "}
             <Link
               href="/register"

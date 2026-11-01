@@ -352,7 +352,7 @@ export const updatePoll = async (req, res) => {
   const { pollId } = req.params;
   const { status } = req.body;
 
-  // Validasi status — TODO: copy validasi yang sama persis kayak di updateAllPollsBySession
+    // Validasi status yang diperbolehkan.
   const validStatuses = ["draft", "published", "closed"];
   if (!validStatuses.includes(status)) {
     return res
@@ -368,11 +368,7 @@ export const updatePoll = async (req, res) => {
     client = await pool.connect();
     await client.query("BEGIN");
 
-    // Step 1: Cek poll ada, sekalian ambil session_id + teacher_id buat verifikasi kepemilikan
-    // TODO: query JOIN polls ke sessions, ambil: p.id, p.type, p.session_id, s.teacher_id
-    // Petunjuk: SELECT p.id, p.type, p.session_id, s.teacher_id
-    //           FROM polls p JOIN sessions s ON p.session_id = s.id
-    //           WHERE p.id = $1
+    // Ambil poll dan pemilik sesi untuk pengecekan akses.
     const pollRes = await client.query(
       `SELECT p.id, p.type, p.session_id, s.teacher_id
              FROM polls p
@@ -390,11 +386,16 @@ export const updatePoll = async (req, res) => {
 
     const poll = pollRes.rows[0];
 
-    // Step 2: Guard type — TODO: cuma quiz yang boleh lewat endpoint ini
-    // Kalau poll.type bukan 'quiz', tolak dengan 400 + pesan jelas
+    // Endpoint ini hanya digunakan untuk memperbarui status quiz.
+    if (poll.type !== "quiz") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "Endpoint ini hanya untuk poll bertipe quiz.",
+      });
+    }
 
-    // Step 3: Verifikasi kepemilikan — TODO: copy pola yang sama dari updateAllPollsBySession
-    // (bandingin poll.teacher_id sama req.user.id)
+    // Verifikasi kepemilikan sesi oleh guru yang terautentikasi.
     const teacherId = pollRes.rows[0].teacher_id;
     const loggedInTeacherId = req.user ? req.user.id : null;
 
@@ -429,7 +430,7 @@ export const updatePoll = async (req, res) => {
       );
     }
 
-    // Step 4: Update — TODO: mirip query bulk, tapi WHERE id = $2 (bukan session_id)
+    // Perbarui status poll yang dipilih beserta timestamp-nya.
     let query = "UPDATE polls SET status = $1";
     if (status === "published") {
       query += ", published_at = CURRENT_TIMESTAMP, closed_at = NULL";
@@ -450,9 +451,7 @@ export const updatePoll = async (req, res) => {
     const updatedPoll = updatedRes.rows[0];
     await client.query("COMMIT");
 
-    // Step 5: Broadcast socket — TODO: emit ke room session, nama event bebas
-    // tapi HARUS beda dari "all_polls_updated" biar frontend bisa bedain
-    // saran nama: "poll_status_updated"
+    // Kirim perubahan poll ini secara terpisah dari event bulk update.
     const io = req.app.get("io");
     if (io) {
       io.to(`session:${poll.session_id}`).emit("poll_updated", {

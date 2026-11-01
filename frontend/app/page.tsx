@@ -2,6 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  useEffect,
+  useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
@@ -13,6 +15,9 @@ import { cn } from "@/lib/utils";
 
 import {
   IconArrowRight,
+  IconBrandInstagram,
+  IconBrandX,
+  IconBrandYoutube,
   IconBolt,
   IconChartBar,
   IconCheck,
@@ -36,6 +41,7 @@ import {
   type Icon,
 } from "@tabler/icons-react";
 import { AccessForm } from "@/components/AccessForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -179,6 +185,16 @@ const footerLinks = [
   ["Cara Kerja", "#modes"],
   ["FAQ", "#faq"],
   ["Untuk Guru", "#daftar-guru"],
+] as const;
+
+const footerAccountLinks = [
+  ["Daftar", "/register"],
+  ["Masuk", "/login"],
+] as const;
+
+const footerLegalLinks = [
+  ["Privasi", "/privasi"],
+  ["Syarat", "/syarat"],
 ] as const;
 
 type PreviewTab = "quiz" | "interactive";
@@ -362,7 +378,7 @@ function DashboardPreview() {
                     Ringkasan Kelas
                   </h4>
                   <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                    Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%;
+                    Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%
                     Fotosintesis menjadi topik dengan persentase jawaban salah
                     tertinggi.
                   </p>
@@ -531,11 +547,37 @@ function DashboardPreview() {
 
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    const onOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        event.target instanceof Node &&
+        !headerRef.current?.contains(event.target)
+      )
+        setMobileMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onOutside);
+    document.addEventListener("touchstart", onOutside);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("touchstart", onOutside);
+    };
+  }, [mobileMenuOpen]);
 
   return (
-    <main id="top">
+    <main id="top" className="theme-transition transition-colors duration-300">
       {/* ============================ NAVBAR ============================ */}
-      <header className="sticky top-0 z-40 h-16 border-b border-border/70 bg-background/90 backdrop-blur-xl sm:h-20">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-40 h-16 border-b border-border/70 bg-background/90 backdrop-blur-xl sm:h-20"
+      >
         <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-8">
           <a
             className="logo inline-flex shrink-0 items-center"
@@ -560,7 +602,23 @@ export default function App() {
             <a href="#faq">FAQ</a>
             <a href="#daftar-guru">Untuk Guru</a>
           </nav>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 md:hidden"
+            aria-label={
+              mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+            }
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-main-navigation"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            {mobileMenuOpen ? (
+              <IconX className="size-5" />
+            ) : (
+              <IconMenu2 className="size-5" />
+            )}
+          </button>
+          <div className="hidden items-center gap-1 sm:gap-2 md:flex">
             <Link
               className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2 text-sm font-semibold text-foreground transition-colors hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-3"
               href="/login"
@@ -591,38 +649,61 @@ export default function App() {
             </button>
           </div>
         </div>
-        {mobileMenuOpen && (
-          <nav
-            id="mobile-main-navigation"
-            aria-label="Navigasi utama"
-            className="absolute inset-x-0 top-full border-b border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-xl md:hidden"
-          >
-            {[
-              ["Fitur", "#features"],
-              ["Cara Kerja", "#modes"],
-              ["FAQ", "#faq"],
-              ["Untuk Guru", "#daftar-guru"],
-            ].map(([label, href]) => (
-              <a
-                key={href}
-                href={href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-brand-500"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-        )}
+        <nav
+          id="mobile-main-navigation"
+          aria-label="Navigasi utama"
+          aria-hidden={!mobileMenuOpen}
+          inert={!mobileMenuOpen}
+          className={cn(
+            "absolute inset-x-0 top-full overflow-hidden border-b border-border bg-background/95 px-4 shadow-lg backdrop-blur-xl transition-[max-height,opacity,padding] duration-200 ease-out motion-reduce:transition-none md:hidden",
+            mobileMenuOpen
+              ? "max-h-[24rem] py-3 opacity-100"
+              : "pointer-events-none max-h-0 py-0 opacity-0",
+          )}
+        >
+          {[
+            ["Fitur", "#features"],
+            ["Cara Kerja", "#modes"],
+            ["FAQ", "#faq"],
+            ["Untuk Guru", "#daftar-guru"],
+          ].map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-brand-500"
+            >
+              {label}
+            </a>
+          ))}
+          <div className="mt-2 grid gap-2 border-t border-border pt-3">
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Masuk
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-600"
+            >
+              Daftar Gratis
+            </Link>
+          </div>
+        </nav>
       </header>
+
+      {/* Toggle tema selalu tersedia tanpa memenuhi area navbar. */}
+      <ThemeToggle className="fixed bottom-6 right-6 z-50 size-12 rounded-full border-border bg-background/95 shadow-2xl backdrop-blur hover:bg-muted sm:bottom-8 sm:right-8" />
 
       <div className="flex min-h-[calc(100svh-4rem)] flex-col sm:min-h-[calc(100svh-5rem)]">
         {/* ============================== HERO ============================ */}
         <section
-          className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background py-6 sm:py-8"
+          className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background py-3 sm:py-8"
           style={{
-            backgroundImage:
-              "radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px)",
+            backgroundImage: "var(--landing-dot-pattern)",
             backgroundSize: "22px 22px",
           }}
         >
@@ -630,7 +711,10 @@ export default function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
           {/* Glow biru lembut di belakang headline */}
-          <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-500/10 blur-3xl" />
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+            style={{ backgroundColor: "var(--landing-glow)" }}
+          />
 
           <style>{`
           @keyframes float {
@@ -649,27 +733,29 @@ export default function App() {
           >
             {/* 1 - Word Cloud */}
             <div
-              className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)]"
+              className="qurio-float absolute top-[12%] left-[5%] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:shadow-[0_8px_24px_-12px_rgba(16,185,129,0.25)]"
               style={floatStyle(-4, 5)}
             >
-              <p className="text-xl font-bold leading-tight text-emerald-800">
+              <p className="text-xl font-bold leading-tight text-emerald-800 dark:text-emerald-200">
                 Fotosintesis
               </p>
-              <p className="mt-0.5 text-xs text-emerald-700">dari 24 siswa</p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                dari 24 siswa
+              </p>
             </div>
 
             {/* 2 - Q&A */}
             <div
-              className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)]"
+              className="qurio-float absolute top-[16%] right-[5%] max-w-[230px] rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)] dark:border-purple-800/70 dark:bg-purple-950/40 dark:shadow-[0_8px_24px_-12px_rgba(147,51,234,0.25)]"
               style={floatStyle(3, 6, 0.5)}
             >
               <div className="flex items-start gap-2">
-                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700" />
+                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700 dark:text-purple-300" />
                 <div>
-                  <p className="text-sm font-semibold leading-tight text-purple-900">
+                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">
                     Kenapa daun hijau?
                   </p>
-                  <p className="mt-1 text-xs text-purple-700">
+                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
                     18 upvote · Dijawab
                   </p>
                 </div>
@@ -678,52 +764,62 @@ export default function App() {
 
             {/* 3 - Quiz */}
             <div
-              className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)]"
+              className="qurio-float absolute bottom-[20%] left-[8%] rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)] dark:border-blue-800/70 dark:bg-blue-950/40 dark:shadow-[0_8px_24px_-12px_rgba(59,130,246,0.25)]"
               style={floatStyle(2, 5.5, 1)}
             >
               <div className="flex items-center gap-2">
-                <IconCircleCheck className="size-4 text-blue-700" />
+                <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
                 <div>
-                  <p className="text-sm font-bold text-blue-900">Mars</p>
-                  <p className="text-xs text-blue-700">78% benar</p>
+                  <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                    Mars
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    78% benar
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* 4 - Polling */}
             <div
-              className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)]"
+              className="qurio-float absolute bottom-[16%] right-[8%] rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)] dark:border-amber-800/70 dark:bg-amber-950/40 dark:shadow-[0_8px_24px_-12px_rgba(245,158,11,0.25)]"
               style={floatStyle(-3, 6.5, 1.5)}
             >
               <div className="mb-1.5 flex items-center gap-2">
-                <IconCheckbox className="size-4 text-amber-700" />
-                <p className="text-xs font-semibold text-amber-900">Jakarta</p>
-                <span className="text-xs font-bold text-amber-800">48%</span>
+                <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  Jakarta
+                </p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                  48%
+                </span>
               </div>
-              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
+              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50">
                 <div className="h-full w-[48%] rounded-full bg-amber-500" />
               </div>
             </div>
 
             {/* 5 - Siswa */}
             <div
-              className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)]"
+              className="qurio-float absolute top-[42%] left-[3%] rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)] dark:border-rose-800/70 dark:bg-rose-950/40 dark:shadow-[0_8px_24px_-12px_rgba(244,63,94,0.25)]"
               style={floatStyle(5, 5.2, 0.8)}
             >
               <div className="flex items-center gap-2">
-                <IconTrophy className="size-4 text-rose-700" />
+                <IconTrophy className="size-4 text-rose-700 dark:text-rose-300" />
                 <div>
-                  <p className="text-xs font-bold text-rose-900">
+                  <p className="text-xs font-bold text-rose-900 dark:text-rose-100">
                     Vina Oktaviani
                   </p>
-                  <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">
+                    Konsisten 7 kuis
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* 6 - Status live */}
             <div
-              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]"
+              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
               style={floatStyle(-2, 4.8, 1.2)}
             >
               <div className="flex items-center gap-2">
@@ -738,14 +834,111 @@ export default function App() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[1180px] px-6">
-            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
-                <span className="size-1.5 rounded-full bg-primary" />
-                Platform analitik kelas untuk guru
-              </span>
+          {/* Chip melayang versi mobile, memakai empat contoh utama desktop */}
+          <div
+            className="pointer-events-none absolute inset-x-2 top-2 bottom-2 lg:hidden"
+            aria-hidden="true"
+          >
+            <div
+              className="qurio-float absolute left-[2%] top-[3%] w-[44%] rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:shadow-[0_8px_24px_-12px_rgba(16,185,129,0.25)] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
+              style={floatStyle(-4, 5)}
+            >
+              <p className="text-sm font-bold leading-tight text-emerald-800 dark:text-emerald-200 sm:text-base">
+                Fotosintesis
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                dari 24 siswa
+              </p>
+            </div>
 
-              <h1 className="m-0 text-balance text-[clamp(34px,4.4vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground">
+            <div
+              className="qurio-float absolute right-[2%] top-[3%] w-[48%] rounded-2xl border border-purple-200 bg-purple-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(147,51,234,0.4)] dark:border-purple-800/70 dark:bg-purple-950/40 dark:shadow-[0_8px_24px_-12px_rgba(147,51,234,0.25)] sm:right-[5%] sm:w-auto sm:max-w-[230px] sm:px-4 sm:py-3"
+              style={floatStyle(3, 6, 0.5)}
+            >
+              <div className="flex items-start gap-1.5 sm:gap-2">
+                <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700 dark:text-purple-300" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">
+                    Kenapa daun hijau?
+                  </p>
+                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
+                    18 upvote · Dijawab
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="qurio-float absolute bottom-[16%] left-[2%] w-[46%] rounded-2xl border border-rose-200 bg-rose-50 px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(244,63,94,0.4)] dark:border-rose-800/70 dark:bg-rose-950/40 dark:shadow-[0_8px_24px_-12px_rgba(244,63,94,0.25)] sm:bottom-[20%] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
+              style={floatStyle(5, 5.2, 0.8)}
+            >
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <IconTrophy className="size-4 shrink-0 text-rose-700 dark:text-rose-300" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold leading-tight text-rose-900 dark:text-rose-100 sm:text-sm">
+                    Vina Oktaviani
+                  </p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">
+                    Konsisten 7 kuis
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="qurio-float absolute bottom-[16%] right-[2%] w-[46%] rounded-2xl border border-border bg-background px-2.5 py-2 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)] sm:bottom-[20%] sm:right-[5%] sm:w-auto sm:px-4 sm:py-3"
+              style={floatStyle(-2, 4.8, 1.2)}
+            >
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="relative flex size-2 shrink-0">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                </span>
+                <p className="text-xs font-semibold text-foreground">
+                  24 siswa di kelas
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="qurio-float absolute bottom-[3%] left-[4%] rounded-2xl border border-blue-200 bg-blue-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(59,130,246,0.45)] dark:border-blue-800/70 dark:bg-blue-950/40 dark:shadow-[0_8px_24px_-12px_rgba(59,130,246,0.25)] sm:bottom-[5%] sm:left-[8%] sm:px-4 sm:py-3"
+              style={floatStyle(2, 5.5, 1)}
+            >
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
+                <div>
+                  <p className="text-sm font-bold leading-tight text-blue-900 dark:text-blue-100">
+                    Mars
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    78% benar
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="qurio-float absolute bottom-[3%] right-[4%] rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(245,158,11,0.45)] dark:border-amber-800/70 dark:bg-amber-950/40 dark:shadow-[0_8px_24px_-12px_rgba(245,158,11,0.25)] sm:bottom-[5%] sm:right-[8%] sm:px-4 sm:py-3"
+              style={floatStyle(-3, 6.5, 1.5)}
+            >
+              <div className="mb-1 flex items-center gap-1.5 sm:mb-1.5 sm:gap-2">
+                <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  Jakarta
+                </p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                  48%
+                </span>
+              </div>
+              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50 sm:w-24">
+                <div className="h-full w-[48%] rounded-full bg-amber-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 mx-auto w-full max-w-[1180px] px-4 pt-20 pb-20 sm:px-6 sm:py-0">
+            <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+              <h1 className="m-0 text-balance text-[clamp(32px,8.8vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground sm:text-[clamp(34px,4.4vw,56px)]">
                 <span className="block">Transparansi</span>
                 <span className="block whitespace-nowrap">
                   <span className="relative inline-block text-brand-700 after:absolute after:inset-x-0 after:bottom-[0.04em] after:-z-10 after:h-[0.14em] after:rounded-full after:bg-brand-200/80">
@@ -755,29 +948,29 @@ export default function App() {
                 </span>
               </h1>
 
-              <p className="mx-auto mt-6 max-w-xl text-balance text-base leading-[1.65] text-muted-foreground sm:text-lg">
+              <p className="mx-auto mt-3 max-w-xl text-balance text-[15px] leading-[1.45] text-muted-foreground sm:mt-6 sm:text-lg sm:leading-[1.65]">
                 Qurio membuat pemahaman setiap murid terlihat jelas: siapa yang
                 paham, siapa yang tertinggal, dan topik mana yang sulit,
                 langsung dari kuis, word cloud, Q&amp;A, dan polling real-time.
               </p>
 
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:mt-7 sm:gap-4">
+              <div className="mt-4 grid w-full grid-cols-2 items-stretch gap-2 sm:mt-7 sm:flex sm:w-auto sm:flex-wrap sm:justify-center sm:gap-4">
                 <Link
                   href="/register"
-                  className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08),0_10px_24px_-8px_rgba(59,91,255,0.6)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  className="inline-flex min-h-12 items-center justify-center gap-1 rounded-xl bg-brand-500 px-2 py-3 text-[13px] font-bold text-white shadow-[0_1px_2px_rgba(15,23,42,0.08),0_10px_24px_-8px_rgba(59,91,255,0.6)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-brand-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:gap-2 sm:px-6 sm:text-sm"
                 >
                   Buat Sesi Gratis
                   <IconArrowRight className="size-4" />
                 </Link>
                 <a
                   href="#modes"
-                  className="inline-flex min-h-12 items-center rounded-xl border border-border bg-background px-6 py-3 text-sm font-bold text-brand-700 shadow-sm transition-colors duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-background px-2 py-3 text-[13px] font-bold text-brand-700 shadow-sm transition-colors duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-6 sm:text-sm"
                 >
                   Lihat Cara Kerja
                 </a>
               </div>
 
-              <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground sm:mt-6 sm:text-sm">
+              <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs font-medium text-muted-foreground sm:mt-6 sm:gap-x-6 sm:gap-y-2 sm:text-sm">
                 {teacherBenefits.map((benefit) => (
                   <li
                     key={benefit}
@@ -789,45 +982,6 @@ export default function App() {
                 ))}
               </ul>
             </div>
-
-            {/* Mobile: chip ringkas, scroll horizontal */}
-            <div className="mt-5 flex gap-3 overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-6">
-              <div className="shrink-0 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
-                <p className="text-sm font-bold text-emerald-800">
-                  Fotosintesis
-                </p>
-                <p className="text-xs text-emerald-700">dari 24 siswa</p>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-2.5">
-                <p className="text-sm font-semibold text-purple-900">
-                  Kenapa daun hijau?
-                </p>
-                <p className="text-xs text-purple-700">18 upvote · Dijawab</p>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2.5">
-                <p className="text-sm font-bold text-blue-900">Mars</p>
-                <p className="text-xs text-blue-700">78% benar</p>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5">
-                <p className="text-sm font-semibold text-amber-900">
-                  Jakarta · 48%
-                </p>
-                <div className="mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70">
-                  <div className="h-full w-[48%] rounded-full bg-amber-500" />
-                </div>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5">
-                <p className="text-sm font-bold text-rose-900">
-                  Vina Oktaviani
-                </p>
-                <p className="text-xs text-rose-700">Konsisten 7 kuis</p>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-border bg-background px-4 py-2.5">
-                <p className="text-sm font-semibold text-foreground">
-                  24 siswa di kelas
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -836,23 +990,27 @@ export default function App() {
           className="marquee-mask group w-full overflow-hidden border-y border-border bg-secondary"
           aria-label="Keunggulan utama Qurio"
         >
-          <div className="marquee-track flex animate-marquee-scroll transition-none group-hover:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]">
+          <div className="marquee-track flex animate-marquee-scroll transition-none group-hover:paused motion-reduce:paused">
             {[false, true].map((hidden) => (
               <div
                 key={String(hidden)}
-                className="marquee-group flex items-center gap-8 px-6 py-3.5 whitespace-nowrap text-xs font-bold uppercase tracking-wide text-secondary-foreground sm:gap-12 sm:py-4 sm:text-sm"
+                className="marquee-group flex items-center gap-5 px-6 py-4 whitespace-nowrap text-xs font-bold uppercase tracking-[0.06em] text-secondary-foreground sm:gap-12 sm:py-4 sm:text-sm sm:tracking-wide"
                 aria-hidden={hidden || undefined}
               >
-                {marqueeItems.map((item, i) => (
-                  <span
+                {marqueeItems.map((item, index) => (
+                  <div
                     key={item}
                     className="inline-flex items-center gap-8 sm:gap-12"
                   >
-                    {item}
-                    {i < marqueeItems.length - 1 && (
-                      <span className="size-1 rounded-full bg-brand-500/50" />
+                    <span>{item}</span>
+                    {/* Memberikan pemisah kustom berupa dot kecil hanya jika bukan item terakhir */}
+                    {index < marqueeItems.length - 1 && (
+                      <span
+                        className="h-1.5 w-1.5 rounded-full bg-border"
+                        aria-hidden="true"
+                      />
                     )}
-                  </span>
+                  </div>
                 ))}
               </div>
             ))}
@@ -937,7 +1095,7 @@ export default function App() {
       </section>
 
       {/* ======================== 4 INTERAKSI UTAMA ===================== */}
-      <section id="modes" className="bg-muted py-20 sm:py-28">
+      <section className="bg-muted py-20 sm:py-28">
         <div className="mx-auto w-full max-w-6xl px-6">
           <SectionHeading
             eyebrow="4 INTERAKSI UTAMA"
@@ -968,9 +1126,13 @@ export default function App() {
                   <strong className="text-lg text-emerald-600">
                     Eksperimen
                   </strong>
-                  <span className="text-[15px] text-slate-500">Berani</span>
+                  <span className="text-[15px] text-muted-foreground">
+                    Berani
+                  </span>
                   <i className="text-xl not-italic text-teal-600">Ide</i>
-                  <small className="text-sm text-slate-400">Diskusi</small>
+                  <small className="text-sm text-muted-foreground">
+                    Diskusi
+                  </small>
                 </div>
               </CardContent>
             </Card>
@@ -1114,7 +1276,10 @@ export default function App() {
       </section>
 
       {/* =========================== 3 LANGKAH ========================== */}
-      <section className="bg-background py-20 text-foreground sm:py-28">
+      <section
+        id="modes"
+        className="bg-background py-20 text-foreground sm:py-28"
+      >
         <div className="mx-auto w-full max-w-6xl px-6">
           <SectionHeading
             eyebrow="MULAI DALAM HITUNGAN DETIK"
@@ -1240,9 +1405,9 @@ export default function App() {
       </section>
 
       {/* ============================= FOOTER =========================== */}
-      <footer className="border-t border-border bg-secondary pt-12 pb-7 sm:pt-16 sm:pb-9">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-          <div className="max-w-sm">
+      <footer className="border-t border-brand-900 bg-brand-950 pt-12 pb-6 text-white sm:pt-16 sm:pb-8">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-x-8 gap-y-10 px-6 sm:grid-cols-3 lg:grid-cols-[1.5fr_1fr_0.9fr_0.9fr_1fr] lg:gap-10">
+          <div className="col-span-2 max-w-sm sm:col-span-3 lg:col-span-1">
             <a
               className="inline-flex h-11 w-24 items-center"
               href="#top"
@@ -1257,36 +1422,101 @@ export default function App() {
                 draggable={false}
               />
             </a>
-            <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
               Platform analitik kelas yang membantu guru memahami setiap suara
               dan pola belajar.
             </p>
           </div>
 
           <nav
-            aria-label="Navigasi footer"
-            className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-1 sm:justify-items-start"
+            aria-label="Jelajahi Qurio"
+            className="flex flex-col items-start gap-1"
           >
-            <h2 className="col-span-2 m-0 text-sm font-bold text-foreground sm:col-span-1">
-              Jelajahi Qurio
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Jelajahi
             </h2>
             {footerLinks.map(([label, href]) => (
               <a
                 href={href}
                 key={href}
-                className="inline-flex min-h-11 items-center text-sm text-muted-foreground transition-colors hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 {label}
               </a>
             ))}
           </nav>
+
+          <nav aria-label="Akun" className="flex flex-col items-start gap-1">
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Akun
+            </h2>
+            {footerAccountLinks.map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <nav
+            aria-label="Informasi legal"
+            className="flex flex-col items-start gap-1"
+          >
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Informasi
+            </h2>
+            {footerLegalLinks.map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <div>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Sosial
+            </h2>
+            <div className="flex gap-2.5">
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="Instagram, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandInstagram className="size-5" />
+              </a>
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="X, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandX className="size-5" />
+              </a>
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="YouTube, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandYoutube className="size-5" />
+              </a>
+            </div>
+          </div>
         </div>
 
-        <div className="mx-auto mt-8 flex w-full max-w-6xl flex-col gap-2 border-t border-border px-6 pt-5 text-xs text-muted-foreground sm:mt-10 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
+        <div className="mx-auto mt-10 flex w-full max-w-6xl flex-col gap-1 border-t border-white/15 px-6 pt-5 text-xs text-white/55 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
           <span>© 2026 Qurio. Hak cipta dilindungi undang-undang.</span>
           <a
             href="#top"
-            className="min-h-11 inline-flex items-center hover:text-foreground"
+            className="inline-flex min-h-11 items-center text-white/70 transition-colors hover:text-white"
           >
             Kembali ke atas ↑
           </a>

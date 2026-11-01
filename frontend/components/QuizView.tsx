@@ -83,10 +83,10 @@ function Header({ title, onLeave }: { title?: string; onLeave?: () => void }) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div>
-        <p className="text-xs tracking-widest uppercase text-black font-semibold">
+        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
           Live Session
         </p>
-        <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
+        <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-foreground">
           {title}
           <span className="inline-flex items-center gap-1.5">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -100,7 +100,7 @@ function Header({ title, onLeave }: { title?: string; onLeave?: () => void }) {
         <button
           type="button"
           onClick={onLeave}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-600 shadow-sm transition-all hover:border-red-200 hover:text-red-600"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-muted-foreground shadow-sm transition-all hover:border-destructive/50 hover:text-destructive"
         >
           <IconLogout className="size-4" />
           Keluar
@@ -122,16 +122,18 @@ function Notice({
   tone?: "zinc" | "green";
 }) {
   const bubble =
-    tone === "green" ? "bg-green-100 text-green-600" : "bg-zinc-100";
+    tone === "green"
+      ? "bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-300"
+      : "bg-muted text-muted-foreground";
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 p-10 text-center shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
       <div
         className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl ${bubble}`}
       >
         <Icon className="size-7" />
       </div>
-      <h3 className="font-bold text-zinc-800">{title}</h3>
-      <p className="text-sm text-zinc-500 mt-1">{text}</p>
+      <h3 className="font-bold text-foreground">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{text}</p>
     </div>
   );
 }
@@ -155,7 +157,6 @@ export default function QuizView({
   const [sessionData, setSessionData] = useState<PublicSession | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
-
   const fetchRequestRef = useRef(0);
   const currentPollIdRef = useRef<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -408,7 +409,7 @@ export default function QuizView({
   const isChoice = poll?.type === "quiz" || poll?.type === "polling";
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] p-4 md:p-8">
+    <div className="min-h-screen bg-background p-4 text-foreground md:p-8">
       <div className="max-w-2xl mx-auto">
         <Header
           title={sessionData?.title ?? "Sesi langsung"}
@@ -416,7 +417,7 @@ export default function QuizView({
         />
 
         {submitError && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm">
+          <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {submitError}
           </div>
         )}
@@ -447,12 +448,12 @@ export default function QuizView({
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
             <div className="p-6 md:p-8">
-              <span className="inline-flex px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black tracking-widest uppercase">
+              <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black tracking-widest text-amber-800 uppercase dark:bg-amber-950 dark:text-amber-200">
                 {poll.type}
               </span>
-              <h2 className="text-xl md:text-2xl font-bold leading-tight mt-4 text-zinc-900">
+              <h2 className="mt-4 text-xl font-bold leading-tight text-foreground md:text-2xl">
                 {poll.question}
               </h2>
             </div>
@@ -468,7 +469,7 @@ export default function QuizView({
                         required: "Jawaban wajib diisi",
                       })}
                       placeholder="Tulis jawabanmu disini..."
-                      className="mt-2 w-full bg-zinc-50 border-2 border-zinc-100 focus:border-zinc-900 focus:bg-white rounded-2xl h-36 text-sm outline-none py-4 px-4 resize-none transition-all"
+                      className="mt-2 h-36 w-full resize-none rounded-2xl border-2 border-input bg-muted/50 px-4 py-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:bg-card"
                     />
                     {errors.answerStudent && (
                       <p className="text-xs text-red-500 mt-1">
@@ -499,7 +500,7 @@ export default function QuizView({
                                 shouldValidate: true,
                               });
                             }}
-                            className={`w-full text-left flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/30 text-zinc-700"}`}
+                            className={`flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition-all ${isActive ? "border-primary bg-primary/10 shadow-sm" : "border-border bg-card text-foreground hover:border-muted-foreground/30 hover:bg-muted/30"}`}
                           >
                             <div
                               className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
@@ -528,7 +529,7 @@ export default function QuizView({
                 <button
                   type="submit"
                   disabled={(isChoice && !selectedOptionId) || isSubmitting}
-                  className="w-full mt-6 bg-zinc-900 text-white text-sm font-bold rounded-2xl p-4 hover:bg-black active:scale-[0.98] disabled:opacity-50 transition-all"
+                  className="mt-6 w-full rounded-2xl bg-primary p-4 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
                 >
                   {isSubmitting ? "Mengirim..." : "Kirim Jawaban"}
                 </button>
