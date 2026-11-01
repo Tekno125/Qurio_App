@@ -253,12 +253,10 @@ export const updateAllPollsBySession = async (req, res) => {
   // Validasi status
   const validStatuses = ["draft", "published", "closed"];
   if (!validStatuses.includes(status)) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Status tidak valid! (draft/published/closed)",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Status tidak valid! (draft/published/closed)",
+    });
   }
 
   if (status === "published") {
@@ -352,15 +350,13 @@ export const updatePoll = async (req, res) => {
   const { pollId } = req.params;
   const { status } = req.body;
 
-    // Validasi status yang diperbolehkan.
+  // Validasi status yang diperbolehkan.
   const validStatuses = ["draft", "published", "closed"];
   if (!validStatuses.includes(status)) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Status tidak valid! (draft/published/closed)",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Status tidak valid! (draft/published/closed)",
+    });
   }
 
   let client;
@@ -385,15 +381,6 @@ export const updatePoll = async (req, res) => {
     }
 
     const poll = pollRes.rows[0];
-
-    // Endpoint ini hanya digunakan untuk memperbarui status quiz.
-    if (poll.type !== "quiz") {
-      await client.query("ROLLBACK");
-      return res.status(400).json({
-        success: false,
-        message: "Endpoint ini hanya untuk poll bertipe quiz.",
-      });
-    }
 
     // Verifikasi kepemilikan sesi oleh guru yang terautentikasi.
     const teacherId = pollRes.rows[0].teacher_id;
