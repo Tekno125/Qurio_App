@@ -1,7 +1,7 @@
 import pool from "../config/database/connection.js"
 import bcrypt from "bcrypt"
-import EmailValidator from "validator"
 import { generateCode, getAuthCookieOptions } from "../middlewares/auth.middleware.js"
+import { isAllowedRegistrationEmailDomain, normalizeEmailAddress } from "../utils/email.js"
 
 const VALID_ROLES = ["guru", "siswa"]
 
@@ -14,8 +14,17 @@ export const usersReg = async (req, res) => {
         return res.status(422).json({ success: false, message: "Isi format dengan benar" })
     }
 
-    if (typeof email !== "string" || !EmailValidator.isEmail(email)) {
-        return res.status(422).json({ success: false, message: "Format email tidak valid" })
+    const normalizedEmail = normalizeEmailAddress(email)
+    if (!normalizedEmail) {
+        return res.status(422).json({ success: false, message: "Format email tidak sesuai" })
+    }
+
+    const emailDomain = normalizedEmail.slice(normalizedEmail.lastIndexOf("@") + 1)
+    if (!isAllowedRegistrationEmailDomain(emailDomain)) {
+        return res.status(422).json({
+            success: false,
+            message: "Format email tidak sesuai"
+        })
     }
 
     if (typeof password !== "string" || password.length < 8) {
@@ -32,7 +41,7 @@ export const usersReg = async (req, res) => {
     try {
         const existing = await pool.query(
             "SELECT id FROM users WHERE name = $1 OR email = $2",
-            [name, email]
+            [name, normalizedEmail]
         )
 
         if (existing.rows.length > 0) {
@@ -44,7 +53,7 @@ export const usersReg = async (req, res) => {
             `INSERT INTO users (name, role, email, password)
              VALUES ($1, $2, $3, $4)
              RETURNING id, name, role, email, password`,
-            [name, role, email, hash]
+            [name, role, normalizedEmail, hash]
         )
 
         const user = createUser.rows[0]
@@ -136,4 +145,3 @@ export const getCurrentUser = (req, res) => {
         data: { user: { id, name, role, email } }
     })
 }
-
