@@ -43,7 +43,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="theme-transition min-h-screen bg-background text-foreground transition-colors duration-300">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-65 flex-col border-r border-sidebar-border bg-sidebar px-6 py-6 lg:flex">
-        <Link href="/dashboard" className="flex justify-center items-center px-2 py-1 shrink-0">
+        <Link
+          href="/dashboard"
+          className="flex justify-center items-center px-2 py-1 shrink-0"
+        >
           <Image
             src={LogoQurio}
             alt="Logo Qurio"
@@ -64,7 +67,9 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           </Link>
         )}
         <nav className="mt-10 space-y-2" aria-label="Navigasi dashboard">
-          <p className="pb-1 text-xs font-semibold text-muted-foreground">Workspace</p>
+          <p className="pb-1 text-xs font-semibold text-muted-foreground">
+            Workspace
+          </p>
           {navigation.map(({ href, label, Icon }) => {
             const active =
               pathname === href ||
@@ -150,7 +155,10 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             className="absolute inset-y-0 left-0 flex w-[min(18rem,85vw)] flex-col border-r border-sidebar-border bg-sidebar px-5 py-5 shadow-xl"
           >
             <div className="flex items-center justify-between">
-              <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 <Image
                   src={LogoQurio}
                   alt="Logo Qurio"
@@ -181,11 +189,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </Link>
             )}
             <nav className="mt-7 space-y-2" aria-label="Navigasi dashboard">
-              <p className="pb-1 text-xs font-semibold text-muted-foreground">Workspace</p>
+              <p className="pb-1 text-xs font-semibold text-muted-foreground">
+                Workspace
+              </p>
               {navigation.map(({ href, label, Icon }) => {
                 const active =
                   pathname === href ||
-                  (href === "/analytics/quiz" && pathname.startsWith("/analytics"));
+                  (href === "/analytics/quiz" &&
+                    pathname.startsWith("/analytics"));
                 return (
                   <Link
                     key={label}
@@ -210,8 +221,12 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 {initials || "Q"}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{user?.name || "Memuat pengguna..."}</p>
-                <p className="truncate text-xs text-muted-foreground">{user?.role || ""}</p>
+                <p className="truncate text-sm font-semibold">
+                  {user?.name || "Memuat pengguna..."}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {user?.role || ""}
+                </p>
               </div>
               <Button
                 variant="ghost"

@@ -119,7 +119,7 @@ export const getSessions = async (req, res) => {
   }
 
   try {
-    // Ambil semua sesi milik guru, urutkan dari yang paling baru
+    // Step 1: Ambil semua sesi milik guru, urutkan dari yang paling baru
     const sessionsResult = await pool.query(
       `
   SELECT
@@ -217,16 +217,29 @@ export const updateSession = async (req, res) => {
   const { status, class_size } = req.body;
 
   try {
-    if (status !== undefined && status !== null && status !== "active" && status !== "ended") {
+    if (
+      status !== undefined &&
+      status !== null &&
+      status !== "active" &&
+      status !== "ended"
+    ) {
       return res.status(400).json({
         success: false,
         message: "Status sesi harus active atau ended.",
       });
     }
 
-    const hasClassSizeField = Object.prototype.hasOwnProperty.call(req.body, "class_size");
+    const hasClassSizeField = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "class_size",
+    );
     const classSizeValidation = validateClassSize(class_size);
-    if (hasClassSizeField && class_size !== undefined && class_size !== null && !classSizeValidation.valid) {
+    if (
+      hasClassSizeField &&
+      class_size !== undefined &&
+      class_size !== null &&
+      !classSizeValidation.valid
+    ) {
       return res.status(400).json({
         success: false,
         message: classSizeValidation.message,

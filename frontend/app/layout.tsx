@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   title: "Qurio - Make your class life",
   description: "Transparansi Intelektual",
   icons: {
-    icon: "/Qurio-Cropped.svg"
-  }
+    icon: "/Qurio-Cropped.svg",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={cn(

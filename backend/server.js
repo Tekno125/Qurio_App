@@ -13,6 +13,7 @@ import questionsRouter from "./src/routes/questions.route.js";
 import wordcloudRouter from "./src/routes/wordcloud.route.js";
 import usersRegLogRouter from "./src/routes/auth.route.js";
 import analyticsRouter from "./src/routes/analytics.route.js";
+import { presenceApi, registerPresence, unregisterBySocket } from "./src/realtime/presence.js";
 
 dotenv.config({ quiet: true });
 
@@ -51,6 +52,8 @@ const io = new Server(httpServer, {
 
 // Simpan io ke app agar bisa dipakai di controller (req.app.get("io"))
 app.set("io", io);
+// Registry kehadiran untuk cek tabrakan absen sekali saat join (tanpa polling).
+app.set("presence", presenceApi);
 
 // =====================
 // MIDDLEWARE
@@ -93,12 +96,29 @@ app.use((err, req, res, next) => {
 // WEBSOCKET EVENT
 // =====================
 io.on("connection", (socket) => {
-    // Peserta/Guru masuk ke ruang sesi agar menerima event real-time
-    socket.on("join_session", (sessionId) => {
+    // Peserta/Guru masuk ke ruang sesi agar menerima event real-time.
+    // Peserta (siswa) disarankan mengirim objek { sessionId, participantId, absen }
+    // agar kehadirannya tercatat; string sessionId polos tetap didukung
+    // untuk kompatibilitas (dashboard guru).
+    socket.on("join_session", (payload) => {
+        const sessionId =
+            typeof payload === "string" ? payload : payload?.sessionId ?? payload?.session_id;
         if (sessionId) socket.join(`session:${sessionId}`);
+
+        if (payload && typeof payload === "object") {
+            registerPresence(socket.id, {
+                sessionId,
+                participantId: payload.participantId ?? payload.participant_id,
+                absen: payload.absen,
+            });
+        }
     });
 
-    socket.on("leave_session", (sessionId) => {
+    socket.on("leave_session", (payload) => {
+        const sessionId =
+            typeof payload === "string" ? payload : payload?.sessionId ?? payload?.session_id;
+        // Bebaskan slot absen seketika (sinkron) — tanpa waktu tunggu.
+        unregisterBySocket(socket.id);
         if (sessionId) socket.leave(`session:${sessionId}`);
     });
 
@@ -109,6 +129,11 @@ io.on("connection", (socket) => {
 
     socket.on("leave_teacher", (teacherId) => {
         if (teacherId) socket.leave(`teacher:${teacherId}`);
+    });
+
+    // Tab ditutup/crash tanpa leave eksplisit: bebaskan slot saat socket mati.
+    socket.on("disconnect", () => {
+        unregisterBySocket(socket.id);
     });
 });
 

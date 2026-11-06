@@ -143,12 +143,12 @@ function DashboardPage() {
   // Terapkan pencarian fuzzy hanya pada sesi aktif.
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-      activeSessions,
-      debouncedSearchQuery,
-      (session) => `${session.title}`,
-    )
-      .filter((result) => result.matchedWords > 0)
-      .map((result) => result.item)
+        activeSessions,
+        debouncedSearchQuery,
+        (session) => `${session.title}`,
+      )
+        .filter((result) => result.matchedWords > 0)
+        .map((result) => result.item)
     : activeSessions;
 
   const visibleSessions = searchedSessions;
@@ -164,19 +164,17 @@ function DashboardPage() {
         current.map((item) =>
           item.id === session.id
             ? {
-              ...item,
-              status: nextStatus,
-              ended_at:
-                nextStatus === "ended" ? new Date().toISOString() : null,
-            }
+                ...item,
+                status: nextStatus,
+                ended_at:
+                  nextStatus === "ended" ? new Date().toISOString() : null,
+              }
             : item,
         ),
       );
       toast.add({
         title:
-          nextStatus === "ended"
-            ? "Sesi diakhiri"
-            : "Sesi diaktifkan kembali",
+          nextStatus === "ended" ? "Sesi diakhiri" : "Sesi diaktifkan kembali",
         description: `Sesi "${session.title}" berhasil diperbarui.`,
         type: "success",
       });

@@ -1,7 +1,14 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
@@ -18,11 +25,13 @@ import {
   IconChevronDown,
   IconCircleCheck,
   IconDeviceMobile,
+  IconDownload,
   IconFileDownload,
   IconLayoutGrid,
   IconList,
   IconMessageQuestion,
   IconMenu2,
+  IconRefresh,
   IconShieldCheck,
   IconTrendingUp,
   IconTrophy,
@@ -211,19 +220,24 @@ function DashboardPreview() {
     }
   };
 
-  const stats = activeTab === "quiz"
-    ? [
-      ["Total Siswa", "24", "Siswa yang ikut sesi"],
-      ["Rata-rata Skor Kuis", "78%", "Dari jawaban yang dinilai"],
-      ["Tingkat Kehadiran", "92%", "Rata-rata per sesi"],
-      ["Sesi Dianalisis", "8", "Sesi mode Quiz"],
-    ]
-    : [
-      ["Total Sesi Interaktif", "6", "Sesi tanpa penilaian"],
-      ["Total Partisipasi", "124", "Kehadiran di seluruh sesi"],
-      ["Rata-rata Peserta", "21", "Siswa per sesi"],
-      ["Aktivitas Digunakan", "—", "Segera hadir (Word Cloud, Q&A, Polling)"],
-    ];
+  const stats =
+    activeTab === "quiz"
+      ? [
+          ["Total Siswa", "24", "Siswa yang ikut sesi"],
+          ["Rata-rata Skor Kuis", "78%", "Dari jawaban yang dinilai"],
+          ["Tingkat Kehadiran", "92%", "Rata-rata per sesi"],
+          ["Sesi Dianalisis", "8", "Sesi mode Quiz"],
+        ]
+      : [
+          ["Total Sesi Interaktif", "6", "Sesi tanpa penilaian"],
+          ["Total Partisipasi", "124", "Kehadiran di seluruh sesi"],
+          ["Rata-rata Peserta", "21", "Siswa per sesi"],
+          [
+            "Aktivitas Digunakan",
+            "—",
+            "Segera hadir (Word Cloud, Q&A, Polling)",
+          ],
+        ];
 
   return (
     <div className="mt-14 overflow-hidden rounded-3xl border border-border bg-card shadow-[0_2px_4px_rgba(15,23,42,0.04),0_32px_64px_-24px_rgba(59,91,255,0.2)] sm:mt-16">
@@ -233,13 +247,13 @@ function DashboardPreview() {
           <span className="size-2.5 rounded-full bg-amber-300" />
           <span className="size-2.5 rounded-full bg-emerald-300" />
         </div>
-        <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-800">
+        <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
           Contoh tampilan · Data simulasi
         </span>
       </div>
 
       <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-border bg-muted/55 p-4 md:block">
+        <aside className="hidden border-r border-sidebar-border bg-sidebar p-4 md:block">
           <Image
             src="/Qurio-Cropped.svg"
             alt="Qurio"
@@ -250,32 +264,65 @@ function DashboardPreview() {
           <span className="mb-5 flex min-h-10 items-center justify-center rounded-lg bg-brand-500 px-2 text-xs font-semibold text-white">
             + Buat Sesi Baru
           </span>
-          <p className="mb-2 px-2 text-xs font-semibold text-muted-foreground">Workspace</p>
-          <div className="space-y-1 text-xs font-medium text-muted-foreground">
-            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconLayoutGrid className="size-4" />Dashboard</span>
-            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5"><IconList className="size-4" />Session List</span>
-            <span className="flex min-h-9 items-center gap-2 rounded-lg bg-brand-500 px-2.5 font-semibold text-white"><IconTrendingUp className="size-4" />Analytics</span>
+          <p className="mb-2 px-2 text-xs font-semibold text-[#64728d]">
+            Workspace
+          </p>
+          <div className="space-y-1 text-xs font-medium text-[#64728b]">
+            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5">
+              <IconLayoutGrid className="size-4" />
+              Dashboard
+            </span>
+            <span className="flex min-h-9 items-center gap-2 rounded-lg px-2.5">
+              <IconList className="size-4" />
+              Session List
+            </span>
+            <span className="flex min-h-9 items-center gap-2 rounded-lg bg-brand-500 px-2.5 font-semibold text-white">
+              <IconTrendingUp className="size-4" />
+              Analytics
+            </span>
           </div>
         </aside>
 
         <div className="min-w-0 p-4 sm:p-6 lg:p-7">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
             <div>
-              <h3 className="m-0 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Analitik Kelas</h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">Pantau pemahaman dan keaktifan siswa di seluruh sesi kelas Anda</p>
+              <h3 className="m-0 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                Analitik Kelas
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                Pantau pemahaman dan keaktifan siswa di seluruh sesi kelas Anda
+              </p>
             </div>
-            <div className="flex flex-wrap gap-2" aria-label="Aksi contoh">
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Muat ulang</span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Ekspor CSV</span>
-              <span className="inline-flex min-h-9 items-center rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">Ekspor PDF</span>
+            <div
+              className="flex flex-wrap gap-2 justify-end"
+              aria-label="Aksi contoh"
+            >
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconRefresh className="size-4" />
+                Muat ulang
+              </span>
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconDownload className="size-4" />
+                Ekspor CSV
+              </span>
+              <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-muted-foreground">
+                <IconDownload className="size-4" />
+                Ekspor PDF
+              </span>
             </div>
           </div>
 
-          <div className="mt-5 flex border-b border-border" role="tablist" aria-label="Contoh tab analitik">
-            {([
-              ["quiz", "Performa Quiz"],
-              ["interactive", "Engagement Interaktif"],
-            ] as const).map(([tab, label]) => (
+          <div
+            className="mt-5 flex border-b border-border"
+            role="tablist"
+            aria-label="Contoh tab analitik"
+          >
+            {(
+              [
+                ["quiz", "Performa Quiz"],
+                ["interactive", "Engagement Interaktif"],
+              ] as const
+            ).map(([tab, label]) => (
               <button
                 key={tab}
                 id={`preview-tab-${tab}`}
@@ -289,7 +336,7 @@ function DashboardPreview() {
                 className={cn(
                   "-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-4 sm:text-sm",
                   activeTab === tab
-                    ? "border-brand-500 text-brand-800"
+                    ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -298,13 +345,28 @@ function DashboardPreview() {
             ))}
           </div>
 
-          <div id="preview-tabpanel" role="tabpanel" aria-labelledby={`preview-tab-${activeTab}`} tabIndex={0} className="relative max-h-[620px] overflow-hidden pt-4 outline-none">
+          <div
+            id="preview-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`preview-tab-${activeTab}`}
+            tabIndex={0}
+            className="relative max-h-[620px] overflow-hidden pt-4 outline-none"
+          >
             <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4 sm:gap-3">
               {stats.map(([label, value, detail]) => (
-                <div key={label} className="min-w-0 rounded-xl border border-border bg-background p-3 sm:rounded-2xl sm:p-4">
-                  <p className="m-0 min-h-8 text-xs font-medium leading-snug text-muted-foreground sm:min-h-0">{label}</p>
-                  <p className="m-0 mt-1.5 text-xl font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">{value}</p>
-                  <p className="m-0 mt-1 hidden text-xs text-muted-foreground sm:block">{detail}</p>
+                <div
+                  key={label}
+                  className="min-w-0 rounded-xl border border-border bg-background p-3 sm:rounded-2xl sm:p-4"
+                >
+                  <p className="m-0 min-h-8 text-xs font-medium leading-snug text-muted-foreground sm:min-h-0">
+                    {label}
+                  </p>
+                  <p className="m-0 mt-1.5 text-xl font-bold tabular-nums tracking-tight text-foreground sm:text-2xl">
+                    {value}
+                  </p>
+                  <p className="m-0 mt-1 hidden text-xs text-muted-foreground sm:block">
+                    {detail}
+                  </p>
                 </div>
               ))}
             </div>
@@ -312,27 +374,87 @@ function DashboardPreview() {
             {activeTab === "quiz" ? (
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Ringkasan Kelas</h4>
-                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">Kehadiran contoh berada di 92%. Skor rata-rata kuis 78% Fotosintesis menjadi topik dengan persentase jawaban salah tertinggi.</p>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Ringkasan Kelas
+                  </h4>
+                  <p className="m-0 mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    Kehadiran contoh berada di 92%. Skor rata-rata kuis 78%
+                    Fotosintesis menjadi topik dengan persentase jawaban salah
+                    tertinggi.
+                  </p>
                 </section>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Kehadiran per Sesi</h4>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Kehadiran per Sesi
+                  </h4>
                   <div className="mt-3 space-y-3">
-                    {[["Fotosintesis", 92], ["Tata Surya", 81], ["Energi", 62]].map(([name, pct]) => (
+                    {[
+                      ["Fotosintesis", 92],
+                      ["Tata Surya", 81],
+                      ["Energi", 62],
+                    ].map(([name, pct]) => (
                       <div key={name}>
-                        <div className="mb-1 flex justify-between gap-2 text-xs"><span className="truncate font-medium">{name}</span><span className="tabular-nums text-muted-foreground">{pct}%</span></div>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", Number(pct) >= 80 ? "bg-emerald-500" : Number(pct) >= 60 ? "bg-amber-500" : "bg-rose-500")} style={{ width: `${pct}%` }} /></div>
+                        <div className="mb-1 flex justify-between gap-2 text-xs">
+                          <span className="truncate font-medium">{name}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {pct}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              Number(pct) >= 80
+                                ? "bg-emerald-500"
+                                : Number(pct) >= 60
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500",
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
                 </section>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:col-span-2 sm:p-5">
-                  <h4 className="m-0 text-sm font-bold text-foreground">Topik Paling Sulit</h4>
+                  <h4 className="m-0 text-sm font-bold text-foreground">
+                    Topik Paling Sulit
+                  </h4>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    {[["Fotosintesis", 68], ["Sistem Pernapasan", 54], ["Tata Surya", 41]].map(([name, pct]) => (
-                      <div key={name} className="min-w-0 rounded-xl bg-muted/50 p-3">
-                        <div className="mb-2 flex justify-between gap-2 text-xs"><span className="truncate font-medium">{name}</span><span className={cn("font-bold tabular-nums", Number(pct) >= 60 ? "text-rose-700" : "text-amber-700")}>{pct}%</span></div>
-                        <div className="h-2 overflow-hidden rounded-full bg-background"><div className={cn("h-full rounded-full", Number(pct) >= 60 ? "bg-rose-500" : "bg-amber-500")} style={{ width: `${pct}%` }} /></div>
+                    {[
+                      ["Fotosintesis", 68],
+                      ["Sistem Pernapasan", 54],
+                      ["Tata Surya", 41],
+                    ].map(([name, pct]) => (
+                      <div
+                        key={name}
+                        className="min-w-0 rounded-xl bg-muted/50 p-3"
+                      >
+                        <div className="mb-2 flex justify-between gap-2 text-xs">
+                          <span className="truncate font-medium">{name}</span>
+                          <span
+                            className={cn(
+                              "font-bold tabular-nums",
+                              Number(pct) >= 60
+                                ? "text-rose-700"
+                                : "text-amber-700",
+                            )}
+                          >
+                            {pct}%
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-background">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              Number(pct) >= 60
+                                ? "bg-rose-500"
+                                : "bg-amber-500",
+                            )}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -341,35 +463,77 @@ function DashboardPreview() {
             ) : (
               <div className="mt-3 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {[["Word Cloud", "42 kata"], ["Tanya Jawab", "14 pertanyaan"], ["Polling", "32 suara"]].map(([label, value]) => (
-                    <div key={label} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 sm:p-4">
-                      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
-                      <span className="text-sm font-bold tabular-nums text-foreground">{value}</span>
+                  {[
+                    ["Word Cloud", "42 kata"],
+                    ["Tanya Jawab", "14 pertanyaan"],
+                    ["Polling", "32 suara"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 sm:p-4"
+                    >
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {label}
+                      </span>
+                      <span className="text-sm font-bold tabular-nums text-foreground">
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
                 <section className="rounded-2xl border border-border bg-background p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <h4 className="m-0 text-sm font-bold text-foreground">Siswa Paling Aktif</h4>
-                      <p className="m-0 mt-1 text-xs text-muted-foreground">Contoh aktivitas dari sesi interaktif</p>
+                      <h4 className="m-0 text-sm font-bold text-foreground">
+                        Siswa Paling Aktif
+                      </h4>
+                      <p className="m-0 mt-1 text-xs text-muted-foreground">
+                        Contoh aktivitas dari sesi interaktif
+                      </p>
                     </div>
-                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">3 aktivitas</span>
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                      3 aktivitas
+                    </span>
                   </div>
                   <div className="mt-3 divide-y divide-border">
-                    {[["A", "Alya Putri", "12 aktivitas", "Sangat Aktif"], ["B", "Bima Pratama", "8 aktivitas", "Aktif"], ["C", "Citra Nabila", "6 aktivitas", "Aktif"]].map(([initial, name, count, status]) => (
-                      <div key={name} className="flex items-center gap-3 py-2.5">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-800">{initial}</span>
-                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">{name}</span>
-                        <span className="hidden text-xs text-muted-foreground sm:inline">{count}</span>
-                        <span className={cn("rounded-full px-2 py-1 text-xs font-semibold", status === "Sangat Aktif" ? "bg-emerald-50 text-emerald-800" : "bg-brand-50 text-brand-800")}>{status}</span>
+                    {[
+                      ["A", "Alya Putri", "12 aktivitas", "Sangat Aktif"],
+                      ["B", "Bima Pratama", "8 aktivitas", "Aktif"],
+                      ["C", "Citra Nabila", "6 aktivitas", "Aktif"],
+                    ].map(([initial, name, count, status]) => (
+                      <div
+                        key={name}
+                        className="flex items-center gap-3 py-2.5"
+                      >
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                          {initial}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
+                          {name}
+                        </span>
+                        <span className="hidden text-xs text-muted-foreground sm:inline">
+                          {count}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-1 text-xs font-semibold",
+                            status === "Sangat Aktif"
+                              ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "border border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-300",
+                          )}
+                        >
+                          {status}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </section>
               </div>
             )}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent" aria-hidden="true" />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card to-transparent"
+              aria-hidden="true"
+            />
           </div>
         </div>
       </div>
@@ -391,7 +555,11 @@ export default function App() {
       if (event.key === "Escape") setMobileMenuOpen(false);
     };
     const onOutside = (event: MouseEvent | TouchEvent) => {
-      if (event.target instanceof Node && !headerRef.current?.contains(event.target)) setMobileMenuOpen(false);
+      if (
+        event.target instanceof Node &&
+        !headerRef.current?.contains(event.target)
+      )
+        setMobileMenuOpen(false);
     };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onOutside);
@@ -406,7 +574,10 @@ export default function App() {
   return (
     <main id="top" className="theme-transition transition-colors duration-300">
       {/* ============================ NAVBAR ============================ */}
-      <header ref={headerRef} className="sticky top-0 z-40 h-16 border-b border-border/70 bg-background/90 backdrop-blur-xl sm:h-20">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-40 h-16 border-b border-border/70 bg-background/90 backdrop-blur-xl sm:h-20"
+      >
         <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-8">
           <a
             className="logo inline-flex shrink-0 items-center"
@@ -434,12 +605,18 @@ export default function App() {
           <button
             type="button"
             className="grid size-11 shrink-0 place-items-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 md:hidden"
-            aria-label={mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+            aria-label={
+              mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+            }
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-main-navigation"
             onClick={() => setMobileMenuOpen((open) => !open)}
           >
-            {mobileMenuOpen ? <IconX className="size-5" /> : <IconMenu2 className="size-5" />}
+            {mobileMenuOpen ? (
+              <IconX className="size-5" />
+            ) : (
+              <IconMenu2 className="size-5" />
+            )}
           </button>
           <div className="hidden items-center gap-1 sm:gap-2 md:flex">
             <Link
@@ -454,6 +631,22 @@ export default function App() {
             >
               <span>Daftar Gratis</span>
             </Link>
+            <button
+              type="button"
+              className="grid size-11 shrink-0 place-items-center rounded-xl border-0 bg-transparent text-foreground transition-colors hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 md:hidden"
+              aria-label={
+                mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+              }
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-main-navigation"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+            >
+              {mobileMenuOpen ? (
+                <IconX className="size-5" />
+              ) : (
+                <IconMenu2 className="size-5" />
+              )}
+            </button>
           </div>
         </div>
         <nav
@@ -461,9 +654,19 @@ export default function App() {
           aria-label="Navigasi utama"
           aria-hidden={!mobileMenuOpen}
           inert={!mobileMenuOpen}
-          className={cn("absolute inset-x-0 top-full overflow-hidden border-b border-border bg-background/95 px-4 shadow-lg backdrop-blur-xl transition-[max-height,opacity,padding] duration-200 ease-out motion-reduce:transition-none md:hidden", mobileMenuOpen ? "max-h-[24rem] py-3 opacity-100" : "pointer-events-none max-h-0 py-0 opacity-0")}
+          className={cn(
+            "absolute inset-x-0 top-full overflow-hidden border-b border-border bg-background/95 px-4 shadow-lg backdrop-blur-xl transition-[max-height,opacity,padding] duration-200 ease-out motion-reduce:transition-none md:hidden",
+            mobileMenuOpen
+              ? "max-h-[24rem] py-3 opacity-100"
+              : "pointer-events-none max-h-0 py-0 opacity-0",
+          )}
         >
-          {[["Fitur", "#features"], ["Cara Kerja", "#modes"], ["FAQ", "#faq"], ["Untuk Guru", "#daftar-guru"]].map(([label, href]) => (
+          {[
+            ["Fitur", "#features"],
+            ["Cara Kerja", "#modes"],
+            ["FAQ", "#faq"],
+            ["Untuk Guru", "#daftar-guru"],
+          ].map(([label, href]) => (
             <a
               key={href}
               href={href}
@@ -474,16 +677,26 @@ export default function App() {
             </a>
           ))}
           <div className="mt-2 grid gap-2 border-t border-border pt-3">
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted">Masuk</Link>
-            <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-600">Daftar Gratis</Link>
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Masuk
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-600"
+            >
+              Daftar Gratis
+            </Link>
           </div>
         </nav>
       </header>
 
       {/* Toggle tema selalu tersedia tanpa memenuhi area navbar. */}
-      <ThemeToggle
-        className="fixed bottom-6 right-6 z-50 size-12 rounded-full border-border bg-background/95 shadow-2xl backdrop-blur hover:bg-muted sm:bottom-8 sm:right-8"
-      />
+      <ThemeToggle className="fixed bottom-6 right-6 z-50 size-12 rounded-full border-border bg-background/95 shadow-2xl backdrop-blur hover:bg-muted sm:bottom-8 sm:right-8" />
 
       <div className="flex min-h-[calc(100svh-4rem)] flex-col sm:min-h-[calc(100svh-5rem)]">
         {/* ============================== HERO ============================ */}
@@ -498,7 +711,10 @@ export default function App() {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
           {/* Glow biru lembut di belakang headline */}
-          <div className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ backgroundColor: "var(--landing-glow)" }} />
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[720px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+            style={{ backgroundColor: "var(--landing-glow)" }}
+          />
 
           <style>{`
           @keyframes float {
@@ -523,7 +739,9 @@ export default function App() {
               <p className="text-xl font-bold leading-tight text-emerald-800 dark:text-emerald-200">
                 Fotosintesis
               </p>
-              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">dari 24 siswa</p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                dari 24 siswa
+              </p>
             </div>
 
             {/* 2 - Q&A */}
@@ -552,8 +770,12 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
                 <div>
-                  <p className="text-sm font-bold text-blue-900 dark:text-blue-100">Mars</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">78% benar</p>
+                  <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                    Mars
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    78% benar
+                  </p>
                 </div>
               </div>
             </div>
@@ -565,8 +787,12 @@ export default function App() {
             >
               <div className="mb-1.5 flex items-center gap-2">
                 <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
-                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Jakarta</p>
-                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">48%</span>
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  Jakarta
+                </p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                  48%
+                </span>
               </div>
               <div className="h-1.5 w-24 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50">
                 <div className="h-full w-[48%] rounded-full bg-amber-500" />
@@ -584,7 +810,9 @@ export default function App() {
                   <p className="text-xs font-bold text-rose-900 dark:text-rose-100">
                     Vina Oktaviani
                   </p>
-                  <p className="text-xs text-rose-700 dark:text-rose-300">Konsisten 7 kuis</p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">
+                    Konsisten 7 kuis
+                  </p>
                 </div>
               </div>
             </div>
@@ -607,13 +835,20 @@ export default function App() {
           </div>
 
           {/* Chip melayang versi mobile, memakai empat contoh utama desktop */}
-          <div className="pointer-events-none absolute inset-x-2 top-2 bottom-2 lg:hidden" aria-hidden="true">
+          <div
+            className="pointer-events-none absolute inset-x-2 top-2 bottom-2 lg:hidden"
+            aria-hidden="true"
+          >
             <div
               className="qurio-float absolute left-[2%] top-[3%] w-[44%] rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.45)] dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:shadow-[0_8px_24px_-12px_rgba(16,185,129,0.25)] sm:left-[5%] sm:w-auto sm:px-4 sm:py-3"
               style={floatStyle(-4, 5)}
             >
-              <p className="text-sm font-bold leading-tight text-emerald-800 dark:text-emerald-200 sm:text-base">Fotosintesis</p>
-              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">dari 24 siswa</p>
+              <p className="text-sm font-bold leading-tight text-emerald-800 dark:text-emerald-200 sm:text-base">
+                Fotosintesis
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                dari 24 siswa
+              </p>
             </div>
 
             <div
@@ -623,8 +858,12 @@ export default function App() {
               <div className="flex items-start gap-1.5 sm:gap-2">
                 <IconMessageQuestion className="mt-0.5 size-4 shrink-0 text-purple-700 dark:text-purple-300" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">Kenapa daun hijau?</p>
-                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">18 upvote · Dijawab</p>
+                  <p className="text-sm font-semibold leading-tight text-purple-900 dark:text-purple-100">
+                    Kenapa daun hijau?
+                  </p>
+                  <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
+                    18 upvote · Dijawab
+                  </p>
                 </div>
               </div>
             </div>
@@ -636,8 +875,12 @@ export default function App() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <IconTrophy className="size-4 shrink-0 text-rose-700 dark:text-rose-300" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold leading-tight text-rose-900 dark:text-rose-100 sm:text-sm">Vina Oktaviani</p>
-                  <p className="text-xs text-rose-700 dark:text-rose-300">Konsisten 7 kuis</p>
+                  <p className="text-xs font-bold leading-tight text-rose-900 dark:text-rose-100 sm:text-sm">
+                    Vina Oktaviani
+                  </p>
+                  <p className="text-xs text-rose-700 dark:text-rose-300">
+                    Konsisten 7 kuis
+                  </p>
                 </div>
               </div>
             </div>
@@ -651,7 +894,9 @@ export default function App() {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75 motion-reduce:animate-none" />
                   <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
                 </span>
-                <p className="text-xs font-semibold text-foreground">24 siswa di kelas</p>
+                <p className="text-xs font-semibold text-foreground">
+                  24 siswa di kelas
+                </p>
               </div>
             </div>
 
@@ -662,8 +907,12 @@ export default function App() {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <IconCircleCheck className="size-4 text-blue-700 dark:text-blue-300" />
                 <div>
-                  <p className="text-sm font-bold leading-tight text-blue-900 dark:text-blue-100">Mars</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">78% benar</p>
+                  <p className="text-sm font-bold leading-tight text-blue-900 dark:text-blue-100">
+                    Mars
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    78% benar
+                  </p>
                 </div>
               </div>
             </div>
@@ -674,8 +923,12 @@ export default function App() {
             >
               <div className="mb-1 flex items-center gap-1.5 sm:mb-1.5 sm:gap-2">
                 <IconCheckbox className="size-4 text-amber-700 dark:text-amber-300" />
-                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Jakarta</p>
-                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">48%</span>
+                <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  Jakarta
+                </p>
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                  48%
+                </span>
               </div>
               <div className="h-1.5 w-20 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50 sm:w-24">
                 <div className="h-full w-[48%] rounded-full bg-amber-500" />
@@ -685,7 +938,6 @@ export default function App() {
 
           <div className="relative z-10 mx-auto w-full max-w-[1180px] px-4 pt-20 pb-20 sm:px-6 sm:py-0">
             <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-
               <h1 className="m-0 text-balance text-[clamp(32px,8.8vw,56px)] font-bold leading-[1.05] tracking-[-0.04em] text-foreground sm:text-[clamp(34px,4.4vw,56px)]">
                 <span className="block">Transparansi</span>
                 <span className="block whitespace-nowrap">
@@ -698,8 +950,8 @@ export default function App() {
 
               <p className="mx-auto mt-3 max-w-xl text-balance text-[15px] leading-[1.45] text-muted-foreground sm:mt-6 sm:text-lg sm:leading-[1.65]">
                 Qurio membuat pemahaman setiap murid terlihat jelas: siapa yang
-                paham, siapa yang tertinggal, dan topik mana yang sulit, langsung
-                dari kuis, word cloud, Q&amp;A, dan polling real-time.
+                paham, siapa yang tertinggal, dan topik mana yang sulit,
+                langsung dari kuis, word cloud, Q&amp;A, dan polling real-time.
               </p>
 
               <div className="mt-4 grid w-full grid-cols-2 items-stretch gap-2 sm:mt-7 sm:flex sm:w-auto sm:flex-wrap sm:justify-center sm:gap-4">
@@ -720,14 +972,16 @@ export default function App() {
 
               <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs font-medium text-muted-foreground sm:mt-6 sm:gap-x-6 sm:gap-y-2 sm:text-sm">
                 {teacherBenefits.map((benefit) => (
-                  <li key={benefit} className="inline-flex items-center gap-1.5">
+                  <li
+                    key={benefit}
+                    className="inline-flex items-center gap-1.5"
+                  >
                     <IconCheck className="size-4 text-emerald-600" />
                     {benefit}
                   </li>
                 ))}
               </ul>
             </div>
-
           </div>
         </section>
 
@@ -744,15 +998,20 @@ export default function App() {
                 aria-hidden={hidden || undefined}
               >
                 {marqueeItems.map((item, index) => (
-                  <div key={item} className="inline-flex items-center gap-8 sm:gap-12">
+                  <div
+                    key={item}
+                    className="inline-flex items-center gap-8 sm:gap-12"
+                  >
                     <span>{item}</span>
                     {/* Memberikan pemisah kustom berupa dot kecil hanya jika bukan item terakhir */}
                     {index < marqueeItems.length - 1 && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-border" aria-hidden="true" />
+                      <span
+                        className="h-1.5 w-1.5 rounded-full bg-border"
+                        aria-hidden="true"
+                      />
                     )}
                   </div>
                 ))}
-
               </div>
             ))}
           </div>
@@ -770,8 +1029,8 @@ export default function App() {
               Sudah punya kode kelas?
             </h2>
             <p className="m-0 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Masukkan kode akses, nama, dan nomor absen untuk langsung masuk
-              ke ruang kelas. Tanpa akun, tanpa aplikasi.
+              Masukkan kode akses, nama, dan nomor absen untuk langsung masuk ke
+              ruang kelas. Tanpa akun, tanpa aplikasi.
             </p>
           </div>
           <div className="flex w-full justify-center lg:justify-end">
@@ -855,8 +1114,7 @@ export default function App() {
                   Word Cloud
                 </h3>
                 <p className="m-0 min-h-[3.25rem] text-sm leading-relaxed text-muted-foreground">
-                  Curah pendapat live yang memetakan kata dan pola pikir
-                  kelas.
+                  Curah pendapat live yang memetakan kata dan pola pikir kelas.
                 </p>
                 <div className="mt-auto flex min-h-40 flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl bg-muted/60 p-4 pt-5">
                   <b className="text-[34px] leading-none text-brand-purple">
@@ -868,9 +1126,13 @@ export default function App() {
                   <strong className="text-lg text-emerald-600">
                     Eksperimen
                   </strong>
-                  <span className="text-[15px] text-muted-foreground">Berani</span>
+                  <span className="text-[15px] text-muted-foreground">
+                    Berani
+                  </span>
                   <i className="text-xl not-italic text-teal-600">Ide</i>
-                  <small className="text-sm text-muted-foreground">Diskusi</small>
+                  <small className="text-sm text-muted-foreground">
+                    Diskusi
+                  </small>
                 </div>
               </CardContent>
             </Card>
@@ -890,8 +1152,16 @@ export default function App() {
 
                 <div className="mt-auto space-y-3 pt-4">
                   {[
-                    ["AJ", "Bisakah dijelaskan lagi?", "18 upvote · Direkomendasikan"],
-                    ["RN", "Contoh di kehidupan nyata?", "9 upvote · Menunggu moderasi"],
+                    [
+                      "AJ",
+                      "Bisakah dijelaskan lagi?",
+                      "18 upvote · Direkomendasikan",
+                    ],
+                    [
+                      "RN",
+                      "Contoh di kehidupan nyata?",
+                      "9 upvote · Menunggu moderasi",
+                    ],
                   ].map(([initials, question, meta]) => (
                     <div
                       key={initials}
@@ -954,23 +1224,46 @@ export default function App() {
 
             {/* Polling */}
             <Card className="h-full gap-0 border-border bg-card p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)] sm:p-7">
-              <span className="mb-5 block text-xs font-extrabold tracking-[0.12em] text-primary">04</span>
+              <span className="mb-5 block text-xs font-extrabold tracking-[0.12em] text-primary">
+                04
+              </span>
               <CardContent className="flex flex-1 flex-col p-0">
-                <h3 className="m-0 mb-3 text-[22px] font-bold tracking-tight">Polling</h3>
+                <h3 className="m-0 mb-3 text-[22px] font-bold tracking-tight">
+                  Polling
+                </h3>
                 <p className="m-0 min-h-[3.25rem] text-sm leading-relaxed text-muted-foreground">
-                  Ambil suara kelas dalam hitungan detik dan lihat hasilnya langsung.
+                  Ambil suara kelas dalam hitungan detik dan lihat hasilnya
+                  langsung.
                 </p>
                 <div className="mt-auto rounded-2xl bg-muted/60 p-4 pt-5">
-                  <p className="m-0 mb-4 text-sm font-semibold leading-snug text-foreground">Kota mana yang ingin kamu kunjungi?</p>
+                  <p className="m-0 mb-4 text-sm font-semibold leading-snug text-foreground">
+                    Kota mana yang ingin kamu kunjungi?
+                  </p>
                   <div className="space-y-3">
-                    {[["Jakarta", 48], ["Bandung", 32], ["Yogyakarta", 20]].map(([city, percent]) => (
+                    {[
+                      ["Jakarta", 48],
+                      ["Bandung", 32],
+                      ["Yogyakarta", 20],
+                    ].map(([city, percent]) => (
                       <div key={city}>
                         <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-foreground">{city}</span>
-                          <span className="font-bold tabular-nums text-muted-foreground">{percent}%</span>
+                          <span className="font-medium text-foreground">
+                            {city}
+                          </span>
+                          <span className="font-bold tabular-nums text-muted-foreground">
+                            {percent}%
+                          </span>
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-background">
-                          <div className={cn("h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none", city === "Jakarta" ? "bg-brand-500" : "bg-brand-300")} style={{ width: `${percent}%` }} />
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none",
+                              city === "Jakarta"
+                                ? "bg-brand-500"
+                                : "bg-brand-300",
+                            )}
+                            style={{ width: `${percent}%` }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -983,7 +1276,10 @@ export default function App() {
       </section>
 
       {/* =========================== 3 LANGKAH ========================== */}
-      <section id="modes" className="bg-background py-20 text-foreground sm:py-28">
+      <section
+        id="modes"
+        className="bg-background py-20 text-foreground sm:py-28"
+      >
         <div className="mx-auto w-full max-w-6xl px-6">
           <SectionHeading
             eyebrow="MULAI DALAM HITUNGAN DETIK"
@@ -993,19 +1289,22 @@ export default function App() {
 
           <div className="relative">
             {/* Garis penghubung antar langkah (desktop) */}
-            <div
-              className="pointer-events-none absolute top-[4.5rem] z-0 hidden h-px border-t-2 border-dashed border-brand-200 md:block"
-              style={{
-                left: "calc((100% - 6rem) / 6)",
-                right: "calc((100% - 6rem) / 6)",
-              }}
-            />
+            <div className="pointer-events-none absolute inset-0 z-0 hidden items-center md:flex">
+              <div
+                className="h-0 flex-1 border-t-2 border-dashed border-brand-200"
+                style={{
+                  marginLeft: "calc((100% - 6rem) / 6)",
+                  marginRight: "calc((100% - 6rem) / 6)",
+                }}
+              />
+            </div>
 
             <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
               {steps.map(([num, title, copy]) => (
                 <Card
                   key={num}
-                  className="relative gap-0 rounded-3xl border-border px-8 py-10 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)]"
+                  className="relative z-10 gap-0 rounded-3xl border-border px-8 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-16px_rgba(15,23,42,0.18)]"
+                  style={{ paddingTop: 40, paddingBottom: 40 }}
                 >
                   <span className="mx-auto mb-7 grid size-16 place-items-center rounded-2xl bg-primary text-2xl font-extrabold text-primary-foreground shadow-[0_10px_24px_-8px_rgba(59,91,255,0.55)]">
                     {num}
@@ -1062,7 +1361,7 @@ export default function App() {
               aria-hidden="true"
             />
 
-            <div className="relative flex max-w-xl flex-col items-center lg:items-start">
+            <div className="relative mx-auto flex max-w-xl flex-col items-center justify-center text-center lg:mx-0 lg:items-start lg:justify-start lg:text-left">
               <span className="mb-4 inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-bold tracking-[0.12em] text-white">
                 UNTUK GURU
               </span>
@@ -1129,42 +1428,98 @@ export default function App() {
             </p>
           </div>
 
-          <nav aria-label="Jelajahi Qurio" className="flex flex-col items-start gap-1">
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">Jelajahi</h2>
+          <nav
+            aria-label="Jelajahi Qurio"
+            className="flex flex-col items-start gap-1"
+          >
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Jelajahi
+            </h2>
             {footerLinks.map(([label, href]) => (
-              <a href={href} key={href} className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+              <a
+                href={href}
+                key={href}
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
                 {label}
               </a>
             ))}
           </nav>
 
           <nav aria-label="Akun" className="flex flex-col items-start gap-1">
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">Akun</h2>
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Akun
+            </h2>
             {footerAccountLinks.map(([label, href]) => (
-              <Link key={href} href={href} className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{label}</Link>
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {label}
+              </Link>
             ))}
           </nav>
 
-          <nav aria-label="Informasi legal" className="flex flex-col items-start gap-1">
-            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">Informasi</h2>
+          <nav
+            aria-label="Informasi legal"
+            className="flex flex-col items-start gap-1"
+          >
+            <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Informasi
+            </h2>
             {footerLegalLinks.map(([label, href]) => (
-              <Link key={href} href={href} className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{label}</Link>
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-10 items-center text-sm text-white/75 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {label}
+              </Link>
             ))}
           </nav>
 
           <div>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-white/50">Sosial</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-white/50">
+              Sosial
+            </h2>
             <div className="flex gap-2.5">
-              <a href="#" onClick={(event) => event.preventDefault()} aria-label="Instagram, tautan belum diatur" className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><IconBrandInstagram className="size-5" /></a>
-              <a href="#" onClick={(event) => event.preventDefault()} aria-label="X, tautan belum diatur" className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><IconBrandX className="size-5" /></a>
-              <a href="#" onClick={(event) => event.preventDefault()} aria-label="YouTube, tautan belum diatur" className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><IconBrandYoutube className="size-5" /></a>
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="Instagram, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandInstagram className="size-5" />
+              </a>
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="X, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandX className="size-5" />
+              </a>
+              <a
+                href="#"
+                onClick={(event) => event.preventDefault()}
+                aria-label="YouTube, tautan belum diatur"
+                className="grid size-11 place-items-center rounded-xl border border-white/20 text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <IconBrandYoutube className="size-5" />
+              </a>
             </div>
           </div>
         </div>
 
         <div className="mx-auto mt-10 flex w-full max-w-6xl flex-col gap-1 border-t border-white/15 px-6 pt-5 text-xs text-white/55 sm:mt-12 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
           <span>© 2026 Qurio. Hak cipta dilindungi undang-undang.</span>
-          <a href="#top" className="inline-flex min-h-11 items-center text-white/70 transition-colors hover:text-white">Kembali ke atas ↑</a>
+          <a
+            href="#top"
+            className="inline-flex min-h-11 items-center text-white/70 transition-colors hover:text-white"
+          >
+            Kembali ke atas ↑
+          </a>
         </div>
       </footer>
     </main>

@@ -78,6 +78,21 @@ export interface Sessions {
   token: string;
 }
 
+// Nilai (skor) satu siswa pada sebuah sesi.
+export interface ParticipantScore {
+  participant_id: string;
+  name: string;
+  absen: string;
+  score: number;
+}
+
+// Ringkasan peserta yang dikirim backend pada tiap sesi.
+export interface SessionParticipants {
+  participant_count: number;
+  total_questions: number;
+  scores: ParticipantScore[];
+}
+
 export interface SessionListItem {
   id: string;
   teacher_id: string;
@@ -89,6 +104,7 @@ export interface SessionListItem {
   status: "active" | "ended";
   created_at: string;
   ended_at: string | null;
+  participants?: SessionParticipants;
 }
 
 interface SessionListResponse {
@@ -139,18 +155,18 @@ export interface PollingDistributionItem {
 
 export type PollStats =
   | {
-    pollId: string;
-    pollType: "polling";
-    totalVotes: number;
-    distribution: PollingDistributionItem[];
-  }
+      pollId: string;
+      pollType: "polling";
+      totalVotes: number;
+      distribution: PollingDistributionItem[];
+    }
   | {
-    pollId: string;
-    pollType: "quiz";
-    correct_count: number;
-    incorrect_count: number;
-    total_count: number;
-  };
+      pollId: string;
+      pollType: "quiz";
+      correct_count: number;
+      incorrect_count: number;
+      total_count: number;
+    };
 
 export interface responseAnswer {
   success: boolean;
@@ -367,9 +383,7 @@ const createSession = async (
   token?: string,
 ): Promise<Sessions> => {
   const normalizedClassSize =
-    classSize === undefined || classSize === null
-      ? null
-      : Number(classSize);
+    classSize === undefined || classSize === null ? null : Number(classSize);
 
   try {
     const response = await fetch(`${API_URL}/api/sessions`, {
@@ -583,7 +597,7 @@ export const updateStatusSession = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message ||
-        `Gagal memperbarui status sesi (HTTP ${response.status})`,
+          `Gagal memperbarui status sesi (HTTP ${response.status})`,
       );
     }
 
@@ -623,7 +637,9 @@ export const fetchUserParticipant = async (
   }
 };
 
-export const fetchCurrentPoll = async (sessionId: string): Promise<Poll> => {
+export const fetchCurrentPoll = async (
+  sessionId: string,
+): Promise<Poll | null> => {
   try {
     const response = await fetch(
       `${API_URL}/api/polls/sessions/${sessionId}/current`,
@@ -812,10 +828,7 @@ function getAnalyticsHeaders(token?: string): Headers {
   return headers;
 }
 
-async function fetchAnalyticsData<T>(
-  path: string,
-  token?: string,
-): Promise<T> {
+async function fetchAnalyticsData<T>(path: string, token?: string): Promise<T> {
   const response = await fetch(`${API_URL}/api/analytics/${path}`, {
     method: "GET",
     credentials: "include",

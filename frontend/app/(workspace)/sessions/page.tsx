@@ -154,12 +154,12 @@ function SessionsPage() {
 
   const searchedSessions = debouncedSearchQuery.trim()
     ? smartSearch(
-      sessions,
-      debouncedSearchQuery,
-      (session) => `${session.title} ${session.access_code}`,
-    )
-      .filter((result) => result.matchedWords > 0)
-      .map((result) => result.item)
+        sessions,
+        debouncedSearchQuery,
+        (session) => `${session.title} ${session.access_code}`,
+      )
+        .filter((result) => result.matchedWords > 0)
+        .map((result) => result.item)
     : sessions;
 
   const visibleSessions = searchedSessions.filter(
@@ -180,11 +180,11 @@ function SessionsPage() {
         current.map((item) =>
           item.id === session.id
             ? {
-              ...item,
-              status: nextStatus,
-              ended_at:
-                nextStatus === "ended" ? new Date().toISOString() : null,
-            }
+                ...item,
+                status: nextStatus,
+                ended_at:
+                  nextStatus === "ended" ? new Date().toISOString() : null,
+              }
             : item,
         ),
       );
@@ -621,9 +621,7 @@ function SessionsPage() {
                                   ) : (
                                     <IconPlayerPlay className="size-4" />
                                   )}
-                                  {isActive
-                                    ? "Akhiri sesi"
-                                    : "Aktifkan sesi"}
+                                  {isActive ? "Akhiri sesi" : "Aktifkan sesi"}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
