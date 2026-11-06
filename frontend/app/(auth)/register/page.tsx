@@ -35,8 +35,15 @@ const formSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
   email: z
     .string()
-    .email("Email tidak valid")
-    .endsWith("gmail.com", "Isi input dengan format (gmail.com) "),
+    .trim()
+    .email("Format email tidak sesuai")
+    .refine((email) => {
+      const domain = email.slice(email.lastIndexOf("@") + 1).toLowerCase();
+      return (
+        ["gmail.com", "yahoo.com", "outlook.com"].includes(domain) ||
+        domain.endsWith(".sch.id")
+      );
+    }, "Format email tidak sesuai"),
   password: z.string().min(8, "Password minimal 8 karakter"),
   role: z.literal("guru"),
 });
@@ -68,7 +75,7 @@ export default function RegisterPage() {
     );
 
     if (!response.success) {
-      if (response.message.toLowerCase().includes("email")) {
+      if (response.message === "Nama atau email sudah terdaftar") {
         setError("email", {
           type: "server",
           message: "Email ini sudah terdaftar. Silakan gunakan email lain.",

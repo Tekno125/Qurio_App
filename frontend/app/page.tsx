@@ -68,7 +68,7 @@ function SectionHeading({
 }) {
   return (
     <div className={cn("mx-auto mb-14 max-w-2xl text-center", className)}>
-      <span className="mb-4 inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-bold tracking-[0.12em] text-brand-700">
+      <span className="mb-4 inline-flex items-center px-3 py-1 text-xs font-bold tracking-[0.12em] text-brand-700">
         {eyebrow}
       </span>
       <h2 className="m-0 text-balance text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">
@@ -819,7 +819,7 @@ export default function App() {
 
             {/* 6 - Status live */}
             <div
-              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
+              className="qurio-float absolute top-[40%] right-[3%] rounded-2xl border border-border bg-background border-white px-4 py-3 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
               style={floatStyle(-2, 4.8, 1.2)}
             >
               <div className="flex items-center gap-2">
